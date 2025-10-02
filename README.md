@@ -1,4 +1,4 @@
-# 🚀 Proyek Kelompok 3 - PBP
+# 🚀 Proyek Kelompok 3 - KuLatih
 
 Halo! 👋 Selamat datang di repository **Kelompok 3 PBP**.  
 Di sini kami mengembangkan project sebagai bagian dari mata kuliah **Pemrograman Berbasis Platform (PBP)**.
