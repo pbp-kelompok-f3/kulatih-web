@@ -139,11 +139,6 @@ kulatih.vercel.app
 </details>
 
 <details align="justify">
-    <summary><b>🌐 Link Deployment</b></summary>
-kulatih.vercel.app
-</details>
-
-<details align="justify">
     <summary><b>🎨 Link Design</b></summary>
 https://www.figma.com/files/team/1555528949421288347/project/463179219/Proyek-Tengah-Semester-PBP?fuid=1467317633894488150
 </details>
