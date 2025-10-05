@@ -134,7 +134,7 @@ Fitur utama:
 
 <details align="justify">
     <summary><b>🌐 Link Deployment</b></summary>
-kulatih.vercel.app
+https://kulatih.vercel.app
 </details>
 
 <details align="justify">
