@@ -50,3 +50,5 @@ Masalah yang kami coba selesaikan adalah keterbatasan platform khusus bagi para 
 
 
 
+
+
