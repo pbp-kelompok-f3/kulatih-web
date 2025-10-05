@@ -77,7 +77,7 @@ Masalah yang kami coba selesaikan adalah keterbatasan platform khusus bagi para 
     2. Mengelola data dan laporan aktivitas sistem
     3. Memantau forum dan komunitas agar tetap kondusif
     4. Menangani pelanggaran, keluhan, dan perbaikan sistem
-    </details>
+</details>
 
 
 
