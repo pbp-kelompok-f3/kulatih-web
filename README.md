@@ -1,4 +1,4 @@
-# 🚀 Proyek Kelompok 3 - KuLatih
+`# 🚀 Proyek Kelompok 3 - KuLatih
 
 Halo! 👋 Selamat datang di repository **Kelompok 3 PBP**.  
 Di sini kami mengembangkan project sebagai bagian dari mata kuliah **Pemrograman Berbasis Platform (PBP)**.
@@ -45,7 +45,39 @@ Masalah yang kami coba selesaikan adalah keterbatasan platform khusus bagi para 
 
 <details align="justify">
     <summary><b>👥 Deskripsi Peran Pengguna</b></summary>
-</details>
+    1. 🧑‍🏫 Pelatih (Coach)
+
+    Pelatih merupakan pengguna yang menawarkan jasa bimbingan dalam berbagai bidang seperti olahraga dan keterampilan. Mereka berperan sebagai penyedia layanan utama yang dapat menampilkan profil profesional, mengatur jadwal latihan, serta berinteraksi dengan pengguna yang melakukan booking.
+
+    Fitur utama:
+
+    1. Membuat dan mengelola profil pelatih
+    2. Menentukan jadwal ketersediaan latihan
+    3. Menerima dan mengonfirmasi booking dari pengguna
+    4. Melihat dan meninjau ulasan dari murid
+
+    2. 👤 Pengguna (Murid)
+
+    Pengguna adalah individu yang mencari pelatih sesuai kebutuhan mereka. Mereka dapat menelusuri daftar pelatih, melakukan booking sesi latihan, serta memberikan ulasan setelah pelatihan selesai. Peran pengguna menjadi kunci dalam menjaga interaksi dan kualitas layanan di platform.
+
+    Fitur utama:
+
+    1. Menelusuri dan memfilter daftar pelatih
+    2. Melakukan booking dan mengatur jadwal latihan
+    3. Memberikan rating & ulasan terhadap pelatih
+    4. Berpartisipasi dalam forum dan komunitas
+
+    3. 🛠️ Admin
+
+    Admin bertugas sebagai pengelola utama platform KuLatih. Mereka memastikan seluruh fitur berjalan dengan baik, memverifikasi data pelatih, serta menjaga keamanan dan kenyamanan pengguna.
+
+    Fitur utama:
+
+    1. Memverifikasi akun pelatih dan pengguna
+    2. Mengelola data dan laporan aktivitas sistem
+    3. Memantau forum dan komunitas agar tetap kondusif
+    4. Menangani pelanggaran, keluhan, dan perbaikan sistem
+    </details>
 
 
 
