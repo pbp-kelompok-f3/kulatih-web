@@ -98,6 +98,7 @@ Fitur utama:
 
 <details align="justify">
     <summary><b>📊 Initial Data Set</b></summary>
+Data set ini bersumber utama dari https://www.superprof.co.id/, dengan beberapa variabel tambahan yang dihasilkan melalui ChatGPT.
 </details>
 
 <details align="justify">
