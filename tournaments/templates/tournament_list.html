@@ -1,0 +1,95 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<h1>List of Tournaments</h1>
+
+<table border="1" cellpadding="8">
+    <thead>
+        <tr>
+            <th>Nama Turnamen</th>
+            <th>Tipe</th>
+            <th>Tanggal</th>
+            <th>Lokasi</th>
+            <th>Pembuat</th>
+            <th>Aksi</th>
+        </tr>
+    </thead>
+    <tbody id="tournament-list">
+    </tbody>
+</table>
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script>
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+    function loadTournaments() {
+        $.ajax({
+            url: "{% url 'tournament:tournaments_view' %}",
+            method: "GET",
+            dataType: "json",
+            success: function(data) {
+                let rows = '';
+                if (data.tournaments.length > 0) {
+                    data.tournaments.forEach(function(t) {
+                        rows += `
+                            <tr>
+                                <td>${t.namaTournaments}</td>
+                                <td>${t.tipeTournaments}</td>
+                                <td>${t.tanggalTournaments}</td>
+                                <td>${t.lokasiTournaments}</td>
+                                <td>${t.pembuat}</td>
+                                <td>
+                                    <button onclick="assignTournament('${t.idTournaments}')">Daftar</button>
+                                    ${t.can_delete ? `<button onclick="deleteTournament('${t.idTournaments}')">Hapus</button>` : ''}
+                                </td>
+                            </tr>
+                        `;
+                    });
+                } else {
+                    rows = '<tr><td colspan="6">Belum ada turnamen.</td></tr>';
+                }
+                $('#tournament-list').html(rows);
+            }
+        });
+    }
+    function assignTournament(id) {
+        $.ajax({
+            url: `/tournament/assign/${id}/`,
+            method: "POST",
+            headers: { "X-CSRFToken": getCookie("csrftoken") },
+            success: function(response) {
+                alert(response.message);
+                loadTournaments();
+            }
+        });
+    }
+    function deleteTournament(id) {
+        $.ajax({
+            url: `/tournament/delete/${id}/`,
+            method: "POST",
+            headers: { "X-CSRFToken": getCookie("csrftoken") },
+            success: function(response) {
+                alert(response.message);
+                loadTournaments();
+            }
+        });
+    }
+
+    // Jalankan load saat halaman selesai dimuat
+    $(document).ready(function() {
+        loadTournaments();
+    });
+</script>
+{% endblock %}
