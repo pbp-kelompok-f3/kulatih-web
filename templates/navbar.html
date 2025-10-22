@@ -1,0 +1,32 @@
+{% load static %}
+
+<nav class="flex items-center justify-between px-10 py-4 bg-[#0b0b23] border-b border-gray-800">
+  <div class="flex items-center space-x-2">
+      <span class="text-white">KU</span><span class="text-yellow-400">LATIH</span>
+    </h1>
+  </div>
+
+  <div class="flex space-x-8 font-semibold text-sm tracking-wide text-white">
+    <a href="{% url 'home' %}" class="hover:text-yellow-400">HOME</a>
+    <a href="{% url 'coach_list' %}" class="hover:text-yellow-400">COACH</a>
+    <a href="{% url 'forum' %}" class="hover:text-yellow-400">FORUM</a>
+    <a href="{% url 'community' %}" class="hover:text-yellow-400">COMMUNITY</a>
+  </div>
+
+  <div class="flex items-center space-x-3">
+    {% if user.is_authenticated %}
+      {% if user.profile.image %}
+        <img src="{{ user.profile.image.url }}" alt="Profile" class="w-8 h-8 rounded-full object-cover">
+      {% else %}
+        <div class="w-8 h-8 rounded-full bg-gray-500 flex items-center justify-center text-sm">U</div>
+      {% endif %}
+    {% else %}
+      <a href="{% url 'login' %}" class="px-4 py-1 border border-white rounded-lg hover:bg-white hover:text-black transition">
+        Log In
+      </a>
+      <a href="{% url 'signup' %}" class="px-4 py-1 bg-white text-black rounded-lg hover:bg-yellow-400 hover:text-black transition">
+        Sign Up
+      </a>
+    {% endif %}
+  </div>
+</nav>
