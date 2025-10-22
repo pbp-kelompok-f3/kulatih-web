@@ -22,5 +22,5 @@ urlpatterns = [
     path('', include('main.urls')),
     path('account/', include('users.urls')),
     path('forum/', include('forum.urls')),
-    path('tournament/', include('tournament.urls'))
+    path('tournament/', include('tournaments.urls'))
 ]
