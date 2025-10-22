@@ -99,6 +99,7 @@ Dengan adanya Forum, KuLatih menjadi lebih dari sekadar platform booking — tap
 
 <details align="justify">
     <summary><b>📊 Initial Data Set</b></summary>
+Data set ini bersumber utama dari https://www.superprof.co.id/, dengan beberapa variabel tambahan yang dihasilkan melalui ChatGPT.
 </details>
 
 <details align="justify">
@@ -136,7 +137,7 @@ Admin bertugas sebagai pengelola utama platform KuLatih. Mereka memastikan selur
 
 <details align="justify">
     <summary><b>🌐 Link Deployment</b></summary>
-kulatih.vercel.app
+https://kulatih.vercel.app
 </details>
 
 <details align="justify">
