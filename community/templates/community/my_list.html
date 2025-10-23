@@ -1,0 +1,25 @@
+{% extends "community/base_community.html" %}
+{% block title %}My Community{% endblock %}
+{% block content %}
+<h2>My Community</h2>
+
+{% for m in memberships %}
+  <div class="card row">
+    <div class="circle">
+      {% if m.community.profile_image_url %}<img src="{{ m.community.profile_image_url }}" alt="pfp">{% endif %}
+    </div>
+    <div style="flex:1;">
+      <div class="bold">{{ m.community.name }}</div>
+      <div class="small">{{ m.community.short_description }}</div>
+    </div>
+    <div>
+      <a class="btn btn-outline" href="{% url 'community:my_group' m.community.slug %}">Open</a>
+      <a class="btn" href="{% url 'community:leave' m.community.slug %}">Leave Community</a>
+    </div>
+  </div>
+{% empty %}
+  <p>Kamu belum join komunitas apapun.</p>
+{% endfor %}
+
+<a class="btn btn-outline" href="{% url 'community:home' %}">Back to Community</a>
+{% endblock %}

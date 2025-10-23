@@ -1,0 +1,28 @@
+{% extends "community/base_community.html" %}
+{% block title %}{{ community.name }}{% endblock %}
+{% block content %}
+<div class="row">
+  <div class="circle" style="width:120px;height:120px;">
+    {% if community.profile_image_url %}<img src="{{ community.profile_image_url }}" alt="pfp" style="width:120px;height:120px;object-fit:cover;border-radius:50%">{% endif %}
+  </div>
+  <div class="card" style="flex:1;">
+    <div class="bold" style="font-size:20px">{{ community.name }}</div>
+    <p>{{ community.full_description }}</p>
+  </div>
+</div>
+<div class="row" style="margin:8px 0 16px;">
+  <div class="card">Jumlah anggota community: <b>{{ members_count }}</b></div>
+  <div class="right">
+    {% if user.is_authenticated %}
+      {% if is_member %}
+        <a class="btn btn-outline" href="{% url 'community:my_list' %}">Go to My Community</a>
+      {% else %}
+        <a class="btn" href="{% url 'community:join' community.slug %}">Join Us</a>
+      {% endif %}
+    {% else %}
+      <a class="btn" href="/accounts/login/">Login to join</a>
+    {% endif %}
+  </div>
+</div>
+<a class="btn btn-outline" href="{% url 'community:home' %}">Back to Community</a>
+{% endblock %}
