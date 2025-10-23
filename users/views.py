@@ -127,7 +127,7 @@ def show_profile(request):
     }
     return render(request, template, context)
 
-@login_required(login_url='/login')
+login_required(login_url='/login')
 @transaction.atomic
 def edit_profile(request):
 
@@ -141,20 +141,28 @@ def edit_profile(request):
         # No profile to edit
         return redirect('main:show_main')
 
-    if request.method == 'POST' and user_form.is_valid() and profile_form.is_valid():
-        # We pass 'instance' to pre-fill the forms with existing data
+    if request.method == 'POST':
+        # Create forms with submitted data
         user_form = UserEditForm(request.POST, instance=request.user)
-        profile_form = ProfileEditForm(request.POST, instance=profile_instance)
+        profile_form = ProfileEditForm(request.POST, request.FILES, instance=profile_instance)
         
-        user_form.save()
-        profile_form.save()
-        return redirect('users:show_profile')
+        if user_form.is_valid() and profile_form.is_valid():
+            user_form.save()
+            profile_form.save()
+            messages.success(request, 'Your profile has been updated successfully!')
+            return redirect('users:show_profile')
+    else:
+        # For a GET request, create the initial forms with existing data
+        user_form = UserEditForm(instance=request.user)
+        profile_form = ProfileEditForm(instance=profile_instance)
 
     context = {
         'user_form': user_form,
         'profile_form': profile_form
     }
     return render(request, 'edit_profile.html', context)
+
+# COACH LIST 
 
 # COACH LIST 
 
@@ -169,6 +177,7 @@ def member_details(request, id):
     }
 
     return render(request, "member_details.html", context)
+
 def coach_detail(request, coach_id):
     coach = get_object_or_404(Coach, id=coach_id)
     context = {

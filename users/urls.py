@@ -21,5 +21,5 @@ urlpatterns = [
     path('coach/<uuid:coach_id>/', coach_detail, name='coach_detail'),
 
     # Member
-    path('member/<string>:username', member_details, name='member_details')
+    path('member/<uuid:id>', member_details, name='member_details')
 ]

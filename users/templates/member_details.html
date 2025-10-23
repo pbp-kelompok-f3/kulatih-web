@@ -1,60 +1,62 @@
 {% extends "base.html" %}
 {% load static %}
 
+{% block meta %}<title>{{ member.user.username }} - KuLatih</title>{% endblock meta %}
+
 {% block content %}
-
-{% include "navbar.html" %}
-
-<main class="py-12 px-4 sm:px-6 lg:px-8">
-  <div class="max-w-3xl mx-auto">
-
-    <div class="flex flex-col sm:flex-row items-center sm:items-start space-y-6 sm:space-y-0 sm:space-x-8">
-      
-      <div class="flex-shrink-0">
-        <img class="h-36 w-36 sm:h-40 sm:w-40 rounded-2xl object-cover shadow-lg" 
-             src="{%' %}" 
-             alt="Profile picture of Trias Fahri">
+<section class="min-h-screen bg-[var(--indigo)] text-[var(--white)] px-8 md:px-20 py-12 font-bevietnam">
+  <div class="max-w-6xl mx-auto">
+    <div class="flex flex-col md:flex-row items-center gap-10">
+      <!-- Left: avatar -->
+      <div class="w-56 h-56 bg-[var(--indigo-dark)] rounded-2xl overflow-hidden shadow-lg flex-shrink-0 mx-auto md:mx-0">
+        {% if member.profile_photo %}
+          <img src="{{ member.profile_photo }}" alt="{{ member.user.username }}" class="w-full h-full object-cover">
+        {% else %}
+          <svg fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd"></path></svg>
+        {% endif %}
       </div>
-      
-      <div class="flex-grow text-center sm:text-left pt-2">
-        <p class="text-sm font-medium text-[#545454]">Coach · Football</p>
-        <h1 class="font-['Bebas_Neue'] text-4xl font-bold text-[#F5F5F5] mt-1">Trias Fahri</h1>
-        <p class="text-lg text-[#545454] mt-1">@slaamoyn</p>
-        
-        <a href="#" class="mt-4 inline-block bg-[#D3B53E] text-[#111024] font-semibold px-5 py-2 rounded-lg text-sm hover:opacity-90 transition-opacity duration-200">
-          Edit Profile
-        </a>
+
+      <!-- Right: header -->
+      <div class="flex-1 text-center md:text-left">
+        <div class="text-lg font-bevietnam tracking-wider text-gray-300 mb-2">
+          Member Profile
+        </div>
+        <h1 class="text-5xl font-bevietnam font-bold leading-none mb-2">{{ member.user.get_full_name }}</h1>
+        <div class="text-lg text-gray-400 mb-4">
+          @{{ member.user.username }} <span class="text-white">· Member since {{ member.user.date_joined|date:"F Y" }}</span>
+        </div>
       </div>
     </div>
 
-    <div class="mt-12 bg-[#242244] p-6 sm:p-8 rounded-2xl shadow-xl">
-      
-      <h2 class="font-['Bebas_Neue'] text-2xl font-bold text-[#F5F5F5] mb-4">Description</h2>
-      <p class="text-[#F5F5F5] leading-relaxed">
-        A 20-year-old software developer looking to get back into shape. I used to play football in high school but have been inactive for a few years due to university. I need guidance to start working out at the gym safely and effectively.
-      </p>
-
-      <div class="mt-8 space-y-6">
-        <div>
-          <h3 class="font-['Bebas_Neue'] text-sm font-semibold text-[#545454] uppercase tracking-wider">Location</h3>
-          <p class="text-lg text-[#F5F5F5] mt-1">Depok, West Java</p>
-        </div>
-        
-        <div>
-          <h3 class="font-['Bebas_Neue'] text-sm font-semibold text-[#545454] uppercase tracking-wider">Email</h3>
-          <p class="text-lg text-[#F5F5F5] mt-1">muhammad.salman@kulatih.com</p>
-        </div>
-        
-        <div>
-          <h3 class="font-['Bebas_Neue'] text-sm font-semibold text-[#545454] uppercase tracking-wider">Phone</h3>
-          <p class="text-lg text-[#F5F5F5] mt-1">081263348342</p>
-        </div>
       </div>
-
     </div>
 
+    <!-- Description / info card -->
+    <div class="bg-[var(--indigo-light)] rounded-2xl p-8 text-left mt-12 shadow-lg">
+        <h2 class="text-2xl font-semibold font-bevietnam mb-2">Description</h2>
+        <p class="text-[var(--white)] leading-relaxed mb-6">
+        {{ member.description|default:"This member has not added a description." }}
+        </p>
+
+        <div class="flex gap-x-8 text-sm">
+            <!-- Column 1: Labels -->
+            <div class="text-gray-400 font-semibold space-y-2">
+                <div>City</div>
+                <div>Email</div>
+                <div>Phone</div> 
+            </div>
+
+            <!-- Column 2: Values -->
+            <div class="text-[rgba(245,245,245,.9)] space-y-2">
+                <div>{{ member.city|default:"Not specified" }}</div>
+                <div>{{ member.user.email }}</div>
+                <div>{{ member.phone|default:"-" }}</div>
+            </div>
+        </div>
+    </div>
   </div>
-</main>
+</section>
 
+{% include "footer.html" %}
 
 {% endblock content %}

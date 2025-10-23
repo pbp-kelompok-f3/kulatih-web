@@ -28,7 +28,7 @@
                     <div class="px-4 py-2 text-sm text-[var(--white)] border-b">
                         <strong class="block truncate">{{ user.first_name }} {{ user.last_name }}</strong> @{{ user.username }}
                     </div>
-                    <a href="#" class="block px-4 py-2 text-sm text-[var(--white)] hover:bg-[var(--indigo)]">My Profile</a>
+                    <a href="{% url 'users:show_profile' %}" class="block px-4 py-2 text-sm text-[var(--white)] hover:bg-[var(--indigo)]">My Profile</a>
                     <a href="#" class="block px-4 py-2 text-sm text-[var(--white)] hover:bg-[var(--indigo)]">Edit Profile</a>
                     <a href="#" class="block px-4 py-2 text-sm text-[var(--white)] hover:bg-[var(--indigo)] border-b">My Bookings</a>
                     <form method="post" action="{% url 'users:logout' %}">
