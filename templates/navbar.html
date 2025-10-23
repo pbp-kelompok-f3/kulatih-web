@@ -17,7 +17,7 @@
             <div class="relative">
                 <button 
                     id="profile-button" 
-                    class="hidden md:block w-12 h-12 rounded-full overflow-hidden focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:ring-offset-2 focus:ring-offset-gray-800"
+                    class="hidden md:block w-12 h-12 rounded-full overflow-hidden  focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:ring-offset-2 focus:ring-offset-gray-800"
                 >
                     {% if user.member.profile_photo %}
                         <img src="{{ user.member.profile_photo }}" alt="Profile" class="w-full h-full object-cover">
@@ -201,7 +201,6 @@ if (profileBtn && profileMenu) {
     const isOpen = !profileMenu.classList.contains('hidden');
 
     if (isOpen) {
-      // Tutup animasi
       profileMenu.style.maxHeight = '0';
       profileMenu.style.opacity = '0';
       profileMenu.style.transform = 'scale(0.95) translateY(-10px)';
@@ -217,7 +216,6 @@ if (profileBtn && profileMenu) {
     }
   });
 
-  // Klik di luar nutup menu
   document.addEventListener('click', (e) => {
     if (!profileBtn.contains(e.target) && !profileMenu.contains(e.target)) {
       profileMenu.style.maxHeight = '0';
