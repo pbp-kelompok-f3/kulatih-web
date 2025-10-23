@@ -1,6 +1,7 @@
-{% extends "community/base_community.html" %}
+{% extends "base.html" %}
 {% block title %}{{ community.name }} Group{% endblock %}
 {% block content %}
+
 <a class="btn btn-outline" href="{% url 'community:my_list' %}">Back to My Community List</a>
 <h2 class="bold" style="margin-top:12px;">WELCOME TO {{ community.name|upper }}</h2>
 

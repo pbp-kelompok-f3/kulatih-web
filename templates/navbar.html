@@ -1,0 +1,82 @@
+{% load static %}
+
+<nav class="bg-[#0b0b23] border-b border-gray-800 text-white">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-10">
+    <div class="flex justify-between items-center py-4">
+      <div class="flex items-center space-x-2 text-lg font-bold">
+        <span class="text-white">KU</span><span class="text-yellow-400">LATIH</span>
+      </div>
+      <div class="hidden md:flex items-center space-x-8 font-semibold text-sm tracking-wide">
+        <a href="/" class="hover:text-yellow-400">HOME</a>
+        <a href="/" class="hover:text-yellow-400">COACH</a>
+        <a href="/" class="hover:text-yellow-400">FORUM</a>
+        <a href="/" class="hover:text-yellow-400">COMMUNITY</a>
+        <a href="{% url 'tournament:tournament_view' %}" class="hover:text-yellow-400">TOURNAMENTS</a>
+      </div>
+      <div class="hidden md:flex items-center space-x-3">
+        {% if user.is_authenticated %}
+          {% if user.profile.image %}
+            <img src="{{ user.profile.image.url }}" alt="Profile" class="w-8 h-8 rounded-full object-cover">
+          {% else %}
+            <div class="w-8 h-8 rounded-full bg-gray-500 flex items-center justify-center text-sm">U</div>
+          {% endif %}
+        {% else %}
+          <a href="/" class="px-4 py-1 border border-white rounded-lg hover:bg-white hover:text-black transition">
+            Log In
+          </a>
+          <a href="/" class="px-4 py-1 bg-white text-black rounded-lg hover:bg-yellow-400 hover:text-black transition">
+            Sign Up
+          </a>
+        {% endif %}
+      </div>
+      <div class="md:hidden">
+        <button id="menu-btn" class="focus:outline-none">
+          <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M4 6h16M4 12h16M4 18h16" />
+          </svg>
+        </button>
+      </div>
+    </div>
+  </div>
+  <div id="mobile-menu" class="hidden md:hidden border-t border-gray-700 bg-[#0b0b23]">
+    {% if user.is_authenticated %}
+      <div class="px-4 py-3 border-b border-gray-700">
+        {% if user.profile.image %}
+          <div class="flex items-center space-x-3">
+            <img src="{{ user.profile.image.url }}" class="w-10 h-10 rounded-full object-cover">
+            <div>
+              <p class="font-semibold">{{ user.username }}</p>
+            </div>
+          </div>
+        {% else %}
+          <p class="font-semibold mb-2">Profile</p>
+        {% endif %}
+      </div>
+      <div class="px-4 py-2 border-b border-gray-700"></div>
+    {% else %}
+      <div class="px-4 py-3 flex flex-col space-y-2 border-b border-gray-700">
+        <a href="/" class="hover:text-yellow-400">Log In</a>
+        <a href="/" class="hover:text-yellow-400">Register</a>
+      </div>
+      <div class="px-4 py-2 border-b border-gray-700"></div>
+    {% endif %}
+
+    <div class="px-4 py-3 flex flex-col space-y-2">
+      <a href="/" class="hover:text-yellow-400">Home</a>
+      <a href="/" class="hover:text-yellow-400">Coach</a>
+      <a href="/" class="hover:text-yellow-400">Forum</a>
+      <a href="/" class="hover:text-yellow-400">Community</a>
+      <a href="{% url 'tournament:tournament_view' %}" class="hover:text-yellow-400">Tournaments</a>
+    </div>
+  </div>
+</nav>
+
+<script>
+  const menuBtn = document.getElementById('menu-btn');
+  const mobileMenu = document.getElementById('mobile-menu');
+
+  menuBtn.addEventListener('click', () => {
+    mobileMenu.classList.toggle('hidden');
+  });
+</script>

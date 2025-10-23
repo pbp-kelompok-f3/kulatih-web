@@ -1,6 +1,7 @@
-{% extends "community/base_community.html" %}
+{% extends "base.html" %}
 {% block title %}{{ community.name }}{% endblock %}
 {% block content %}
+
 <div class="row">
   <div class="circle" style="width:120px;height:120px;">
     {% if community.profile_image_url %}<img src="{{ community.profile_image_url }}" alt="pfp" style="width:120px;height:120px;object-fit:cover;border-radius:50%">{% endif %}
