@@ -1,0 +1,79 @@
+{% load static %}
+{% if bookings %}
+  {% for b in bookings %}
+  <article class="relative rounded-2xl bg-[var(--indigo-light)] border border-[var(--indigo-light)]
+                  p-5 shadow-[0_12px_40px_rgba(0,0,0,.35)]">
+    <!-- Top row -->
+    <div class="flex items-center justify-between mb-3 text-[11px] opacity-90 pb-1
+                border-b border-[rgba(255,255,255,.07)]">
+      <div>
+        {{ b.date|date:"l, d F Y" }} ·
+        {{ b.start_time|time:"H:i" }} – {{ b.end_time|time:"H:i" }} WIB
+      </div>
+      <span class="heading-font px-2.5 py-0.5 rounded text-[10px] font-bold
+        {% if b.status == 'confirmed' %} bg-green-700 text-white
+        {% elif b.status == 'pending' %} bg-amber-400 text-[var(--indigo-dark)]
+        {% elif b.status == 'rescheduled' %} bg-purple-700 text-white
+        {% else %} bg-gray-600 text-white {% endif %}">
+        {{ b.get_status_display }}
+      </span>
+    </div>
+
+    <!-- Coach row -->
+    <div class="flex items-center gap-4">
+      <img src="{% static 'img/avatar-default.png' %}" alt="" class="w-16 h-16 rounded-full bg-[var(--indigo-dark)]
+                 ring-2 ring-[rgba(255,255,255,.08)] object-cover">
+      <div>
+        <div class="heading-font text-xl leading-none">
+          {% for c in b.coach.all %}{{ c.name }}{% if not forloop.last %}, {% endif %}{% empty %}Coach{% endfor %}
+        </div>
+        <div class="text-sm text-[rgba(245,245,245,.65)]">
+          {% with m=b.member.all|first %}{{ m.sport|default:"" }}{% endwith %}
+        </div>
+      </div>
+    </div>
+
+    <div class="mt-3 text-sm text-[rgba(245,245,245,.8)]">
+      {% if b.location %}{{ b.location }}{% else %}Location TBA{% endif %}
+    </div>
+
+    <!-- Actions -->
+    <div class="mt-4 flex items-center gap-2">
+      <button class="heading-font px-3 py-1.5 rounded-md bg-red-600 text-white text-[13px]"
+              data-cancel-url="{% url 'booking:ajax_cancel' b.id %}">Cancel</button>
+
+      <a class="heading-font px-3 py-1.5 rounded-md bg-[var(--yellow)] text-[var(--indigo-dark)] text-[13px]">
+        View Details
+      </a>
+
+      <button class="heading-font px-3 py-1.5 rounded-md bg-[var(--indigo-dark)] text-[var(--white)] text-[13px]"
+              data-res-id="{{ b.id }}">Reschedule</button>
+    </div>
+
+    <!-- Inline reschedule -->
+    <form class="mt-3 hidden" data-res-form="{{ b.id }}">
+      {% csrf_token %}
+      <div class="grid grid-cols-3 gap-2">
+        <input type="date" name="new_date" value="{{ b.date|date:'Y-m-d' }}"
+               class="rounded-md px-2 py-2 text-sm bg-[var(--indigo-dark)] border border-[var(--indigo-dark)] text-[var(--white)]" required>
+        <input type="time" name="new_start_time" value="{{ b.start_time|time:'H:i' }}"
+               class="rounded-md px-2 py-2 text-sm bg-[var(--indigo-dark)] border border-[var(--indigo-dark)] text-[var(--white)]" required>
+        <input type="time" name="new_end_time" value="{{ b.end_time|time:'H:i' }}"
+               class="rounded-md px-2 py-2 text-sm bg-[var(--indigo-dark)] border border-[var(--indigo-dark)] text-[var(--white)]" required>
+      </div>
+      <div class="mt-2 flex gap-2">
+        <button class="heading-font px-3 py-2 rounded-md bg-[var(--yellow)] text-[var(--indigo-dark)] text-sm"
+                data-res-save="{{ b.id }}" data-url="{% url 'booking:ajax_reschedule' b.id %}">Save</button>
+        <button type="button" class="heading-font px-3 py-2 rounded-md bg-[var(--indigo-dark)] text-[var(--white)] text-sm"
+                data-res-cancel="{{ b.id }}">Cancel</button>
+      </div>
+    </form>
+  </article>
+  {% endfor %}
+{% else %}
+  <div class="rounded-2xl p-16 text-center bg-[var(--indigo-light)] border border-[var(--indigo-light)]
+              shadow-[0_12px_40px_rgba(0,0,0,.35)]">
+    <h2 class="heading-font text-3xl mb-2">NO UPCOMING</h2>
+    <p class="opacity-70">You don’t have upcoming sessions.</p>
+  </div>
+{% endif %}
