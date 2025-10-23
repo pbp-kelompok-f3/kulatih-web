@@ -1,25 +1,44 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>{% block title %}KULATIH{% endblock %}</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <title>{% block title %}KuLatih{% endblock %}</title>
+  {% block meta %}{% endblock meta %}
+
+  <!-- Tailwind -->
   <script src="https://cdn.tailwindcss.com"></script>
-  <link rel="stylesheet" href="{% static 'css/global.css' %}">
 
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="{% static 'css/global.css' %}"/>
+  <!-- Fonts: Be Vietnam Pro (body) + Bebas Neue (heading) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&family=Bebas+Neue&display=swap" rel="stylesheet">
 
+  <!-- Global CSS -->
+  <link rel="stylesheet" href="{% static 'css/global.css' %}"/>
+
+  <!-- Font helpers -->
+  <style>
+    :root { --heading-font: 'Bebas Neue', system-ui, -apple-system, Segoe UI, Roboto, 'Helvetica Neue', Arial, sans-serif; }
+    body  { font-family: 'Be Vietnam Pro', system-ui, -apple-system, Segoe UI, Roboto, 'Helvetica Neue', Arial, sans-serif; }
+    .heading-font { font-family: var(--heading-font); }
+  </style>
+
+  {% block extra_head %}{% endblock extra_head %}
 </head>
-<body class="bg-[#0b0b23] text-white">
+<body class="min-h-screen">
+  {# Navbar selalu ada di semua halaman #}
+  {% include "navbar.html" %}
 
-  {% include 'includes/navbar.html' %}
-  <main class="p-8">
-    {% block content %}
-    {% endblock %}
+  <main>
+    {% block content %}{% endblock content %}
   </main>
-  {% include 'includes/footer.html' %}
 
+  {% include 'toast.html' %}
+  {% include 'modal.html' %}
+
+  {% block extra_scripts %}{% endblock extra_scripts %}
 </body>
 </html>

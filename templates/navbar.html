@@ -1,32 +1,40 @@
 {% load static %}
 
 <nav class="flex items-center justify-between px-10 py-4 bg-[#0b0b23] border-b border-gray-800">
+
+  <!-- Brand -->
   <div class="flex items-center space-x-2">
-      <span class="text-white">KU</span><span class="text-yellow-400">LATIH</span>
-    </h1>
+    <span class="text-white tracking-wider">KU</span><span class="text-yellow-400 tracking-wider">LATIH</span>
   </div>
 
+  <!-- Links -->
   <div class="flex space-x-8 font-semibold text-sm tracking-wide text-white">
-    <a href="{% url 'home' %}" class="hover:text-yellow-400">HOME</a>
-    <a href="{% url 'coach_list' %}" class="hover:text-yellow-400">COACH</a>
-    <a href="{% url 'forum' %}" class="hover:text-yellow-400">FORUM</a>
-    <a href="{% url 'community' %}" class="hover:text-yellow-400">COMMUNITY</a>
+    {# Safely resolve URLs (won't crash if name not found) #}
+    {% url 'home' as home_url %}
+    {% url 'coach_list' as coach_list_url %}
+    {% url 'forum:post_list' as forum_url %}
+    {% url 'community' as community_url %}
+
+    <a href="{{ home_url|default:'/' }}" class="hover:text-yellow-400">HOME</a>
+    <a href="{{ coach_list_url|default:'#' }}" class="hover:text-yellow-400">COACH</a>
+    <a href="{{ forum_url|default:'#' }}" class="hover:text-yellow-400">FORUM</a>
+    <a href="{{ community_url|default:'#' }}" class="hover:text-yellow-400">COMMUNITY</a>
   </div>
 
+  <!-- Right side (auth) -->
   <div class="flex items-center space-x-3">
     {% if user.is_authenticated %}
       {% if user.profile.image %}
         <img src="{{ user.profile.image.url }}" alt="Profile" class="w-8 h-8 rounded-full object-cover">
       {% else %}
-        <div class="w-8 h-8 rounded-full bg-gray-500 flex items-center justify-center text-sm">U</div>
+        <div class="w-8 h-8 rounded-full bg-gray-600 flex items-center justify-center">👤</div>
       {% endif %}
     {% else %}
-      <a href="{% url 'login' %}" class="px-4 py-1 border border-white rounded-lg hover:bg-white hover:text-black transition">
-        Log In
-      </a>
-      <a href="{% url 'signup' %}" class="px-4 py-1 bg-white text-black rounded-lg hover:bg-yellow-400 hover:text-black transition">
-        Sign Up
-      </a>
+      {% url 'login' as login_url %}
+      {% url 'signup' as signup_url %}
+      <a href="{{ login_url|default:'#' }}" class="px-3 py-1 border rounded hover:text-yellow-400">Log In</a>
+      <a href="{{ signup_url|default:'#' }}" class="px-3 py-1 border rounded hover:text-yellow-400">Sign Up</a>
     {% endif %}
   </div>
+
 </nav>
