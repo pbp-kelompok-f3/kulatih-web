@@ -1,50 +1,80 @@
-from django.shortcuts import render, get_object_or_404
-from django.http import JsonResponse
+from django.shortcuts import render, get_object_or_404, redirect
+from django.utils import timezone
+from django.contrib import messages
 from .models import Booking
-from django.views.decorators.csrf import csrf_exempt
-import json
-from datetime import datetime
+from users.models import Coach, Member
 
-@csrf_exempt
-def booking_create(request):
-    """Tambah booking baru, dengan validasi bentrok."""
+# 🟢 Tampilkan semua booking
+def booking_list(request):
+    bookings = Booking.objects.all().order_by('-date')
+    return render(request, 'booking_list.html', {'bookings': bookings})
+
+# 🟢 Buat booking baru
+def create_booking(request):
     if request.method == 'POST':
-        data = json.loads(request.body)
+        coach_ids = request.POST.getlist('coaches')
+        member_ids = request.POST.getlist('members')
+        date = request.POST.get('date')
 
-        user_name = data.get('user_name')
-        coach_name = data.get('coach_name')
-        sport_type = data.get('sport_type')
-        date_str = data.get('date')
-        start_time_str = data.get('start_time')
-        end_time_str = data.get('end_time')
+        booking = Booking.objects.create(date=date, status='pending')
+        booking.coach.set(Coach.objects.filter(id__in=coach_ids))
+        booking.member.set(Member.objects.filter(id__in=member_ids))
+        booking.save()
 
-        # Konversi string ke datetime
+        messages.success(request, "Booking berhasil dibuat!")
+        return redirect('booking_list')
+
+    context = {
+        'coaches': Coach.objects.all(),
+        'members': Member.objects.all(),
+    }
+    return render(request, 'create_booking.html', context)
+
+# 🟢 Edit booking
+def edit_booking(request, booking_id):
+    booking = get_object_or_404(Booking, id=booking_id)
+
+    if request.method == 'POST':
+        coach_ids = request.POST.getlist('coaches')
+        member_ids = request.POST.getlist('members')
+        date = request.POST.get('date')
+        status = request.POST.get('status')
+
+        booking.coach.set(Coach.objects.filter(id__in=coach_ids))
+        booking.member.set(Member.objects.filter(id__in=member_ids))
+        booking.date = date
+        booking.status = status
+        booking.save()
+
+        messages.success(request, "Booking berhasil diubah!")
+        return redirect('booking_list')
+
+    context = {
+        'booking': booking,
+        'coaches': Coach.objects.all(),
+        'members': Member.objects.all(),
+    }
+    return render(request, 'edit_booking.html', context)
+
+# 🟢 Cancel booking
+def cancel_booking(request, booking_id):
+    booking = get_object_or_404(Booking, id=booking_id)
+    booking.status = 'cancelled'
+    booking.save()
+    messages.info(request, "Booking dibatalkan.")
+    return redirect('booking_list')
+
+# 🟢 Reschedule booking
+def reschedule_booking(request, booking_id):
+    booking = get_object_or_404(Booking, id=booking_id)
+
+    if request.method == 'POST':
+        new_date = request.POST.get('new_date')
         try:
-            date = datetime.strptime(date_str, "%Y-%m-%d").date()
-            start_time = datetime.strptime(start_time_str, "%H:%M").time()
-            end_time = datetime.strptime(end_time_str, "%H:%M").time()
-        except Exception:
-            return JsonResponse({'error': 'Format tanggal/jam salah'}, status=400)
+            booking.reschedule(new_date)
+            messages.success(request, "Booking berhasil direschedule!")
+        except ValueError as e:
+            messages.error(request, str(e))
+        return redirect('booking_list')
 
-        # Validasi waktu
-        if start_time >= end_time:
-            return JsonResponse({'error': 'Waktu mulai harus lebih awal dari waktu selesai'}, status=400)
-
-        # Cek bentrok jadwal coach
-        if Booking.is_conflict(coach_name, date, start_time, end_time):
-            return JsonResponse({'error': f'Coach {coach_name} sudah punya jadwal di jam tersebut'}, status=409)
-
-        # Kalau aman → buat booking baru
-        booking = Booking.objects.create(
-            user_name=user_name,
-            coach_name=coach_name,
-            sport_type=sport_type,
-            date=date,
-            start_time=start_time,
-            end_time=end_time,
-            status='pending'
-        )
-        return JsonResponse({'message': 'Booking berhasil dibuat', 'id': booking.id}, status=201)
-
-    return JsonResponse({'error': 'Invalid request method'}, status=400)
-
+    return render(request, 'reschedule_booking.html', {'booking': booking})
