@@ -5,9 +5,10 @@ from . import views
 app_name = 'booking'
 
 urlpatterns = [
-    path('', views.booking_list, name='list'),                      
-    path('create/', views.create_booking, name='create'),           
-    path('<int:booking_id>/edit/', views.edit_booking, name='edit'),
-    path('<int:booking_id>/cancel/', views.cancel_booking, name='cancel'),  
-    path('<int:booking_id>/reschedule/', views.reschedule_booking, name='reschedule'),  
+    path('', views.booking_list, name='list'),
+    path('api/upcoming/', views.api_upcoming, name='api_upcoming'),
+    path('api/history/',  views.api_history,  name='api_history'),
+    path('ajax/cancel/<int:booking_id>/',     views.ajax_cancel,     name='ajax_cancel'),
+    path('ajax/reschedule/<int:booking_id>/', views.ajax_reschedule, name='ajax_reschedule'),
+    path('create/', views.create_booking, name='create'),
 ]

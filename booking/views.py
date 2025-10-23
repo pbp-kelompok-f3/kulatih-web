@@ -5,6 +5,10 @@ from django.contrib import messages
 from datetime import datetime
 from .models import Booking
 from users.models import Coach, Member
+from django.template.loader import render_to_string
+from django.http import HttpResponse, JsonResponse
+from django.views.decorators.http import require_POST
+from .models import Booking
 
 # 🟢 List
 def booking_list(request):
@@ -146,26 +150,48 @@ def reschedule_booking(request, booking_id):
 
     return render(request, 'reschedule_booking.html', {'booking': booking})
 
-# return HTML partial
-def api_my_upcoming(request):
-    ...
-    html = render_to_string('bookings/_booking_cards.html', {'bookings': qs}, request=request)
+def api_upcoming(request):
+    qs = Booking.objects.filter(
+        status__in=['pending','confirmed','rescheduled'],
+        date__gte=timezone.localdate()
+    ).order_by('date','start_time')
+    html = render_to_string('bookings/_cards_upcoming.html', {'bookings': qs}, request=request)
     return HttpResponse(html)
 
-def api_my_history(request):
-    ...
-    html = render_to_string('bookings/_booking_cards.html', {'bookings': qs}, request=request)
+def api_history(request):
+    qs = Booking.objects.filter(status__in=['completed','cancelled']).order_by('-date','-start_time')
+    html = render_to_string('bookings/_cards_history.html', {'bookings': qs}, request=request)
     return HttpResponse(html)
 
-# actions
-def ajax_cancel_booking(request, booking_id):
-    if request.method != 'POST': return HttpResponseBadRequest('POST only')
-    b = get_object_or_404(Booking, id=booking_id)
+@require_POST
+def ajax_cancel(request, booking_id):
+    try:
+        b = Booking.objects.get(id=booking_id)
+    except Booking.DoesNotExist:
+        return JsonResponse({'ok': False, 'error': 'Not found'}, status=404)
     b.status = 'cancelled'
-    b.save(update_fields=['status'])
+    b.save()
     return JsonResponse({'ok': True})
 
-def ajax_reschedule_booking(request, booking_id):
-    if request.method != 'POST': return HttpResponseBadRequest('POST only')
-    ...
-    return JsonResponse({'ok': True})
+@require_POST
+def ajax_reschedule(request, booking_id):
+    from datetime import datetime
+    try:
+        b = Booking.objects.get(id=booking_id)
+    except Booking.DoesNotExist:
+        return JsonResponse({'ok': False, 'error': 'Not found'}, status=404)
+
+    nd = request.POST.get('new_date')
+    ns = request.POST.get('new_start_time')
+    ne = request.POST.get('new_end_time')
+    if not (nd and ns and ne):
+        return JsonResponse({'ok': False, 'error': 'Invalid data'}, status=400)
+
+    try:
+        nd = datetime.strptime(nd, '%Y-%m-%d').date()
+        ns = datetime.strptime(ns, '%H:%M').time()
+        ne = datetime.strptime(ne, '%H:%M').time()
+        b.reschedule(nd, ns, ne)
+        return JsonResponse({'ok': True})
+    except ValueError as e:
+        return JsonResponse({'ok': False, 'error': str(e)}, status=400)

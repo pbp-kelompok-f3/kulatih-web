@@ -1,40 +1,39 @@
 {% extends "base.html" %}
-{% load static %}
-
 {% block title %}My Bookings | KuLatih{% endblock %}
 
 {% block content %}
 <div class="min-h-[80vh] bg-[var(--indigo)] text-[var(--white)]">
-  <div class="max-w-6xl mx-auto px-5 py-10">
+  <div class="max-w-6xl mx-auto px-4 md:px-5 py-10">
 
     <!-- Header -->
-    <div class="flex items-center justify-between mb-6">
+    <div class="flex items-center justify-between">
       <div>
         <h1 class="heading-font text-5xl md:text-6xl leading-none px-3 text-[var(--yellow)]">MY BOOKINGS</h1>
         <span class="heading-font inline-block mt-3 ml-2 text-base md:text-xl px-3 py-1 rounded tracking-wide
                      bg-[var(--white)] text-[var(--indigo-dark)]">DETAILS</span>
       </div>
-
       <a href="{% url 'booking:create' %}"
-         class="heading-font px-6 py-3 rounded-md bg-[var(--yellow)] text-[var(--indigo-dark)]
+         class="heading-font px-5 md:px-6 py-2.5 md:py-3 rounded-md bg-[var(--yellow)] text-[var(--indigo-dark)]
                 shadow hover:brightness-110 transition">ADD</a>
     </div>
 
     <!-- Tabs -->
-    <div class="flex gap-3 mb-6">
+    <div class="mt-6 flex gap-3">
       <button id="tab-upcoming"
-              class="heading-font px-6 py-2 rounded-md border-2 border-transparent
-                     bg-[var(--yellow)] text-[var(--indigo-dark)]">Upcoming</button>
+              class="heading-font w-64 px-6 py-2 rounded-md border-2 border-transparent
+                     bg-[var(--yellow)] text-[var(--indigo-dark)]
+                     shadow-[inset_0_-2px_0_rgba(0,0,0,.2)]">Upcoming</button>
+
       <button id="tab-history"
-              class="heading-font px-6 py-2 rounded-md border-2 border-[var(--indigo-light)]
-                     bg-[var(--indigo-dark)] text-[var(--white)]">Booking History</button>
+              class="heading-font w-64 px-6 py-2 rounded-md border-2 border-[var(--indigo-light)]
+                     bg-[var(--indigo-dark)] text-[var(--white)]
+                     shadow-[inset_0_-2px_0_rgba(0,0,0,.2)]">Booking History</button>
     </div>
 
-    <!-- List container (AJAX in) -->
-    <div id="list-container" class="grid md:grid-cols-2 gap-5">
-      <!-- Skeleton awal -->
-      <div class="rounded-2xl h-40 bg-[var(--indigo-light)] border border-[var(--indigo-light)]"></div>
-      <div class="rounded-2xl h-40 bg-[var(--indigo-light)] border border-[var(--indigo-light)]"></div>
+    <!-- List (AJAX target) -->
+    <div id="list-container" class="mt-5 grid md:grid-cols-2 gap-4 md:gap-5">
+      <div class="rounded-2xl h-40 bg-[var(--indigo-light)] border border-[var(--indigo-light)] shadow-[0_12px_40px_rgba(0,0,0,.35)]"></div>
+      <div class="rounded-2xl h-40 bg-[var(--indigo-light)] border border-[var(--indigo-light)] shadow-[0_12px_40px_rgba(0,0,0,.35)]"></div>
     </div>
 
   </div>
@@ -43,98 +42,70 @@
 
 {% block extra_js %}
 <script>
-  // ---- CSRF ----
+  /* ===== CSRF ===== */
   function getCookie(name){
-    const m = document.cookie.match('(^|;)\\s*' + name + '\\s*=\\s*([^;]+)');
+    const m = document.cookie.match('(^|;)\\s*'+name+'\\s*=\\s*([^;]+)');
     return m ? decodeURIComponent(m.pop()) : '';
   }
   const CSRF = getCookie('csrftoken');
 
-  // ---- Tabs ----
-  const list     = document.getElementById('list-container');
-  const upBtn    = document.getElementById('tab-upcoming');
-  const hiBtn    = document.getElementById('tab-history');
+  /* ===== Elemen ===== */
+  const list  = document.getElementById('list-container');
+  const upBtn = document.getElementById('tab-upcoming');
+  const hiBtn = document.getElementById('tab-history');
+  let currentTab = 'upcoming';
 
-  function setActive(which){
-    if(which==='up'){
-      upBtn.style.background = getComputedStyle(document.documentElement)
-        .getPropertyValue('--yellow').trim();
-      upBtn.style.color      = getComputedStyle(document.documentElement)
-        .getPropertyValue('--indigo-dark').trim();
-      upBtn.style.borderColor = 'transparent';
-
-      hiBtn.style.background = getComputedStyle(document.documentElement)
-        .getPropertyValue('--indigo-dark').trim();
-      hiBtn.style.color      = getComputedStyle(document.documentElement)
-        .getPropertyValue('--white').trim();
-      hiBtn.style.borderColor = getComputedStyle(document.documentElement)
-        .getPropertyValue('--indigo-light').trim();
-    }else{
-      hiBtn.style.background = getComputedStyle(document.documentElement)
-        .getPropertyValue('--yellow').trim();
-      hiBtn.style.color      = getComputedStyle(document.documentElement)
-        .getPropertyValue('--indigo-dark').trim();
-      hiBtn.style.borderColor = 'transparent';
-
-      upBtn.style.background = getComputedStyle(document.documentElement)
-        .getPropertyValue('--indigo-dark').trim();
-      upBtn.style.color      = getComputedStyle(document.documentElement)
-        .getPropertyValue('--white').trim();
-      upBtn.style.borderColor = getComputedStyle(document.documentElement)
-        .getPropertyValue('--indigo-light').trim();
-    }
+  /* ===== Tab active styling (classList) ===== */
+  function setActiveTab(tab){
+    const active   = ['bg-[var(--yellow)]','text-[var(--indigo-dark)]','border-transparent'];
+    const inactive = ['bg-[var(--indigo-dark)]','text-[var(--white)]','border-[var(--indigo-light)]'];
+    upBtn.classList.remove(...active, ...inactive);
+    hiBtn.classList.remove(...active, ...inactive);
+    if(tab === 'upcoming'){ upBtn.classList.add(...active); hiBtn.classList.add(...inactive); }
+    else { hiBtn.classList.add(...active); upBtn.classList.add(...inactive); }
   }
 
-  async function loadTab(kind){
-    setActive(kind==='history' ? 'hi' : 'up');
+  function showSkeleton(){
     list.innerHTML = `
-      <div class="rounded-2xl h-40 bg-[var(--indigo-light)] border border-[var(--indigo-light)]"></div>
-      <div class="rounded-2xl h-40 bg-[var(--indigo-light)] border border-[var(--indigo-light)]"></div>
-    `;
-    const url = kind==='history'
-      ? "{% url 'booking:api_history' %}"
-      : "{% url 'booking:api_upcoming' %}";
+      <div class="rounded-2xl h-40 bg-[var(--indigo-light)] border border-[var(--indigo-light)] shadow-[0_12px_40px_rgba(0,0,0,.35)]"></div>
+      <div class="rounded-2xl h-40 bg-[var(--indigo-light)] border border-[var(--indigo-light)] shadow-[0_12px_40px_rgba(0,0,0,.35)]"></div>`;
+  }
+
+  async function loadTab(tab){
+    currentTab = tab;
+    setActiveTab(tab);
+    showSkeleton();
+    const url = tab === 'history' ? "{% url 'booking:api_history' %}" : "{% url 'booking:api_upcoming' %}";
     try{
       const r = await fetch(url, {headers:{'X-Requested-With':'XMLHttpRequest'}});
       list.innerHTML = await r.text();
     }catch(err){
       console.error(err);
-      list.innerHTML = `<div class="rounded-2xl p-6 bg-[var(--indigo-light)] border border-[var(--indigo-light)]">
-                          Failed to load.
-                        </div>`;
+      list.innerHTML = `<div class="rounded-2xl p-6 bg-[var(--indigo-light)] border border-[var(--indigo-light)]">Failed to load.</div>`;
     }
   }
 
   upBtn.addEventListener('click', ()=>loadTab('upcoming'));
   hiBtn.addEventListener('click', ()=>loadTab('history'));
-  loadTab('upcoming'); // initial
 
-  // ---- Delegated actions inside list (AJAX Cancel & Reschedule) ----
+  /* ===== Delegated: Cancel & Reschedule (AJAX) ===== */
   list.addEventListener('click', async (e)=>{
     // Cancel
     const cancelBtn = e.target.closest('[data-cancel-url]');
     if(cancelBtn){
       if(!confirm('Cancel this booking?')) return;
-      const url = cancelBtn.getAttribute('data-cancel-url');
       try{
-        const r = await fetch(url, {method:'POST', headers:{'X-CSRFToken': CSRF}});
+        const r = await fetch(cancelBtn.dataset.cancelUrl, {method:'POST', headers:{'X-CSRFToken': CSRF}});
         const j = await r.json();
-        if(j.ok){
-          const current = (upBtn.style.background.includes('rgb(') ? upBtn.style.background : getComputedStyle(upBtn).backgroundColor);
-          const isUpcomingActive = upBtn.style.borderColor === 'transparent';
-          await loadTab(isUpcomingActive ? 'upcoming' : 'history');
-        }else{
-          alert(j.error || 'Cancel failed');
-        }
-      }catch(err){ alert('Cancel error'); console.error(err); }
+        if(j.ok) loadTab(currentTab); else alert(j.error || 'Cancel failed');
+      }catch(err){ console.error(err); alert('Cancel error'); }
       return;
     }
 
-    // Show/Hide reschedule form
+    // Toggle reschedule form
     const resBtn = e.target.closest('[data-res-id]');
     if(resBtn){
-      const id = resBtn.getAttribute('data-res-id');
-      const form = list.querySelector(`[data-res-form="${id}"]`);
+      const form = list.querySelector(`[data-res-form="${resBtn.dataset.resId}"]`);
       if(form) form.classList.toggle('hidden');
       return;
     }
@@ -142,32 +113,28 @@
     // Submit reschedule
     const saveBtn = e.target.closest('[data-res-save]');
     if(saveBtn){
-      const id  = saveBtn.getAttribute('data-res-save');
-      const url = saveBtn.getAttribute('data-url');
+      const id   = saveBtn.dataset.resSave;
+      const url  = saveBtn.dataset.url;
       const form = list.querySelector(`[data-res-form="${id}"]`);
-      const fd = new FormData(form);
+      const fd   = new FormData(form);
       try{
         saveBtn.disabled = true; saveBtn.textContent = 'Saving...';
         const r = await fetch(url, {method:'POST', headers:{'X-CSRFToken': CSRF}, body: fd});
         const j = await r.json();
-        if(j.ok){
-          const isUpcomingActive = upBtn.style.borderColor === 'transparent';
-          await loadTab(isUpcomingActive ? 'upcoming' : 'history');
-        }else{
-          alert(j.error || 'Reschedule failed');
-        }
-      }catch(err){ alert('Reschedule error'); console.error(err); }
+        if(j.ok) loadTab(currentTab); else alert(j.error || 'Reschedule failed');
+      }catch(err){ console.error(err); alert('Reschedule error'); }
       finally{ saveBtn.disabled = false; saveBtn.textContent = 'Save'; }
-      return;
     }
 
-    // Cancel reschedule toggle
-    const cancelResBtn = e.target.closest('[data-res-cancel]');
-    if(cancelResBtn){
-      const id = cancelResBtn.getAttribute('data-res-cancel');
-      const form = list.querySelector(`[data-res-form="${id}"]`);
+    // Hide reschedule
+    const cancelInline = e.target.closest('[data-res-cancel]');
+    if(cancelInline){
+      const form = list.querySelector(`[data-res-form="${cancelInline.dataset.resCancel}"]`);
       if(form) form.classList.add('hidden');
     }
   });
+
+  // initial
+  loadTab('upcoming');
 </script>
 {% endblock %}
