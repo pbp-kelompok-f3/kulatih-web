@@ -1,9 +1,10 @@
-# reviews/views.py (versi simple, minim helper, gaya lurus)
+# reviews/views.py — final, sesuai flow terbaru
 import json
 
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth import get_user_model
 from django.core.paginator import Paginator, EmptyPage
+from django.db import IntegrityError
 from django.db.models import Avg, Count
 from django.http import JsonResponse, HttpResponseBadRequest
 from django.shortcuts import get_object_or_404
@@ -14,8 +15,8 @@ from users.models import Coach, Member
 
 User = get_user_model()
 
-# READ
 
+# READ
 @require_GET
 def coach_reviews_json(request, coach_id: int) -> JsonResponse:
     coach = get_object_or_404(Coach, pk=coach_id)
@@ -26,9 +27,22 @@ def coach_reviews_json(request, coach_id: int) -> JsonResponse:
     elif sort == "oldest":  order_by = "created_at"
     else:                   order_by = "-created_at"
 
-    qs = Review.objects.filter(coach=coach).order_by(order_by, "-id")
+    qs = (
+        Review.objects
+        .filter(coach=coach)
+        .select_related("reviewer__user")   # ambil username tanpa N+1
+        .order_by(order_by, "-id")
+    )
+
     stats = qs.aggregate(avg=Avg("rating"), total=Count("id"))
 
+    # siapa user login -> member_id (kalau ada) untuk flag is_owner
+    try:
+        me_member_id = Member.objects.get(user=request.user).id
+    except Exception:
+        me_member_id = None
+
+    # pagination
     try:
         page = int(request.GET.get("page", 1))
     except ValueError:
@@ -55,12 +69,13 @@ def coach_reviews_json(request, coach_id: int) -> JsonResponse:
             "rating": r.rating,
             "comment": r.comment,
             "created_at": r.created_at.isoformat(),
+            "is_owner": (me_member_id == r.reviewer_id),
         })
 
     coach_username = getattr(getattr(coach, "user", None), "username", str(coach.id))
     data = {
         "coach": {"id": coach.id, "username": coach_username},
-        "stats": stats,
+        "stats": {"avg": stats["avg"], "total": stats["total"]},
         "sort": sort,
         "pagination": {
             "page": page_obj.number,
@@ -75,6 +90,33 @@ def coach_reviews_json(request, coach_id: int) -> JsonResponse:
     return JsonResponse(data, status=200)
 
 
+@require_GET
+def review_detail_json(request, review_id: int) -> JsonResponse:
+    r = get_object_or_404(
+        Review.objects.select_related("reviewer__user", "coach__user"),
+        pk=review_id,
+    )
+
+    # flag owner
+    try:
+        me_member_id = Member.objects.get(user=request.user).id
+    except Exception:
+        me_member_id = None
+
+    reviewer_username = getattr(getattr(r.reviewer, "user", None), "username", str(r.reviewer_id))
+    coach_username = getattr(getattr(r.coach, "user", None), "username", str(r.coach_id))
+
+    return JsonResponse({
+        "id": r.id,
+        "coach": {"id": r.coach_id, "username": coach_username},
+        "reviewer": {"id": r.reviewer_id, "username": reviewer_username},
+        "rating": r.rating,
+        "comment": r.comment,
+        "created_at": r.created_at.isoformat(),
+        "is_owner": (me_member_id == r.reviewer_id),
+    }, status=200)
+
+
 # CREATE
 
 @login_required
@@ -82,17 +124,17 @@ def coach_reviews_json(request, coach_id: int) -> JsonResponse:
 def create_review_json(request, coach_id: int) -> JsonResponse:
     coach = get_object_or_404(Coach, pk=coach_id)
 
-    # larang self-review: kalau coach.user == request.user
     coach_user_id = getattr(getattr(coach, "user", None), "id", None)
     if coach_user_id and coach_user_id == request.user.id:
         return JsonResponse({"error": "not_allowed"}, status=403)
 
-    # pastikan user punya profile Member
+    # user harus punya profile Member
     try:
         member = Member.objects.get(user=request.user)
     except Member.DoesNotExist:
         return JsonResponse({"error": "member_profile_required"}, status=403)
 
+    # parse body
     try:
         payload = json.loads(request.body.decode("utf-8") or "{}")
     except Exception:
@@ -114,7 +156,8 @@ def create_review_json(request, coach_id: int) -> JsonResponse:
             rating=rating,
             comment=comment[:1000],
         )
-    except Exception:
+    except IntegrityError:
+        # unique (coach, reviewer)
         return JsonResponse({"error": "already_reviewed"}, status=400)
 
     return JsonResponse({
@@ -128,14 +171,13 @@ def create_review_json(request, coach_id: int) -> JsonResponse:
     }, status=201)
 
 
-# UPDATE
+# UPDATE 
 
 @login_required
-@require_http_methods(["PATCH", "PUT", "POST"]) 
+@require_http_methods(["PATCH", "PUT", "POST"])  
 def update_review_json(request, review_id: int) -> JsonResponse:
     review = get_object_or_404(Review, pk=review_id)
 
-    # cek kepemilikan atau admin
     is_admin = request.user.is_staff or request.user.is_superuser
     owner_ok = False
     try:
@@ -155,18 +197,29 @@ def update_review_json(request, review_id: int) -> JsonResponse:
     rating = payload.get("rating", None)
     comment = payload.get("comment", None)
 
+    changed_fields = []
+
     if rating is not None:
         if isinstance(rating, str) and rating.isdigit():
             rating = int(rating)
         if not isinstance(rating, int) or not (1 <= rating <= 5):
             return JsonResponse({"error": "rating_must_be_int_1_5"}, status=400)
         review.rating = rating
+        changed_fields.append("rating")
 
     if comment is not None:
         review.comment = (comment or "").strip()[:1000]
+        changed_fields.append("comment")
 
-    review.save(update_fields=["rating", "comment"])
-    return JsonResponse({"message": "updated", "id": review.id, "rating": review.rating, "comment": review.comment}, status=200)
+    if changed_fields:
+        review.save(update_fields=changed_fields)
+
+    return JsonResponse({
+        "message": "updated",
+        "id": review.id,
+        "rating": review.rating,
+        "comment": review.comment,
+    }, status=200)
 
 
 # DELETE
