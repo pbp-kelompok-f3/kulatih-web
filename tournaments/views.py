@@ -3,56 +3,124 @@ from django.http import JsonResponse
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.csrf import csrf_exempt
 from .models import Tournament
-from users.models import Coach, Member 
+from users.models import Coach, Member
 from .forms import TournamentForm
 import json
 
-@login_required
-def tournaments_view(request):
-    tournaments = Tournament.objects.all()
-    return render(request, 'tournament/tournaments.html', {'tournaments': tournaments})
 
-@login_required
+def tournament_view(request):
+    tournaments = Tournament.objects.all()
+    is_coach = hasattr(request.user, 'coach')
+    if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+        data = []
+        for t in tournaments:
+            pembuat_username = (
+                t.pembuatTournaments.user.username
+                if hasattr(t.pembuatTournaments, 'user')
+                else "Unknown"
+            )
+            data.append({
+                'id': str(t.idTournaments),
+                'nama': t.namaTournaments,
+                'tipe': t.tipeTournaments,
+                'tanggal': t.tanggalTournaments.strftime('%Y-%m-%d'),
+                'lokasi': t.lokasiTournaments,
+                'poster': t.posterTournaments,
+                'deskripsi': t.deskripsiTournaments,
+                'pembuat': pembuat_username,
+            })
+        return JsonResponse({'tournaments': data})
+
+    return render(request, 'tournament_list.html', {
+        'tournaments': tournaments,
+        'is_coach': is_coach
+    })
+
+
+def tournament_show(request, tournament_id):
+    tournament = get_object_or_404(Tournament, pk=tournament_id)
+
+    pembuat_username = (
+        tournament.pembuatTournaments.user.username
+        if hasattr(tournament.pembuatTournaments, 'user')
+        else "Unknown"
+    )
+
+    if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+        data = {
+            'id': str(tournament.idTournaments),
+            'nama': tournament.namaTournaments,
+            'tipe': tournament.tipeTournaments,
+            'tanggal': tournament.tanggalTournaments.strftime('%Y-%m-%d'),
+            'lokasi': tournament.lokasiTournaments,
+            'poster': tournament.posterTournaments,
+            'deskripsi': tournament.deskripsiTournaments,
+            'pembuat': pembuat_username,
+        }
+        return JsonResponse({'tournament': data})
+
+    return render(request, 'tournament_show.html', {'tournament': tournament})
+
+
 @csrf_exempt
 def create_tournament(request):
-    if request.method == "POST":
-        if not hasattr(request.user, 'coach_profile'):
-            return JsonResponse({'error': 'Hanya coach yang bisa membuat tournament'}, status=403)
+    if request.method != "POST":
+        return JsonResponse({'error': 'Invalid request method'}, status=405)
 
+    if not hasattr(request.user, 'coach'):
+        return JsonResponse({'error': 'Hanya coach yang bisa membuat tournament'}, status=403)
+
+    try:
         data = json.loads(request.body)
-        form = TournamentForm(data)
-        if form.is_valid():
-            tournament = form.save(commit=False)
-            tournament.pembuatTournaments = request.user.coach_profile
-            tournament.save()
-            return JsonResponse({'message': 'Tournament berhasil dibuat!', 'id': str(tournament.idTournaments)})
-        else:
-            return JsonResponse({'error': form.errors}, status=400)
+    except json.JSONDecodeError:
+        return JsonResponse({'error': 'Invalid JSON body'}, status=400)
 
-    return JsonResponse({'error': 'Invalid request'}, status=400)
+    form = TournamentForm(data)
+    if form.is_valid():
+        tournament = form.save(commit=False)
+        tournament.pembuatTournaments = request.user.coach
+        tournament.save()
+        return JsonResponse({
+            'message': 'Tournament berhasil dibuat!',
+            'id': str(tournament.idTournaments)
+        })
+    else:
+        return JsonResponse({'error': form.errors}, status=400)
 
 
-@login_required
 @csrf_exempt
 def delete_tournament(request, tournament_id):
+    if request.method != "DELETE":
+        return JsonResponse({'error': 'Invalid request method'}, status=405)
+
     tournament = get_object_or_404(Tournament, idTournaments=tournament_id)
-    if request.user.coach_profile != tournament.pembuatTournaments:
+
+    if not hasattr(request.user, 'coach') or request.user.coach != tournament.pembuatTournaments:
         return JsonResponse({'error': 'Kamu tidak berhak menghapus tournament ini'}, status=403)
     
     tournament.delete()
     return JsonResponse({'message': 'Tournament berhasil dihapus!'})
 
+
 @login_required
 @csrf_exempt
 def assign_tournament(request, tournament_id):
-    if request.method == "POST":
-        tournament = get_object_or_404(Tournament, idTournaments=tournament_id)
+    if request.method != "POST":
+        return JsonResponse({'error': 'Invalid request method'}, status=405)
 
-        if not hasattr(request.user, 'customer_profile'):
-            return JsonResponse({'error': 'Hanya customer yang bisa daftar'}, status=403)
+    tournament = get_object_or_404(Tournament, idTournaments=tournament_id)
 
-        customer = request.user.customer_profile
-        tournament.pesertaTournaments.add(customer)
-        return JsonResponse({'message': f'{customer.user.username} berhasil daftar ke {tournament.namaTournaments}!'})
+    if not hasattr(request.user, 'member'):
+        return JsonResponse({'error': 'Hanya member yang bisa daftar'}, status=403)
 
-    return JsonResponse({'error': 'Invalid request'}, status=400)
+    member = request.user.member
+
+    if tournament.pesertaTournaments.filter(pk=member.pk).exists():
+        return JsonResponse({'error': 'Kamu sudah terdaftar di turnamen ini'}, status=400)
+
+    tournament.pesertaTournaments.add(member)
+    return JsonResponse({'message': f'{member.user.username} berhasil daftar ke {tournament.namaTournaments}!'})
+
+
+def dummy_home(request):
+    return render(request, "dummy_home.html")

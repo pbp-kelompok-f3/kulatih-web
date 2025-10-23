@@ -1,72 +1,50 @@
 {% load static %}
 
-<nav class="bg-[var(--indigo-dark)] border-b border-[rgb(255_255_255/0.12)] text-[var(--white)]"> {# CHANGED: pakai var + rgba border #}
+<nav class="bg-[#0b0b23] border-b border-gray-800 text-white">
   <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-10">
     <div class="flex justify-between items-center py-4">
-      <!-- Brand -->
-      <div class="flex items-center space-x-2 text-lg font-bold heading-font"> {# CHANGED: heading-font #}
-        <span>KU</span><span class="text-[var(--yellow)]">LATIH</span> {# CHANGED: var(--yellow) #}
+      <div class="flex items-center space-x-2 text-lg font-bold">
+        <span class="text-white">KU</span><span class="text-yellow-400">LATIH</span>
       </div>
-
-      <!-- Desktop links -->
-      <div class="hidden md:flex items-center space-x-8 font-semibold text-sm tracking-wide heading-font"> {# CHANGED: heading-font #}
-        {# CHANGED: safe resolve semua URL #}
-        {% url 'home' as home_url %}
-        {% url 'coach_list' as coach_url %}
-        {% url 'forum:post_list' as forum_url %}
-        {% url 'community' as community_url %}
-        {% url 'tournament:tournament_view' as tourn_url %}
-
-        <a href="{{ home_url|default:'/' }}" class="hover:text-[var(--yellow)]">HOME</a>          {# CHANGED #}
-        <a href="{{ coach_url|default:'#' }}" class="hover:text-[var(--yellow)]">COACH</a>        {# CHANGED #}
-        <a href="{{ forum_url|default:'#' }}" class="hover:text-[var(--yellow)]">FORUM</a>        {# CHANGED #}
-        <a href="{{ community_url|default:'#' }}" class="hover:text-[var(--yellow)]">COMMUNITY</a>{# CHANGED #}
-        <a href="{{ tourn_url|default:'#' }}" class="hover:text-[var(--yellow)]">TOURNAMENTS</a>  {# CHANGED #}
+      <div class="hidden md:flex items-center space-x-8 font-semibold text-sm tracking-wide">
+        <a href="/" class="hover:text-yellow-400">HOME</a>
+        <a href="/" class="hover:text-yellow-400">COACH</a>
+        <a href="/" class="hover:text-yellow-400">FORUM</a>
+        <a href="/" class="hover:text-yellow-400">COMMUNITY</a>
+        <a href="{% url 'tournament:tournament_view' %}" class="hover:text-yellow-400">TOURNAMENTS</a>
       </div>
-
-      <!-- Right side (auth) -->
       <div class="hidden md:flex items-center space-x-3">
         {% if user.is_authenticated %}
           {% if user.profile.image %}
-            <img src="{{ user.profile.image.url }}" alt="Profile"
-                 class="w-8 h-8 rounded-full object-cover ring-1 [--tw-ring-color:rgba(245,245,245,0.3)]"> {# CHANGED: ring putih halus #}
+            <img src="{{ user.profile.image.url }}" alt="Profile" class="w-8 h-8 rounded-full object-cover">
           {% else %}
-            <div class="w-8 h-8 rounded-full bg-[rgb(255_255_255/0.18)] flex items-center justify-center text-sm">U</div> {# CHANGED: bg rgba #}
+            <div class="w-8 h-8 rounded-full bg-gray-500 flex items-center justify-center text-sm">U</div>
           {% endif %}
         {% else %}
-          {% url 'login' as login_url %}       {# CHANGED: safe resolve #}
-          {% url 'signup' as signup_url %}     {# CHANGED: safe resolve #}
-          <a href="{{ login_url|default:'#' }}"
-             class="px-4 py-1 rounded-lg border border-[rgb(255_255_255/0.35)] hover:bg-[var(--white)] hover:text-[var(--indigo-dark)] transition">
+          <a href="/" class="px-4 py-1 border border-white rounded-lg hover:bg-white hover:text-black transition">
             Log In
-          </a> {# CHANGED: warna pakai var/rgba #}
-          <a href="{{ signup_url|default:'#' }}"
-             class="px-4 py-1 rounded-lg bg-[var(--white)] text-[var(--indigo-dark)] hover:bg-[var(--yellow)] hover:text-[var(--indigo-dark)] transition">
+          </a>
+          <a href="/" class="px-4 py-1 bg-white text-black rounded-lg hover:bg-yellow-400 hover:text-black transition">
             Sign Up
-          </a> {# CHANGED: warna pakai var #}
+          </a>
         {% endif %}
       </div>
-
-      <!-- Mobile trigger -->
       <div class="md:hidden">
-        <button id="menu-btn" class="focus:outline-none" aria-label="Toggle menu">
-          <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <button id="menu-btn" class="focus:outline-none">
+          <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                  d="M4 6h16M4 12h16M4 18h16" />
+              d="M4 6h16M4 12h16M4 18h16" />
           </svg>
         </button>
       </div>
     </div>
   </div>
-
-  <!-- Mobile menu -->
-  <div id="mobile-menu" class="hidden md:hidden border-t border-[rgb(255_255_255/0.12)] bg-[var(--indigo-dark)]">
+  <div id="mobile-menu" class="hidden md:hidden border-t border-gray-700 bg-[#0b0b23]">
     {% if user.is_authenticated %}
-      <div class="px-4 py-3 border-b border-[rgb(255_255_255/0.12)]">
+      <div class="px-4 py-3 border-b border-gray-700">
         {% if user.profile.image %}
           <div class="flex items-center space-x-3">
-            <img src="{{ user.profile.image.url }}"
-                 class="w-10 h-10 rounded-full object-cover ring-1 [--tw-ring-color:rgba(245,245,245,0.3)]"> {# CHANGED #}
+            <img src="{{ user.profile.image.url }}" class="w-10 h-10 rounded-full object-cover">
             <div>
               <p class="font-semibold">{{ user.username }}</p>
             </div>
@@ -75,30 +53,21 @@
           <p class="font-semibold mb-2">Profile</p>
         {% endif %}
       </div>
-      <div class="px-4 py-2 border-b border-[rgb(255_255_255/0.12)]"></div>
+      <div class="px-4 py-2 border-b border-gray-700"></div>
     {% else %}
-      <div class="px-4 py-3 flex flex-col space-y-2 border-b border-[rgb(255_255_255/0.12)]">
-        {% url 'login' as login_url %}     {# CHANGED #}
-        {% url 'signup' as signup_url %}   {# CHANGED #}
-        <a href="{{ login_url|default:'#' }}" class="hover:text-[var(--yellow)]">Log In</a>     {# CHANGED #}
-        <a href="{{ signup_url|default:'#' }}" class="hover:text-[var(--yellow)]">Register</a>  {# CHANGED #}
+      <div class="px-4 py-3 flex flex-col space-y-2 border-b border-gray-700">
+        <a href="/" class="hover:text-yellow-400">Log In</a>
+        <a href="/" class="hover:text-yellow-400">Register</a>
       </div>
-      <div class="px-4 py-2 border-b border-[rgb(255_255_255/0.12)]"></div>
+      <div class="px-4 py-2 border-b border-gray-700"></div>
     {% endif %}
 
     <div class="px-4 py-3 flex flex-col space-y-2">
-      {# CHANGED: safe resolve semua link menu mobile #}
-      {% url 'home' as home_url %}
-      {% url 'coach_list' as coach_url %}
-      {% url 'forum:post_list' as forum_url %}
-      {% url 'community' as community_url %}
-      {% url 'tournament:tournament_view' as tourn_url %}
-
-      <a href="{{ home_url|default:'/' }}" class="hover:text-[var(--yellow)]">Home</a>           {# CHANGED #}
-      <a href="{{ coach_url|default:'#' }}" class="hover:text-[var(--yellow)]">Coach</a>         {# CHANGED #}
-      <a href="{{ forum_url|default:'#' }}" class="hover:text-[var(--yellow)]">Forum</a>         {# CHANGED #}
-      <a href="{{ community_url|default:'#' }}" class="hover:text-[var(--yellow)]">Community</a> {# CHANGED #}
-      <a href="{{ tourn_url|default:'#' }}" class="hover:text-[var(--yellow)]">Tournaments</a>   {# CHANGED #}
+      <a href="/" class="hover:text-yellow-400">Home</a>
+      <a href="/" class="hover:text-yellow-400">Coach</a>
+      <a href="/" class="hover:text-yellow-400">Forum</a>
+      <a href="/" class="hover:text-yellow-400">Community</a>
+      <a href="{% url 'tournament:tournament_view' %}" class="hover:text-yellow-400">Tournaments</a>
     </div>
   </div>
 </nav>
@@ -106,7 +75,8 @@
 <script>
   const menuBtn = document.getElementById('menu-btn');
   const mobileMenu = document.getElementById('mobile-menu');
-  if (menuBtn && mobileMenu) {
-    menuBtn.addEventListener('click', () => mobileMenu.classList.toggle('hidden'));
-  }
+
+  menuBtn.addEventListener('click', () => {
+    mobileMenu.classList.toggle('hidden');
+  });
 </script>
