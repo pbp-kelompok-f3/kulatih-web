@@ -1,95 +1,155 @@
 {% extends 'base.html' %}
+{% load static %}
 
 {% block content %}
-<h1>List of Tournaments</h1>
+<div class="bg-[#0f0e2e] min-h-screen text-white px-6 py-10">
 
-<table border="1" cellpadding="8">
-    <thead>
-        <tr>
-            <th>Nama Turnamen</th>
-            <th>Tipe</th>
-            <th>Tanggal</th>
-            <th>Lokasi</th>
-            <th>Pembuat</th>
-            <th>Aksi</th>
-        </tr>
-    </thead>
-    <tbody id="tournament-list">
-    </tbody>
-</table>
+    <h1 class="font-family text-center text-4xl font-extrabold mb-10 tracking-wide">FIND YOUR TOURNAMENT</h1>
 
-<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <div class="flex justify-center gap-4 mb-8">
+        <button id="btn-my" class="px-6 py-2 rounded-xl bg-yellow-500 text-black font-semibold hover:scale-105 transition-all">
+            My Tournament
+        </button>
+        <button id="btn-all" class="px-6 py-2 rounded-xl bg-gray-700 font-semibold hover:scale-105 transition-all">
+            All Tournament
+        </button>
+        {% if is_coach %}
+        <button id="btn-create" class="px-6 py-2 rounded-xl bg-green-600 font-semibold hover:scale-105 transition-all">
+            + Create Tournament
+        </button>
+        {% endif %}
+    </div>
+
+    <div class="flex justify-center items-center gap-3 mb-10">
+        <input
+            type="text"
+            id="search-bar"
+            placeholder="Search Tournament or Location"
+            class="w-1/2 px-5 py-3 rounded-xl bg-gray-800 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-yellow-400"
+        />
+        <button id="filter-btn" class="bg-yellow-500 p-3 rounded-lg">
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-black" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M3 4a1 1 0 0 1 1-1h16a1 1 0 0 1 .8 1.6l-6.6 8.8V19l-4 2v-7.6L3.2 5.6A1 1 0 0 1 3 4Z" />
+            </svg>
+        </button>
+    </div>
+
+    <div id="tournament-container" class="grid sm:grid-cols-2 lg:grid-cols-3 gap-8 justify-center"></div>
+</div>
+
+{% if is_coach %}
+<div id="create-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+    <div class="bg-[#1a1836] p-8 rounded-2xl w-[400px] text-white">
+        <h2 class="text-2xl font-bold mb-4">Create Tournament</h2>
+        <form id="create-form">
+            <input name="namaTournaments" placeholder="Tournament Name" class="w-full mb-3 p-2 rounded bg-gray-800" required>
+            <select name="tipeTournaments" class="w-full mb-3 p-2 rounded bg-gray-800" required>
+                <option value="">Select Type</option>
+                <option value="Futsal">Futsal</option>
+                <option value="Basket">Basket</option>
+                <option value="Voli">Voli</option>
+                <option value="Badminton">Badminton</option>
+                <option value="Tenis Meja">Tenis Meja</option>
+            </select>
+            <input type="date" name="tanggalTournaments" class="w-full mb-3 p-2 rounded bg-gray-800" required>
+            <input name="lokasiTournaments" placeholder="Location" class="w-full mb-3 p-2 rounded bg-gray-800" required>
+            <input name="posterTournaments" placeholder="Poster URL" class="w-full mb-3 p-2 rounded bg-gray-800" required>
+            <textarea name="deskripsiTournaments" placeholder="Description" class="w-full mb-3 p-2 rounded bg-gray-800"></textarea>
+            <div class="flex justify-end gap-3">
+                <button type="button" id="cancel-create" class="bg-gray-600 px-4 py-2 rounded">Cancel</button>
+                <button type="submit" class="bg-green-600 px-4 py-2 rounded">Create</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endif %}
+
 <script>
-    function getCookie(name) {
-        let cookieValue = null;
-        if (document.cookie && document.cookie !== '') {
-            const cookies = document.cookie.split(';');
-            for (let i = 0; i < cookies.length; i++) {
-                const cookie = cookies[i].trim();
-                if (cookie.substring(0, name.length + 1) === (name + '=')) {
-                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-                    break;
-                }
-            }
-        }
-        return cookieValue;
+document.addEventListener("DOMContentLoaded", () => {
+    const container = document.getElementById("tournament-container");
+    const btnAll = document.getElementById("btn-all");
+    const btnMy = document.getElementById("btn-my");
+
+    function renderEmptyState(title, message) {
+        container.innerHTML = `
+            <div class="flex flex-col items-center justify-center text-center col-span-full py-20 animate-fadeIn">
+                <img src="{% static 'images/empty.png' %}" alt="Empty" 
+                    class="w-64 h-64 object-contain mb-6 opacity-80">
+                <h2 class="text-2xl font-semibold text-gray-300">${title}</h2>
+                <p class="text-gray-500 mt-2">${message}</p>
+            </div>
+        `;
     }
-    function loadTournaments() {
-        $.ajax({
-            url: "{% url 'tournament:tournaments_view' %}",
-            method: "GET",
-            dataType: "json",
-            success: function(data) {
-                let rows = '';
-                if (data.tournaments.length > 0) {
-                    data.tournaments.forEach(function(t) {
-                        rows += `
-                            <tr>
-                                <td>${t.namaTournaments}</td>
-                                <td>${t.tipeTournaments}</td>
-                                <td>${t.tanggalTournaments}</td>
-                                <td>${t.lokasiTournaments}</td>
-                                <td>${t.pembuat}</td>
-                                <td>
-                                    <button onclick="assignTournament('${t.idTournaments}')">Daftar</button>
-                                    ${t.can_delete ? `<button onclick="deleteTournament('${t.idTournaments}')">Hapus</button>` : ''}
-                                </td>
-                            </tr>
-                        `;
-                    });
-                } else {
-                    rows = '<tr><td colspan="6">Belum ada turnamen.</td></tr>';
-                }
-                $('#tournament-list').html(rows);
+
+    function loadTournaments(filter = "") {
+        fetch("{% url 'tournament:tournament_view' %}", {
+            headers: { "X-Requested-With": "XMLHttpRequest" }
+        })
+        .then(res => res.json())
+        .then(data => {
+            let tournaments = data.tournaments || [];
+
+            if (filter) {
+                tournaments = tournaments.filter(t =>
+                    t.nama.toLowerCase().includes(filter.toLowerCase()) ||
+                    t.lokasi.toLowerCase().includes(filter.toLowerCase())
+                );
             }
-        });
-    }
-    function assignTournament(id) {
-        $.ajax({
-            url: `/tournament/assign/${id}/`,
-            method: "POST",
-            headers: { "X-CSRFToken": getCookie("csrftoken") },
-            success: function(response) {
-                alert(response.message);
-                loadTournaments();
+
+            if (tournaments.length === 0) {
+                renderEmptyState("No tournaments found.", "Coba buat atau cari tournament baru.");
+                return;
             }
-        });
-    }
-    function deleteTournament(id) {
-        $.ajax({
-            url: `/tournament/delete/${id}/`,
-            method: "POST",
-            headers: { "X-CSRFToken": getCookie("csrftoken") },
-            success: function(response) {
-                alert(response.message);
-                loadTournaments();
-            }
+
+            container.innerHTML = tournaments.map(t => `
+                <div onclick="window.location.href='/tournament/${t.id}/'"
+                    class="bg-[#1c1b42] rounded-2xl p-5 shadow-lg hover:scale-105 transition-transform cursor-pointer animate-fadeIn">
+                    <img src="${t.poster}" alt="${t.nama}" class="rounded-xl w-full h-48 object-cover mb-4">
+                    <h3 class="text-lg font-semibold mb-1">${t.nama}</h3>
+                    <p class="text-sm text-gray-400 mb-1">${t.tipe} • ${t.lokasi}</p>
+                    <p class="text-sm text-yellow-400">${t.tanggal}</p>
+                    <p class="text-xs mt-2 text-gray-400">By ${t.pembuat}</p>
+                </div>
+            `).join("");
+        })
+        .catch(err => {
+            console.error(err);
+            renderEmptyState("Gagal memuat tournament", "Silakan refresh halaman atau coba lagi nanti.");
         });
     }
 
-    // Jalankan load saat halaman selesai dimuat
-    $(document).ready(function() {
-        loadTournaments();
-    });
+    function loadMyTournaments() {
+        fetch("{% url 'tournament:tournament_view' %}", {
+            headers: { "X-Requested-With": "XMLHttpRequest" }
+        })
+        .then(res => res.json())
+        .then(data => {
+            const myName = "{{ request.user.username }}";
+            const myTournaments = data.tournaments.filter(t => t.pembuat === myName);
+
+            if (myTournaments.length === 0) {
+                renderEmptyState(
+                    "Anda belum membuat tournament anda.",
+                    "Klik tombol “Create Tournament” untuk membuatnya."
+                );
+                return;
+            }
+
+            container.innerHTML = myTournaments.map(t => `
+                <div onclick="window.location.href='/tournament/${t.id}/'"
+                    class="bg-[#1c1b42] rounded-2xl p-5 shadow-lg hover:scale-105 transition-transform cursor-pointer animate-fadeIn">
+                    <img src="${t.poster}" alt="${t.nama}" class="rounded-xl w-full h-48 object-cover mb-4">
+                    <h3 class="text-lg font-semibold mb-1">${t.nama}</h3>
+                    <p class="text-sm text-gray-400 mb-1">${t.tipe} • ${t.lokasi}</p>
+                    <p class="text-sm text-yellow-400">${t.tanggal}</p>
+                    <p class="text-xs mt-2 text-gray-400">By ${t.pembuat}</p>
+                </div>
+            `).join("");
+        });
+    }
+    btnMy.addEventListener("click", loadMyTournaments);
+    btnAll.addEventListener("click", loadTournaments);
+    loadMyTournaments();
+});
 </script>
 {% endblock %}
