@@ -1,0 +1,89 @@
+{% if bookings %}
+  {% for b in bookings %}
+  <article class="relative rounded-2xl bg-[var(--indigo-light)] border border-[var(--indigo-light)] p-5">
+    <!-- Top line: tanggal + status -->
+    <div class="flex items-center justify-between mb-3">
+      <div class="text-xs md:text-sm opacity-90">
+        {{ b.date|date:"l, d F Y" }} · {{ b.start_time|time:"H:i" }} – {{ b.end_time|time:"H:i" }} WIB
+      </div>
+      <span class="heading-font px-3 py-1 rounded-md text-[11px] font-bold
+                   {% if b.status == 'confirmed' %} bg-green-700 text-white
+                   {% elif b.status == 'pending' %} bg-amber-400 text-[var(--indigo-dark)]
+                   {% elif b.status == 'completed' %} bg-blue-700 text-white
+                   {% else %} bg-gray-600 text-white {% endif %}">
+        {{ b.get_status_display }}
+      </span>
+    </div>
+
+    <!-- Coach row -->
+    <div class="flex items-center gap-4">
+      <div class="w-16 h-16 rounded-full overflow-hidden bg-[var(--indigo-dark)]"></div>
+      <div>
+        <div class="heading-font text-lg">
+          {% for c in b.coach.all %}{{ c.name }}{% if not forloop.last %}, {% endif %}{% endfor %}
+        </div>
+        <div class="text-sm opacity-80">
+          {% with m=b.member.all|first %}{{ m.sport|default:"" }}{% endwith %}
+        </div>
+      </div>
+    </div>
+
+    <!-- Location -->
+    <div class="mt-3 text-sm opacity-80">
+      {% if b.location %}{{ b.location }}{% else %}Koci Soccer Field, Depok{% endif %}
+    </div>
+
+    <!-- Actions -->
+    <div class="mt-4 flex items-center gap-2">
+      {% if b.status != 'cancelled' and b.status != 'completed' %}
+        <button class="heading-font px-3 py-2 rounded-md text-sm bg-red-600 text-white"
+                data-cancel-url="{% url 'booking:ajax_cancel' b.id %}">
+          Cancel
+        </button>
+
+        <a href="#" class="heading-font px-3 py-2 rounded-md text-sm
+                          bg-[var(--yellow)] text-[var(--indigo-dark)]">View Details</a>
+
+        <button class="heading-font px-3 py-2 rounded-md text-sm
+                       bg-[var(--indigo-dark)] text-[var(--white)]"
+                data-res-id="{{ b.id }}">
+          Reschedule
+        </button>
+      {% else %}
+        <a href="{% url 'booking:create' %}" class="heading-font px-3 py-2 rounded-md text-sm
+                          bg-[var(--indigo-dark)] text-[var(--white)]">Book Again</a>
+      {% endif %}
+    </div>
+
+    <!-- Reschedule inline form -->
+    <form class="mt-3 hidden" data-res-form="{{ b.id }}">
+      {% csrf_token %}
+      <div class="grid grid-cols-3 gap-2">
+        <input type="date"  name="date"
+               class="rounded-md px-2 py-2 text-sm bg-[var(--indigo-dark)] border border-[var(--indigo-dark)]"
+               value="{{ b.date|date:'Y-m-d' }}" required>
+        <input type="time"  name="start_time"
+               class="rounded-md px-2 py-2 text-sm bg-[var(--indigo-dark)] border border-[var(--indigo-dark)]"
+               value="{{ b.start_time|time:'H:i' }}" required>
+        <input type="time"  name="end_time"
+               class="rounded-md px-2 py-2 text-sm bg-[var(--indigo-dark)] border border-[var(--indigo-dark)]"
+               value="{{ b.end_time|time:'H:i' }}" required>
+      </div>
+      <div class="mt-2 flex gap-2">
+        <button class="heading-font px-3 py-2 rounded-md text-sm
+                       bg-[var(--yellow)] text-[var(--indigo-dark)]"
+                data-res-save="{{ b.id }}"
+                data-url="{% url 'booking:ajax_reschedule' b.id %}">Save</button>
+        <button type="button" class="heading-font px-3 py-2 rounded-md text-sm
+                                      bg-[var(--indigo-dark)] text-[var(--white)]"
+                data-res-cancel="{{ b.id }}">Cancel</button>
+      </div>
+    </form>
+  </article>
+  {% endfor %}
+{% else %}
+  <div class="rounded-2xl p-16 text-center bg-[var(--indigo-light)] border border-[var(--indigo-light)]">
+    <h2 class="heading-font text-2xl mb-2">NO BOOKING</h2>
+    <p class="opacity-70">You have no items here.</p>
+  </div>
+{% endif %}

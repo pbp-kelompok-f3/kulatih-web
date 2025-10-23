@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+
+{% block meta %}<title>Register (Member) - KuLatih</title>{% endblock meta %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto my-5 px-4 sm:px-6">
+        
+    <!-- Navigation Bar -->
+    <nav class="flex justify-between items-center bg-white p-4 sm:p-6 rounded-t-lg shadow-md border-b border-gray-200">
+        <a href="{% url 'main:show_main' %}" class="text-2xl font-bold text-gray-800">KuLatih</a>
+        <div class="flex items-center">
+            {% if user.is_authenticated %}
+                <span class="font-medium mr-4 text-gray-700">Hi, <a href="{% url 'users:show_profile' %}" class="text-blue-600 hover:underline">{{ user.username }}</a>!</span>
+                <a href="{% url 'users:logout' %}" class="ml-4 px-3 py-2 rounded-md text-sm font-medium text-white shadow-sm transition bg-red-600 hover:bg-red-700">Logout</a>
+            {% else %}
+                <a href="{% url 'users:login' %}" class="ml-4 px-3 py-2 rounded-md text-sm font-medium text-white shadow-sm transition bg-blue-600 hover:bg-blue-700">Login</a>
+                <a href="{% url 'users:register_member' %}" class="ml-4 px-3 py-2 rounded-md text-sm font-medium text-white shadow-sm transition bg-green-600 hover:bg-green-700">Register (Member)</a>
+                <a href="{% url 'users:register_coach' %}" class="ml-4 px-3 py-2 rounded-md text-sm font-medium text-white shadow-sm transition bg-green-600 hover:bg-green-700">Register (Coach)</a>
+            {% endif %}
+        </div>
+    </nav>
+
+    <!-- Main Registration Form -->
+    <main class="bg-white p-6 sm:p-8 rounded-b-lg shadow-md">
+        <div class="max-w-lg mx-auto">
+            <h2 class="text-2xl font-semibold text-center text-gray-800 mb-6">Create Your Member Account</h2>
+
+            <form method="POST" action="{% url 'users:register_member' %}" novalidate>
+                {% csrf_token %}
+
+                <!-- Group Account Fields -->
+                <fieldset class="mb-6">
+                    <legend class="text-lg font-semibold text-gray-800 mb-4 border-b pb-2">Account Info</legend>
+                    {% for field in form %}
+                        {% if field.name in "username,email,first_name,last_name,password,password_confirm" %}
+                        <div class="mb-4">
+                            <label for="{{ field.id_for_label }}" class="block mb-1 text-sm font-medium text-gray-700">{{ field.label }}</label>
+                            <input type="{{ field.field.widget.input_type }}" name="{{ field.name }}" id="{{ field.id_for_label }}" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                            {% if field.errors %}<div class="text-red-600 text-sm mt-1">{{ field.errors }}</div>{% endif %}
+                        </div>
+                        {% endif %}
+                    {% endfor %}
+                </fieldset>
+
+                <!-- Group Profile Fields -->
+                <fieldset>
+                    <legend class="text-lg font-semibold text-gray-800 mb-4 border-b pb-2">Profile Info</legend>
+                    {% for field in form %}
+                        {% if field.name in "profile_photo,city,phone" %}
+                        <div class="mb-4">
+                            <label for="{{ field.id_for_label }}" class="block mb-1 text-sm font-medium text-gray-700">{{ field.label }} {% if not field.field.required %}(Optional){% endif %}</label>
+                            <input type="{{ field.field.widget.input_type }}" name="{{ field.name }}" id="{{ field.id_for_label }}" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                            {% if field.errors %}<div class="text-red-600 text-sm mt-1">{{ field.errors }}</div>{% endif %}
+                        </div>
+                        {% endif %}
+                    {% endfor %}
+                </fieldset>
+                
+                <button type="submit" class="w-full mt-6 px-4 py-2 bg-blue-600 text-white font-medium rounded-md shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 cursor-pointer transition">
+                    Create Account
+                </button>
+            </form>
+        </div>
+    </main>
+</div>
+{% endblock content %}
