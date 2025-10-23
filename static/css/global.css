@@ -1,19 +1,25 @@
 :root {
-    --yellow:       #D3B53E;
-    --indigo:       #191831;
-    --indigo-light: #242244;
-    --indigo-dark:  #111024;
-    --white:        #F5F5F5;
-    }
-
-    .body-font {
-    font-family: "Be Vietnam Pro", ui-sans-serif, system-ui, -apple-system, "Segoe UI",
-                Roboto, "Helvetica Neue", Arial, "Noto Sans", "Apple Color Emoji",
-                "Segoe UI Emoji", "Segoe UI Symbol";
-    }
-
-    .heading-font {
-    font-family: "Bebas Neue", ui-sans-serif, system-ui, -apple-system, "Segoe UI",
-                Roboto, "Helvetica Neue", Arial, "Noto Sans";
-    letter-spacing: 0.04em;
+  --yellow:       #D3B53E;
+  --indigo:       #191831;
+  --indigo-light: #242244;
+  --indigo-dark:  #111024;
+  --white:        #F5F5F5;
+  --gray:         #545454;
+  --dark-gray:    #2C2C2C;
 }
+
+/* Site defaults: Be Vietnam for body, Bebas for headings */
+html, body {
+  font-family: "Be Vietnam Pro", sans-serif;
+}
+
+.font-bevietnam {
+  font-family: "Be Vietnam Pro", sans-serif;
+}
+
+.heading-font, h1, h2, h3, .font-bebas, .bebas {
+  font-family: "Bebas Neue", sans-serif;
+}
+
+/* small helpers if needed */
+.lead { font-family: "Be Vietnam Pro", sans-serif; }
