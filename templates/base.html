@@ -5,10 +5,12 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     {% block meta %} {% endblock meta %}
+    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Be+Vietnam+Pro:wght@400;700&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="{% static 'css/global.css' %}"/>
   </head>
   <body>
+    {% include 'navbar.html' %}
     {% block content %} {% endblock content %}
     {% include 'toast.html' %}
     {% include 'modal.html' %}
