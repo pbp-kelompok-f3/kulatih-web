@@ -123,3 +123,19 @@ def delete_post(request, post_id):
 
     messages.success(request, "Post deleted.")
     return redirect("forum:post_list")
+
+@login_required
+@require_POST
+def edit_post(request, post_id):
+    post = get_object_or_404(ForumPost, id=post_id)
+    # hanya author atau admin
+    if not (request.user.is_staff or request.user == post.author):
+        return JsonResponse({"ok": False, "error": "forbidden"}, status=403)
+
+    content = (request.POST.get("content") or "").strip()
+    if not content:
+        return JsonResponse({"ok": False, "error": "empty content"}, status=400)
+
+    post.content = content
+    post.save(update_fields=["content"])
+    return JsonResponse({"ok": True, "content": post.content})

@@ -7,4 +7,5 @@ urlpatterns = [
     path("<int:post_id>/upvote/", views.upvote, name="upvote"),
     path("<int:post_id>/downvote/", views.downvote, name="downvote"),
     path("<int:post_id>/delete/", views.delete_post, name="delete_post"),
+    path("<int:post_id>/edit/", views.edit_post, name="edit_post"),
 ]
