@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+
+{% include "navbar.html" %}
+
+<main class="py-12 px-4 sm:px-6 lg:px-8">
+  <div class="max-w-3xl mx-auto">
+
+    <div class="flex flex-col sm:flex-row items-center sm:items-start space-y-6 sm:space-y-0 sm:space-x-8">
+      
+      <div class="flex-shrink-0">
+        <img class="h-36 w-36 sm:h-40 sm:w-40 rounded-2xl object-cover shadow-lg" 
+             src="{%' %}" 
+             alt="Profile picture of Trias Fahri">
+      </div>
+      
+      <div class="flex-grow text-center sm:text-left pt-2">
+        <p class="text-sm font-medium text-[#545454]">Coach · Football</p>
+        <h1 class="font-['Bebas_Neue'] text-4xl font-bold text-[#F5F5F5] mt-1">Trias Fahri</h1>
+        <p class="text-lg text-[#545454] mt-1">@slaamoyn</p>
+        
+        <a href="#" class="mt-4 inline-block bg-[#D3B53E] text-[#111024] font-semibold px-5 py-2 rounded-lg text-sm hover:opacity-90 transition-opacity duration-200">
+          Edit Profile
+        </a>
+      </div>
+    </div>
+
+    <div class="mt-12 bg-[#242244] p-6 sm:p-8 rounded-2xl shadow-xl">
+      
+      <h2 class="font-['Bebas_Neue'] text-2xl font-bold text-[#F5F5F5] mb-4">Description</h2>
+      <p class="text-[#F5F5F5] leading-relaxed">
+        A 20-year-old software developer looking to get back into shape. I used to play football in high school but have been inactive for a few years due to university. I need guidance to start working out at the gym safely and effectively.
+      </p>
+
+      <div class="mt-8 space-y-6">
+        <div>
+          <h3 class="font-['Bebas_Neue'] text-sm font-semibold text-[#545454] uppercase tracking-wider">Location</h3>
+          <p class="text-lg text-[#F5F5F5] mt-1">Depok, West Java</p>
+        </div>
+        
+        <div>
+          <h3 class="font-['Bebas_Neue'] text-sm font-semibold text-[#545454] uppercase tracking-wider">Email</h3>
+          <p class="text-lg text-[#F5F5F5] mt-1">muhammad.salman@kulatih.com</p>
+        </div>
+        
+        <div>
+          <h3 class="font-['Bebas_Neue'] text-sm font-semibold text-[#545454] uppercase tracking-wider">Phone</h3>
+          <p class="text-lg text-[#F5F5F5] mt-1">081263348342</p>
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+</main>
+
+
+{% endblock content %}

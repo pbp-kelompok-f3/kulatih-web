@@ -1,10 +1,13 @@
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.db import transaction
 from django.contrib import messages
 from django.contrib.auth import login, authenticate, logout
 from django.contrib.auth.forms import AuthenticationForm
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
+from django.shortcuts import get_object_or_404
+from .models import Member, Coach
+
 
 from .forms import (
     MemberRegistrationForm,
@@ -153,4 +156,17 @@ def edit_profile(request):
         'profile_form': profile_form
     }
     return render(request, 'edit_profile.html', context)
-    
+
+# COACH LIST 
+
+
+# MEMBER
+
+def member_details(request, id):
+    member = get_object_or_404(Member, pk=id)
+
+    context = {
+        'member': member
+    }
+
+    return render(request, "member_details.html", context)
