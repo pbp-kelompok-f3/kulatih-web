@@ -12,8 +12,7 @@ def is_admin(user):
 
 # USER VIEWS
 def post_list(request):
-    """Menampilkan semua posting forum"""
-    posts = ForumPost.objects.select_related('author').order_by('-created_at')
+    posts = ForumPost.objects.all().order_by('-created_at')
     return render(request, 'forum/post_list.html', {'posts': posts})
 
 @login_required

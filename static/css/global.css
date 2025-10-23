@@ -1,0 +1,11 @@
+:root {
+    --yellow: #D3B53E;
+    --indigo-light: #242244;
+    --indigo: #191831;
+    --indigo-dark: #111024;
+    --white: #F5F5F5;
+}
+
+body {
+    font-family: 'Bebas Neue', sans-serif;
+}
