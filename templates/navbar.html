@@ -3,9 +3,13 @@
 <nav class="bg-[#0b0b23] border-b border-gray-800 text-white">
   <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-10">
     <div class="flex justify-between items-center py-4">
+
+      <!-- Logo -->
       <div class="flex items-center space-x-2 text-lg font-bold">
         <span class="text-white">KU</span><span class="text-yellow-400">LATIH</span>
       </div>
+
+      <!-- Desktop Menu -->
       <div class="hidden md:flex items-center space-x-8 font-semibold text-sm tracking-wide">
         <a href="/" class="hover:text-yellow-400">HOME</a>
         <a href="/" class="hover:text-yellow-400">COACH</a>
@@ -13,6 +17,8 @@
         <a href="/" class="hover:text-yellow-400">COMMUNITY</a>
         <a href="{% url 'tournament:tournament_view' %}" class="hover:text-yellow-400">TOURNAMENTS</a>
       </div>
+
+      <!-- Profile / Auth -->
       <div class="hidden md:flex items-center space-x-3">
         {% if user.is_authenticated %}
           {% if user.profile.image %}
@@ -29,6 +35,8 @@
           </a>
         {% endif %}
       </div>
+
+      <!-- Mobile menu button -->
       <div class="md:hidden">
         <button id="menu-btn" class="focus:outline-none">
           <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -39,6 +47,8 @@
       </div>
     </div>
   </div>
+
+  <!-- Mobile Dropdown -->
   <div id="mobile-menu" class="hidden md:hidden border-t border-gray-700 bg-[#0b0b23]">
     {% if user.is_authenticated %}
       <div class="px-4 py-3 border-b border-gray-700">
