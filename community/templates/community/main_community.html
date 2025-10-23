@@ -1,40 +1,67 @@
 {% extends "base.html" %}
+{% load static %}
 {% block title %}Community{% endblock %}
 {% block content %}
 
-<h1>WELCOME TO OUR COMMUNITY</h1>
+<section class="min-h-screen bg-[var(--indigo)] text-[var(--white)] px-8 md:px-16 py-12 font-bevietnam">
+  
+  <!-- Header -->
+  <h1 class="text-center text-5xl md:text-6xl font-bebas tracking-wide bg-[var(--yellow)] text-[var(--indigo-dark)] py-6 rounded-2xl mb-10 shadow-lg">
+    WELCOME TO OUR COMMUNITY
+  </h1>
 
-<div class="searchbar">
-  <form method="get" action=".">
-    <input type="text" name="q" placeholder="Search community" value="{{ q }}">
-  </form>
-  <div class="right">
-    <a class="btn btn-outline" href="{% url 'community:my_list' %}">My Community</a>
-    <a class="btn" href="{% url 'community:create' %}">Make Community</a>
-  </div>
-</div>
+  <!-- Search bar + buttons -->
+  <div class="flex flex-col md:flex-row justify-between items-center gap-4 mb-12">
+    
+    <!-- Search -->
+    <form method="get" action="." class="flex items-center w-full md:w-1/2 bg-[var(--indigo-light)] rounded-full shadow-lg overflow-hidden">
+      <input type="text" name="q" value="{{ q }}" placeholder="Search community"
+             class="flex-1 bg-transparent px-6 py-3 text-[var(--white)] placeholder-gray-400 focus:outline-none">
+      <button type="submit" class="px-5 text-[var(--yellow)] hover:text-[var(--white)] transition">
+        <i class="fa fa-search"></i>
+      </button>
+    </form>
 
-<hr>
-
-{% for c in communities %}
-  <div class="card row">
-    <div class="circle">
-      {% if c.profile_image_url %}<img src="{{ c.profile_image_url }}" alt="pfp">{% endif %}
+    <!-- Buttons -->
+    <div class="flex gap-4">
+      <a href="{% url 'community:my_list' %}" 
+         class="px-6 py-3 bg-[var(--indigo-light)] text-[var(--white)] font-semibold rounded-full hover:bg-[var(--yellow)] hover:text-[var(--indigo-dark)] transition">
+        MY COMMUNITY
+      </a>
+      <a href="{% url 'community:create' %}" 
+         class="px-6 py-3 bg-[var(--indigo-light)] text-[var(--white)] font-semibold rounded-full hover:bg-[var(--yellow)] hover:text-[var(--indigo-dark)] transition">
+        MAKE COMMUNITY
+      </a>
     </div>
-    <div>
-      <div class="bold">{{ c.name }}</div>
-      <div class="small">{{ c.short_description }}</div>
-      <div class="small">Members: {{ c.members_count }}</div>
-      <div style="margin-top:8px;">
-        <a class="btn btn-outline" href="{% url 'community:detail' c.slug %}">View</a>
-        {% if user.is_authenticated and c.id in joined_ids %}
-          <span class="small">Already joined</span>
-        {% endif %}
+  </div>
+
+  <!-- List of Communities -->
+  <div class="flex flex-col gap-6">
+    {% for c in communities %}
+      <div class="flex flex-col sm:flex-row items-center gap-6 bg-[var(--indigo-light)] p-6 rounded-2xl shadow-lg hover:scale-[1.02] transition-transform">
+        <div class="w-24 h-24 bg-[var(--indigo-dark)] rounded-full flex items-center justify-center overflow-hidden shadow">
+          {% if c.profile_image_url %}
+            <img src="{{ c.profile_image_url }}" alt="{{ c.name }}" class="w-full h-full object-cover">
+          {% else %}
+            <span class="text-[var(--yellow)] text-3xl font-bebas">?</span>
+          {% endif %}
+        </div>
+        <div class="text-center sm:text-left">
+          <h2 class="text-2xl font-bebas">{{ c.name|upper }}</h2>
+          <p class="text-[var(--white)] opacity-80">{{ c.short_description }}</p>
+          <div class="mt-3">
+            <a href="{% url 'community:detail' c.slug %}" class="text-[var(--yellow)] font-semibold hover:underline">View</a>
+            {% if user.is_authenticated and c.id in joined_ids %}
+              <span class="ml-3 text-sm text-gray-400 italic">Already joined</span>
+            {% endif %}
+          </div>
+        </div>
       </div>
-    </div>
+    {% empty %}
+      <p class="text-center text-gray-400">No communities found.</p>
+    {% endfor %}
   </div>
-{% empty %}
-  <p>Tidak ada community.</p>
-{% endfor %}
+
+</section>
 
 {% endblock %}

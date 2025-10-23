@@ -66,9 +66,7 @@
         {% if user.profile.image.url %}
           <div class="flex items-center space-x-3">
             <img src="{{ user.profile.image.url }}" class="w-10 h-10 rounded-full object-cover">
-            <div>
-              <p class="font-semibold">{{ user.username }}</p>
-            </div>
+            <div><p class="font-semibold">{{ user.username }}</p></div>
           </div>
         {% else %}
           <p class="font-semibold mb-2">Profile</p>
@@ -77,8 +75,8 @@
       <div class="px-4 py-2 border-b border-gray-700"></div>
     {% else %}
       <div class="px-4 py-3 flex flex-col space-y-2 border-b border-gray-700">
-        <a href="/" class="hover:text-yellow-400">Log In</a>
-        <a href="/" class="hover:text-yellow-400">Register</a>
+        <a href="{{ url_login|default:'#' }}" class="hover:text-yellow-400">Log In</a>
+        <a href="{{ url_signup|default:'#' }}" class="hover:text-yellow-400">Register</a>
       </div>
       <div class="px-4 py-2 border-b border-gray-700"></div>
     {% endif %}
@@ -125,6 +123,41 @@
 
   // MOBILE
 
+  // Tambah shadow saat halaman discroll
+  (function(){
+    const nav = document.getElementById('site-nav');
+    if (!nav) return;
+    const onScroll = () => {
+      if (window.scrollY > 4) {
+        nav.classList.add('shadow-lg');
+      } else {
+        nav.classList.remove('shadow-lg');
+      }
+    };
+    onScroll();
+    window.addEventListener('scroll', onScroll, { passive: true });
+  })();
+
+  // WEB profile dropdown
+  const profileButton = document.getElementById('profile-button');
+  const profileMenu = document.getElementById('profile-menu');
+  if (profileButton && profileMenu) {
+    profileButton.addEventListener('click', (e) => {
+      e.stopPropagation();
+      profileMenu.classList.toggle('hidden');
+      if (profileMenu.classList.contains('hidden')) profileButton.blur();
+    });
+    document.addEventListener('click', (e) => {
+      if (!profileMenu.classList.contains('hidden') &&
+          !profileMenu.contains(e.target) &&
+          !profileButton.contains(e.target)) {
+        profileMenu.classList.add('hidden');
+        profileButton.blur();
+      }
+    });
+  }
+
+  // MOBILE burger
   const menuBtn = document.getElementById('menu-btn');
   const mobileMenu = document.getElementById('mobile-menu');
 
