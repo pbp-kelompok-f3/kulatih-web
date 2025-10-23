@@ -4,11 +4,19 @@ from users.models import Coach, Member
 
 class Tournament(models.Model):
     CATEGORY_CHOICES = [
-        ('Futsal', 'Futsal'),
-        ('Basket', 'Basket'),
-        ('Voli', 'Voli'),
-        ('Badminton', 'Badminton'),
-        ('Tenis Meja', 'Tenis Meja'),
+        ('gym', 'Gym & Fitness'),
+        ('football', 'Football'),
+        ('futsal', 'Futsal'),
+        ('basketball', 'Basketball'),
+        ('tennis', 'Tennis'),
+        ('badminton', 'Badminton'),
+        ('swimming', 'Swimming'),
+        ('yoga', 'Yoga'),
+        ('martial_arts', 'Martial Arts'),
+        ('golf', 'Golf'),
+        ('volleyball', 'Volleyball'),
+        ('running', 'Running'),
+        ('other', 'Other'),
     ]
 
     pembuatTournaments = models.ForeignKey(Coach, on_delete=models.CASCADE)

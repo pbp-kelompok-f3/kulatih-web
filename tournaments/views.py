@@ -67,7 +67,7 @@ def tournament_show(request, tournament_id):
 @csrf_exempt
 @login_required
 def create_tournament(request):
-    is_coach = hasattr(request.user, 'profile') and request.user.coach.is_coach
+    is_coach = hasattr(request.user, 'coach')
 
     if not is_coach:
         return render(request, 'tournament_create.html', {'is_coach': False})
@@ -76,9 +76,9 @@ def create_tournament(request):
         form = TournamentForm(request.POST, request.FILES)
         if form.is_valid():
             tournament = form.save(commit=False)
-            tournament.creator = request.user
+            tournament.pembuatTournaments = request.user.coach
             tournament.save()
-            return redirect('tournament:tournament_view')
+            return redirect('tournaments:tournament_view')
     else:
         form = TournamentForm()
 

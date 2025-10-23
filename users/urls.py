@@ -15,4 +15,6 @@ urlpatterns = [
     # Profile
     path('profile/', show_profile, name='show_profile'),
     path('profile/edit/', edit_profile, name='edit_profile'),
+
+    path
 ]

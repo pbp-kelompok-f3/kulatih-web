@@ -5,6 +5,7 @@ from django.contrib.auth import login, authenticate, logout
 from django.contrib.auth.forms import AuthenticationForm
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
+from django.shortcuts import render, get_object_or_404
 
 from .forms import (
     MemberRegistrationForm,
@@ -153,4 +154,18 @@ def edit_profile(request):
         'profile_form': profile_form
     }
     return render(request, 'edit_profile.html', context)
+
+def coach_detail(request, coach_id):
+    coach = get_object_or_404(Coach, id=coach_id)
+    context = {
+        'coach': coach
+    }
+    return render(request, 'coach_detail.html', context)
+
+def coach_list(request):
+    coaches = Coach.objects.all()
+    context = {
+        'coaches': coaches
+    }
+    return render(request, 'coach_list.html', context)
     

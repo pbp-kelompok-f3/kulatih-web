@@ -7,6 +7,7 @@ import uuid
 
 class Member(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='member')
+    
 
     profile_photo = models.URLField(blank=True, null=True)
     city = models.CharField(max_length=100)
