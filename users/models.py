@@ -6,6 +6,7 @@ import uuid
 
 
 class Member(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='member')
 
     profile_photo = models.URLField(blank=True, null=True)
@@ -33,6 +34,7 @@ class Coach(models.Model):
         ('other', 'Other'),
     ]
     
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='coach')
 
     profile_photo = models.URLField(blank=True, null=True)
