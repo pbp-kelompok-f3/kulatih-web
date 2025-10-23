@@ -11,54 +11,6 @@
 
 
 {% block content %}
-    {% include 'navbar.html' %}
-    <!-- This is your .container, styled with Tailwind -->
-    <div class="max-w-4xl mx-auto my-5 px-4 sm:px-6">
-            
-        <!-- This is your <nav>, styled with Tailwind -->
-        <nav class="flex justify-between items-center bg-white p-4 sm:p-6 rounded-lg shadow-md">
-            
-            <!-- This is your .logo, styled with Tailwind -->
-            <a href="{% url 'main:show_main' %}" class="text-4xl font-bold text-gray-800"><h1>KULATIH</h1></a>
-            
-            <!-- This is your .auth section, styled with Tailwind -->
-            <div class="flex items-center">
-                
-                {% if user.is_authenticated %}
-                    
-                    <!-- This is your .auth-info, styled with Tailwind -->
-                    <span class="font-medium mr-4 text-gray-700">
-                        Hi, <a href="{% url 'users:show_profile' %}" class="text-blue-600 hover:underline">{{ user.username }}</a>!
-                    </span>
-                    <!-- This is your .logout-btn, styled with Tailwind -->
-                    <a href="{% url 'users:logout' %}" class="ml-4 px-3 py-2 rounded-md text-sm font-medium text-white shadow-sm transition bg-red-600 hover:bg-red-700">Logout</a>
 
-                {% else %}
-
-                    <!-- This is your .login-btn, styled with Tailwind -->
-                    <a href="{% url 'users:login' %}" classM="ml-4 px-3 py-2 rounded-md text-sm font-medium text-white shadow-sm transition bg-blue-600 hover:bg-blue-700">Login</a>
-                    <!-- This is your .register-btn, styled with Tailwind -->
-                    <a href="{% url 'users:register_member' %}" class="ml-4 px-3 py-2 rounded-md text-sm font-medium text-white shadow-sm transition bg-green-600 hover:bg-green-700">Register (Member)</a>
-                    <a href="{% url 'users:register_coach' %}" class="ml-4 px-3 py-2 rounded-md text-sm font-medium text-white shadow-sm transition bg-green-600 hover:bg-green-700">Register (Coach)</a>
-                
-                {% endif %}
-            </div>
-        </nav>
-
-        <!-- This is your <main> section, styled with Tailwind -->
-        <main class="bg-white mt-5 p-6 sm:p-8 rounded-lg shadow-md">
-            <h1 class="text-4xl font-bold text-gray-800 text-center">Welcome to KuLatih!</h1>
-            <p class="text-lg text-gray-600 text-center my-4">Find your perfect sports coach today. Browse our coaches or sign up to get started.</p>
-            
-            <h2 class="text-2xl font-semibold text-gray-800 text-center mt-10 mb-6">Our Top Sports</h2>
-            <ul class="flex flex-wrap justify-center gap-4">
-                <li class="bg-gray-200 text-gray-700 font-medium py-2 px-4 rounded-full">Fitness & Strength</li>
-                <li class="bg-gray-200 text-gray-700 font-medium py-2 px-4 rounded-full">Football</li>
-                <li class="bg-gray-200 text-gray-700 font-medium py-2 px-4 rounded-full">Badminton</li>
-                <li class="bg-gray-200 text-gray-700 font-medium py-2 px-4 rounded-full">Yoga</li>
-            </ul>
-        </main>
-
-    </div>
 {% endblock content %}
 
