@@ -3,7 +3,7 @@ from django.http import JsonResponse
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.csrf import csrf_exempt
 from .models import Tournament
-from user.models import Coach,Customer 
+from users.models import Coach, Member 
 from .forms import TournamentForm
 import json
 

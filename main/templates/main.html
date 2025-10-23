@@ -10,7 +10,7 @@
 
 
 {% block content %}
-    
+    {% include 'navbar.html' %}
     <!-- This is your .container, styled with Tailwind -->
     <div class="max-w-4xl mx-auto my-5 px-4 sm:px-6">
             
@@ -18,7 +18,7 @@
         <nav class="flex justify-between items-center bg-white p-4 sm:p-6 rounded-lg shadow-md">
             
             <!-- This is your .logo, styled with Tailwind -->
-            <a href="{% url 'main:show_main' %}" class="text-2xl font-bold text-gray-800">KuLatih</a>
+            <a href="{% url 'main:show_main' %}" class="text-4xl font-bold text-gray-800"><h1>KULATIH</h1></a>
             
             <!-- This is your .auth section, styled with Tailwind -->
             <div class="flex items-center">
