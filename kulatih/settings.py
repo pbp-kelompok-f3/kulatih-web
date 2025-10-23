@@ -48,7 +48,6 @@ INSTALLED_APPS = [
     'tournaments',
     'community',
     'booking',
-    'community',
 ]
 
 MIDDLEWARE = [
