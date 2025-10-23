@@ -1,0 +1,54 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="bg-[#0f0e2e] min-h-screen text-white px-6 py-10 flex justify-center items-center">
+
+  <div class="bg-transparent max-w-4xl w-full flex flex-col md:flex-row gap-8">
+
+    <!-- Left Card -->
+    <div class="bg-[#1b1a41] rounded-2xl shadow-lg p-6 w-full md:w-1/2 flex flex-col items-center text-center">
+      <img src="{{ coach.profile_photo|default:'https://via.placeholder.com/200' }}" 
+           alt="{{ coach.user.username }}" 
+           class="w-40 h-40 object-cover rounded-xl mb-4 border-4 border-[#0f0e2e]">
+
+      <h2 class="text-2xl font-extrabold text-yellow-400 mb-4 uppercase tracking-wide">
+        {{ coach.user.get_full_name|default:coach.user.username }}
+      </h2>
+
+      <div class="space-y-3 text-sm">
+        <div class="flex justify-between border-b border-gray-600 pb-1">
+          <span class="font-semibold text-gray-300">FEE</span>
+          <span class="font-bold">Rp{{ coach.hourly_fee}}</span>
+        </div>
+        <div class="flex justify-between border-b border-gray-600 pb-1">
+          <span class="font-semibold text-gray-300">CITY</span>
+          <span class="font-bold">{{ coach.city }}</span>
+        </div>
+        <div class="flex justify-between">
+          <span class="font-semibold text-gray-300">SPORT</span>
+          <span class="font-bold">{{ coach.sport }}</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right Card -->
+    <div class="bg-[#2b2964] rounded-2xl shadow-lg p-6 w-full md:w-1/2 flex flex-col justify-between">
+      <div>
+        <h3 class="text-2xl font-bold mb-4">DESCRIPTION</h3>
+        <p class="text-gray-200 text-sm leading-relaxed">
+          {{ coach.description|default:"Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam." }}
+        </p>
+      </div>
+
+      <div class="mt-6 flex justify-end">
+        <a href="#" 
+           class="bg-yellow-500 hover:bg-yellow-600 text-[#0f0e2e] font-bold px-6 py-2 rounded-lg transition">
+          BOOK
+        </a>
+      </div>
+    </div>
+
+  </div>
+</div>
+{% endblock %}
