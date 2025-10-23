@@ -1,0 +1,58 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="min-h-screen flex flex-col items-center justify-center bg-[#0d0b26] text-white p-6">
+    <div class="bg-[#1a1836] w-full max-w-md p-8 rounded-2xl shadow-lg">
+        <h2 class="text-2xl font-bold mb-6 text-center">Create Tournament</h2>
+
+        {% if not is_coach %}
+            <p class="text-red-400 text-center">Hanya coach yang dapat membuat tournament.</p>
+        {% else %}
+        <form method="POST">
+            {% csrf_token %}
+            <div class="space-y-4">
+                <div>
+                    <label class="block mb-1 text-sm">Nama Tournament</label>
+                    {{ form.namaTournaments }}
+                </div>
+
+                <div>
+                    <label class="block mb-1 text-sm">Tipe Tournament</label>
+                    {{ form.tipeTournaments }}
+                </div>
+
+                <div>
+                    <label class="block mb-1 text-sm">Tanggal Tournament</label>
+                    {{ form.tanggalTournaments }}
+                </div>
+
+                <div>
+                    <label class="block mb-1 text-sm">Lokasi Tournament</label>
+                    {{ form.lokasiTournaments }}
+                </div>
+
+                <div>
+                    <label class="block mb-1 text-sm">Poster URL</label>
+                    {{ form.posterTournaments }}
+                </div>
+
+                <div>
+                    <label class="block mb-1 text-sm">Deskripsi</label>
+                    {{ form.deskripsiTournaments }}
+                </div>
+            </div>
+
+            <div class="flex justify-between mt-6">
+                <a href="{% url 'tournament:tournament_view' %}" class="bg-gray-600 px-4 py-2 rounded hover:bg-gray-700">
+                    Cancel
+                </a>
+                <button type="submit" class="bg-green-600 px-4 py-2 rounded hover:bg-green-700">
+                    Create
+                </button>
+            </div>
+        </form>
+    {% endif %}
+    </div>
+</div>
+{% endblock %}
