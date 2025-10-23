@@ -45,7 +45,8 @@ INSTALLED_APPS = [
     'main',
     'forum',
     'users',
-    'tournaments'
+    'tournaments',
+    'community',
 ]
 
 MIDDLEWARE = [
