@@ -20,5 +20,5 @@ urlpatterns = [
     
 
     # Member
-    path('member/<string>:username', member_details, name='member_details')
+    path('member/<uuid:id>', member_details, name='member_details')
 ]

@@ -1,10 +1,68 @@
 {% extends "base.html" %}
 {% load static %}
 
-{% block meta %}
-    <title>Coach Profile - KuLatih</title>
-{% endblock meta %}
+{% block meta %}<title>My Profile - KuLatih</title>{% endblock meta %}
 
 {% block content %}
-    <h1>{{ user.username }}</h1>
+<section class="min-h-screen bg-[var(--indigo)] text-[var(--white)] px-8 md:px-20 py-12 font-bevietnam">
+  <div class="max-w-6xl mx-auto">
+    <div class="flex flex-col md:flex-row items-center gap-10">
+      <!-- Left: avatar -->
+      <div class="w-56 h-56 bg-[var(--indigo-dark)] rounded-2xl overflow-hidden shadow-lg flex-shrink-0 mx-auto md:mx-0">
+        {% if user.profile_photo %}
+          <img src="{{ user.profile_photo }}" alt="{{ user.username }}" class="w-full h-full object-cover">
+        {% else %}
+          <svg fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd"></path></svg>
+        {% endif %}
+      </div>
+
+      <!-- Right: header -->
+      <div class="flex-1 text-center md:text-left">
+        <div class="text-lg font-bevietnam tracking-wider text-gray-300 mb-2">
+          Member Profile
+        </div>
+        <h1 class="text-5xl font-bevietnam font-bold leading-none mb-2">{{ user.get_full_name }}</h1>
+        <div class="text-lg text-gray-400 mb-4">
+          @{{ user.username }} <span class="text-white">· Member since {{ user.date_joined|date:"F Y" }}</span>
+        </div>
+
+        {% if user.is_authenticated %}
+            <a href="{% url 'users:edit_profile' %}" class="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-[var(--yellow)] text-[var(--indigo-dark)] font-medium shadow-md hover:opacity-90">
+                ✎ Edit Profile
+            </a>
+        {% endif %}
+      </div>
+    </div>
+
+      </div>
+    </div>
+
+    <!-- Description / info card -->
+    <div class="bg-[var(--indigo-light)] rounded-2xl p-8 text-left mt-12 shadow-lg">
+        <h2 class="text-2xl font-semibold font-bevietnam mb-2">Description</h2>
+        <p class="text-[var(--white)] leading-relaxed mb-6">
+        {{ user.description|default:"This member has not added a description." }}
+        </p>
+        
+        <div class="flex gap-x-8 text-sm">
+            <!-- Column 1: Labels -->
+            <div class="text-gray-400 font-semibold space-y-2">
+                <div>City</div>
+                <div>Email</div>
+                <div>Phone</div> 
+            </div>
+
+            <!-- Column 2: Values -->
+            <div class="text-[rgba(245,245,245,.9)] space-y-2">
+                <div>{{ profile.city|default:"Not specified" }}</div>
+                <div>{{ user.email }}</div>
+                <div>{{ profile.phone|default:"-" }}</div>
+            </div>
+        </div>
+    </div>
+  </div>
+</section>
+
+{% include "footer.html" %}
+
 {% endblock content %}
