@@ -1,11 +1,19 @@
 :root {
-    --yellow: #D3B53E;
+    --yellow:       #D3B53E;
+    --indigo:       #191831;
     --indigo-light: #242244;
-    --indigo: #191831;
-    --indigo-dark: #111024;
-    --white: #F5F5F5;
-}
+    --indigo-dark:  #111024;
+    --white:        #F5F5F5;
+    }
 
-body {
-    font-family: 'Bebas Neue', sans-serif;
+    .body-font {
+    font-family: "Be Vietnam Pro", ui-sans-serif, system-ui, -apple-system, "Segoe UI",
+                Roboto, "Helvetica Neue", Arial, "Noto Sans", "Apple Color Emoji",
+                "Segoe UI Emoji", "Segoe UI Symbol";
+    }
+
+    .heading-font {
+    font-family: "Bebas Neue", ui-sans-serif, system-ui, -apple-system, "Segoe UI",
+                Roboto, "Helvetica Neue", Arial, "Noto Sans";
+    letter-spacing: 0.04em;
 }
