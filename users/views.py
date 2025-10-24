@@ -94,7 +94,7 @@ def login_user(request):
         if form.is_valid():
             user = form.get_user()
             login(request, user)
-            return redirect("main:show_main")
+            return redirect("users:coach_list")
     else:
         form = AuthenticationForm(request)
 
