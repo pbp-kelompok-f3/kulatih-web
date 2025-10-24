@@ -1,23 +1,43 @@
+{% extends 'base.html' %}
 {% load static %}
 
-<section class="bg-[var(--indigo)] px-8 md:px-20 pb-14 text-[var(--white)]">
-  <div class="max-w-6xl mx-auto">
+{% block meta %}
+<title>My Bookings</title>
+{% endblock meta %}
+
+{% block content %}
+<div class="min-h-screen bg-[var(--indigo)] px-6 py-10 text-[var(--white)]">
+  <div class="max-w-4xl mx-auto">
 
     <!-- Header Section -->
-    <div class="mb-6 text-left">
-      <h1 class="heading-font text-[var(--yellow)] text-5xl">MY BOOKINGS</h1>
+    <div class="mb-10 text-left">
+      <h1 class="heading-font text-[var(--yellow)] text-5xl mb-4">MY BOOKINGS</h1>
+      <button
+        class="heading-font text-base px-10 py-2 bg-[var(--white)] text-[var(--indigo-dark)] font-bold rounded-md shadow-sm">
+        DETAILS
+      </button>
     </div>
-
 
     <!-- Tabs -->
     <div class="flex justify-center mb-10">
-      <div class="flex w-full max-w-6xl rounded-xl overflow-hidden border border-[rgba(255,255,255,0.2)] bg-[var(--indigo)]">
+      <div
+        class="flex w-full max-w-4xl bg-[var(--indigo)] border border-[rgba(255,255,255,0.2)] rounded-xl p-2 gap-3 shadow-[0_0_20px_rgba(0,0,0,0.25)]">
+
+        <!-- Upcoming -->
         <button id="btn-upcoming"
-          class="flex-1 py-3 font-semibold text-sm transition-all bg-[var(--yellow)] text-[var(--indigo-dark)]">
+          class="flex-1 py-3 font-semibold text-sm rounded-md transition-all
+                 bg-[var(--yellow)] text-[var(--indigo-dark)]
+                 border border-[rgba(255,255,255,0.2)]
+                 hover:brightness-105">
           Upcoming
         </button>
+
+        <!-- Booking History -->
         <button id="btn-history"
-          class="flex-1 py-3 font-semibold text-sm transition-all bg-transparent text-[var(--white)] border-l border-[rgba(255,255,255,0.2)]">
+          class="flex-1 py-3 font-semibold text-sm rounded-md transition-all
+                 bg-transparent text-[var(--white)]
+                 border border-[rgba(255,255,255,0.2)]
+                 hover:brightness-125">
           Booking History
         </button>
       </div>
@@ -28,23 +48,30 @@
       <div id="bookings-container" class="grid grid-cols-1 md:grid-cols-2 gap-6">
         {% for b in bookings %}
         <article
-          class="booking-card rounded-2xl bg-[var(--indigo-light)] border border-[var(--indigo-light)] p-6 shadow-lg relative"
+          class="booking-card rounded-2xl bg-[var(--indigo-light)] border border-[var(--indigo-light)] p-6 shadow-[0_8px_24px_rgba(0,0,0,.3)] relative"
           data-category="{% if b.status == 'cancelled' or b.status == 'completed' or b.date < today %}history{% else %}upcoming{% endif %}">
 
-          <!-- Status badge -->
-          <span class="absolute top-4 right-4 heading-font px-2.5 py-0.5 rounded text-[11px] font-bold uppercase
-            {% if b.status == 'confirmed' %} bg-green-700 text-white
-            {% elif b.status == 'pending' %} bg-[var(--yellow)] text-[var(--indigo-dark)]
-            {% elif b.status == 'rescheduled' %} bg-purple-600 text-white
-            {% elif b.status == 'completed' %} bg-[var(--gray)] text-[var(--white)]
-            {% else %} bg-gray-600 text-white {% endif %}">
-            {{ b.get_status_display }}
-          </span>
-
           <!-- Header Info -->
-          <div class="flex items-center gap-2 mb-4 text-sm opacity-80">
-            <i class="fa-regular fa-calendar"></i>
-            <div>{{ b.date|date:"l, d F Y" }} · {{ b.start_time|time:"H:i" }}–{{ b.end_time|time:"H:i" }} WIB</div>
+          <div class="flex items-start justify-between mb-3 border-b border-[rgba(255,255,255,0.15)] pb-2">
+            <div class="flex items-start gap-2 text-[13px] text-[rgba(255,255,255,0.85)]">
+              <i class="fa-regular fa-calendar text-[var(--white)] opacity-80 mt-[2px]"></i>
+              <div class="flex flex-col">
+                <span>{{ b.date|date:"l, d F Y" }}</span>
+                <span class="text-[12px] text-[rgba(255,255,255,0.6)] mt-[2px]">
+                  {{ b.start_time|time:"H:i" }}–{{ b.end_time|time:"H:i" }} WIB
+                </span>
+              </div>
+            </div>
+
+            <!-- Status Badge -->
+            <span class="heading-font px-3 py-[2px] rounded-md text-[10px] font-bold uppercase tracking-[1px]
+              {% if b.status == 'confirmed' %} bg-green-700 text-white
+              {% elif b.status == 'pending' %} bg-[var(--yellow)] text-[var(--indigo-dark)]
+              {% elif b.status == 'rescheduled' %} bg-purple-600 text-white
+              {% elif b.status == 'completed' %} bg-[var(--gray)] text-[var(--white)]
+              {% else %} bg-gray-600 text-white {% endif %}">
+              {{ b.get_status_display }}
+            </span>
           </div>
 
           <!-- Coach Section -->
@@ -83,7 +110,7 @@
             {% endif %}
           </div>
 
-          <!-- Hidden reschedule form -->
+          <!-- Hidden Reschedule Form -->
           <form class="res-form hidden mt-4" data-res-form="{{ b.id }}">
             {% csrf_token %}
             <div class="grid grid-cols-3 gap-2">
@@ -105,13 +132,13 @@
         {% endfor %}
       </div>
     {% else %}
-      <div class="rounded-2xl p-16 text-center bg-[var(--indigo-light)] border border-[var(--indigo-light)] shadow-lg">
+      <div class="rounded-2xl p-16 text-center bg-[var(--indigo-light)] border border-[var(--indigo-light)] shadow-[0_12px_40px_rgba(0,0,0,.35)]">
         <h2 class="heading-font text-3xl mb-2">NO BOOKINGS</h2>
         <p class="opacity-70">You don’t have any bookings yet.</p>
       </div>
     {% endif %}
- </div>
-</section>
+  </div>
+</div>
 
 <!-- JS -->
 <script>
@@ -128,19 +155,22 @@
     }
 
     function setActiveTab(tab) {
-  if (tab === 'upcoming') {
-    btnUpcoming.classList.add('bg-[var(--yellow)]', 'text-[var(--indigo-dark)]');
-    btnUpcoming.classList.remove('bg-transparent', 'text-[var(--white)]');
-    btnHistory.classList.add('bg-transparent', 'text-[var(--white)]');
-    btnHistory.classList.remove('bg-[var(--yellow)]', 'text-[var(--indigo-dark)]');
-  } else {
-    btnHistory.classList.add('bg-[var(--yellow)]', 'text-[var(--indigo-dark)]');
-    btnHistory.classList.remove('bg-transparent', 'text-[var(--white)]');
-    btnUpcoming.classList.add('bg-transparent', 'text-[var(--white)]');
-    btnUpcoming.classList.remove('bg-[var(--yellow)]', 'text-[var(--indigo-dark)]');
-  }
-}
+      if (tab === 'upcoming') {
+        btnUpcoming.classList.add('bg-[var(--yellow)]', 'text-[var(--indigo-dark)]');
+        btnUpcoming.classList.remove('bg-transparent', 'text-[var(--white)]');
+        btnHistory.classList.add('bg-transparent', 'text-[var(--white)]');
+        btnHistory.classList.remove('bg-[var(--yellow)]', 'text-[var(--indigo-dark)]');
+      } else {
+        btnHistory.classList.add('bg-[var(--yellow)]', 'text-[var(--indigo-dark)]');
+        btnHistory.classList.remove('bg-transparent', 'text-[var(--white)]');
+        btnUpcoming.classList.add('bg-transparent', 'text-[var(--white)]');
+        btnUpcoming.classList.remove('bg-[var(--yellow)]', 'text-[var(--indigo-dark)]');
+      }
 
+      [btnUpcoming, btnHistory].forEach(btn => {
+        btn.classList.add('border', 'border-[rgba(255,255,255,0.2)]');
+      });
+    }
 
     btnUpcoming.addEventListener('click', () => {
       showCategory('upcoming');
@@ -215,3 +245,4 @@
     });
   });
 </script>
+{% endblock content %}
