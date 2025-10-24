@@ -38,7 +38,7 @@
             <button 
               id="edit-btn"
               type="button"
-              class="w-full bg-yellow-500 hover:bg-yellow-600 text-white font-semibold py-2 rounded-lg transition">
+              class="w-full bg-yellow-500 text-black text-xl hover:bg-yellow-600 text-white font-semibold py-2 rounded-lg transition">
               Edit Tournament
             </button>
 
@@ -89,15 +89,15 @@
 </div>
 <div id="editModal" class="fixed inset-0 bg-black/60 hidden justify-center items-center z-50">
   <div class="bg-[#1e1b3a] p-6 rounded-xl w-full max-w-lg relative animate-fadeIn">
-    <h2 class="text-2xl font-bold mb-4">Edit Tournament</h2>
-    <form id="editForm" class="space-y-4">
+    <h2 class="text-5xl text-white font-bebas mb-4">Edit Tournament</h2>
+    <form id="editForm" class="text-white space-y-4">
       {% csrf_token %}
-      <input type="text" id="namaTournaments" name="namaTournaments" class="w-full p-2 rounded bg-[#111024] border border-gray-600" placeholder="Nama Tournament" required />
-      <input type="text" id="lokasiTournaments" name="lokasiTournaments" class="w-full p-2 rounded bg-[#111024] border border-gray-600" placeholder="Lokasi" required />
-      <input type="date" id="tanggalTournaments" name="tanggalTournaments" class="w-full p-2 rounded bg-[#111024] border border-gray-600" required />
-      <textarea id="deskripsiTournaments" name="deskripsiTournaments" rows="3" class="w-full p-2 rounded bg-[#111024] border border-gray-600" placeholder="Deskripsi"></textarea>
-      <input type="url" id="posterTournaments" name="posterTournaments" class="w-full p-2 rounded bg-[#111024] border border-gray-600" placeholder="Poster URL" />
-      <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-lg">Save Changes</button>
+      <input type="text" id="namaTournaments" name="namaTournaments" class="placeholder-gray-400 w-full p-2 rounded bg-[#111024] border border-gray-600" placeholder="Nama Tournament" required />
+      <input type="text" id="lokasiTournaments" name="lokasiTournaments" class="placeholder-gray-400 w-full p-2 rounded bg-[#111024] border border-gray-600" placeholder="Lokasi" required />
+      <input type="date" id="tanggalTournaments" name="tanggalTournaments" class="placeholder-gray-400 w-full p-2 rounded bg-[#111024] border border-gray-600" required />
+      <textarea id="deskripsiTournaments" name="deskripsiTournaments" rows="3" class="placeholder-gray-400 w-full p-2 rounded bg-[#111024] border border-gray-600" placeholder="Deskripsi"></textarea>
+      <input type="url" id="posterTournaments" name="posterTournaments" class="placeholder-gray-400 w-full p-2 rounded bg-[#111024] border border-gray-600" placeholder="Poster URL" />
+      <button type="submit" class="w-full bg-yellow-400 hover:bg-yellow-500 text-black font-bold py-2 rounded-lg">Save Changes</button>
     </form>
     <button id="closeModal" type="button" class="absolute top-3 right-3 text-gray-400 hover:text-white text-lg">✖</button>
   </div>

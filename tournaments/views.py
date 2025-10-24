@@ -8,6 +8,7 @@ from .forms import TournamentForm
 import json
 from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required
+from django.urls import reverse_lazy
 
 def tournament_view(request):
     tournaments = Tournament.objects.all()
@@ -39,12 +40,7 @@ def tournament_view(request):
     })
 
 
-from django.http import JsonResponse
-from django.contrib.auth.decorators import login_required
-from django.shortcuts import get_object_or_404
-from .models import Tournament
-
-@login_required
+@login_required(login_url=reverse_lazy('users:login'))
 def my_tournaments_ajax(request):
     if request.headers.get('x-requested-with') == 'XMLHttpRequest':
         user = request.user
@@ -72,12 +68,7 @@ def my_tournaments_ajax(request):
 
     return JsonResponse({'error': 'Invalid request'}, status=400)
 
-
-
-
-
-
-@login_required
+@login_required(login_url=reverse_lazy('users:login'))
 def tournament_show(request, tournament_id):
     tournament = get_object_or_404(Tournament, idTournaments=tournament_id)
 
@@ -111,7 +102,9 @@ def tournament_show(request, tournament_id):
 
 
 @csrf_exempt
-@login_required
+
+
+@login_required(login_url=reverse_lazy('users:login'))
 def create_tournament(request):
     is_coach = hasattr(request.user, 'coach')
 
@@ -132,7 +125,8 @@ def create_tournament(request):
 
 
 @csrf_exempt
-@login_required
+
+@login_required(login_url=reverse_lazy('users:login'))
 
 def delete_tournament(request, tournament_id):
     if request.method not in ["POST", "DELETE"]:
@@ -149,7 +143,8 @@ def delete_tournament(request, tournament_id):
     return redirect('tournaments:tournament_view')
 
 @csrf_exempt
-@login_required
+
+@login_required(login_url=reverse_lazy('users:login'))
 def assign_tournament(request, tournament_id):
     if request.method != 'POST':
         return JsonResponse({'error': 'Invalid request method'}, status=405)
@@ -172,9 +167,7 @@ def assign_tournament(request, tournament_id):
     return JsonResponse({'message': f'{member.user.username} berhasil daftar ke {tournament.namaTournaments}!'}, status=200)
 
 
-
-
-@login_required
+@login_required(login_url=reverse_lazy('users:login'))
 @csrf_exempt
 def edit_tournament_ajax(request, tournament_id):
     tournament = get_object_or_404(Tournament, idTournaments=tournament_id)

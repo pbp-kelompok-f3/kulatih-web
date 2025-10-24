@@ -94,7 +94,7 @@ def login_user(request):
         if form.is_valid():
             user = form.get_user()
             login(request, user)
-            return redirect("main:show_main")
+            return redirect("users:coach_list")
     else:
         form = AuthenticationForm(request)
 
@@ -168,6 +168,16 @@ def edit_profile(request):
             profile_form.save()
             
             if is_ajax:
+                profile_data = {
+                    'city': profile_instance.city,
+                    'phone': profile_instance.phone,
+                    'description': profile_instance.description,
+                    'profile_photo': profile_instance.profile_photo,
+                }
+                if hasattr(request.user, 'coach'):
+                    profile_data['sport'] = profile_instance.get_sport_display()
+                    profile_data['hourly_fee'] = profile_instance.hourly_fee
+
                 return JsonResponse({
                     'success': True,
                     'user': {
@@ -175,19 +185,11 @@ def edit_profile(request):
                         'last_name': request.user.last_name,
                         'email': request.user.email,
                     },
-                    'profile': {
-                        'city': profile_instance.city,
-                        'phone': profile_instance.phone,
-                        'description': profile_instance.description,
-                        'profile_photo': profile_instance.profile_photo,
-                    }
+                    'profile': profile_data
                 })
 
             messages.success(request, 'Your profile has been updated successfully!')
             return redirect('users:show_profile')
-        elif is_ajax:
-            errors = user_form.errors.as_json() + profile_form.errors.as_json()
-            return JsonResponse({'success': False, 'errors': errors}, status=400)
 
     else:
         # For a GET request, create the initial forms with existing data
@@ -213,10 +215,7 @@ def edit_profile(request):
     context['profile'] = profile
     return render(request, f'users/{template}', context)
 
-# COACH LIST 
-
-
-# MEMBER
+# Details (Able to be viewed by all user)
 
 def member_details(request, id):
     member = get_object_or_404(Member, pk=id)
