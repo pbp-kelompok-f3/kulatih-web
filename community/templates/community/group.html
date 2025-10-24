@@ -69,22 +69,27 @@ document.querySelector('#message-form').addEventListener('submit', async functio
 
   const data = await response.json();
   if (data.text) {
-    const chatBox = document.querySelector('#messages');
-    chatBox.innerHTML += `
-      <div class="flex flex-col items-end message-container" data-id="${data.id}">
-        <div class="text-xs text-[var(--white)] mb-1">${data.sender}</div>
-        <div class="relative bg-[var(--yellow)] text-[var(--indigo-dark)] px-5 py-3 rounded-2xl max-w-[70%] text-right font-medium">
-          ${data.text}
-        </div>
-        <div class="flex justify-end gap-3 text-xs text-gray-400 mt-1">
-          <a href="/community/my/${data.community_id}/message/${data.id}/edit/" class="hover:underline">edit</a>
-          <a href="#" class="delete-btn hover:underline" data-id="${data.id}">delete</a>
-        </div>
+  const chatBox = document.querySelector('#messages');
+
+  const emptyMsg = chatBox.querySelector('p.text-gray-400');
+  if (emptyMsg) emptyMsg.remove();
+
+  // Tambahkan pesan baru
+  chatBox.innerHTML += `
+    <div class="flex flex-col items-end message-container" data-id="${data.id}">
+      <div class="text-xs text-[var(--white)] mb-1">${data.sender}</div>
+      <div class="relative bg-[var(--yellow)] text-[var(--indigo-dark)] px-5 py-3 rounded-2xl max-w-[70%] text-right font-medium">
+        ${data.text}
       </div>
-    `;
-    document.querySelector('#message-input').value = '';
-    chatBox.scrollTop = chatBox.scrollHeight;
-  }
+      <div class="flex justify-end gap-3 text-xs text-gray-400 mt-1">
+        <a href="/community/my/${data.community_id}/message/${data.id}/edit/" class="hover:underline">edit</a>
+        <a href="#" class="delete-btn hover:underline" data-id="${data.id}">delete</a>
+      </div>
+    </div>
+  `;
+  document.querySelector('#message-input').value = '';
+  chatBox.scrollTop = chatBox.scrollHeight;
+}
 });
 
 // DELETE Message via AJAX
@@ -93,14 +98,30 @@ document.addEventListener('click', async e => {
     e.preventDefault();
     const msgId = e.target.dataset.id;
     const msgContainer = e.target.closest('.message-container');
+    const chatBox = document.querySelector('#messages');
+
     const response = await fetch(`/community/my/{{ community.id }}/message/${msgId}/delete/`, {
       method: 'DELETE',
       headers: {'X-CSRFToken': '{{ csrf_token }}'},
     });
+
     const data = await response.json();
-    if (data.success) msgContainer.remove();
+    if (data.success) {
+      msgContainer.remove();
+
+      // Cek apakah semua pesan sudah dihapus
+      const remaining = chatBox.querySelectorAll('.message-container');
+      if (remaining.length === 0) {
+        chatBox.innerHTML = `
+          <p class="text-center text-gray-400 italic">
+            no messages yet, be the first to say hi!
+          </p>
+        `;
+      }
+    }
   }
 });
+
 </script>
 
 {% endblock %}
