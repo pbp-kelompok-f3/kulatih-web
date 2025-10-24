@@ -12,6 +12,7 @@ from .models import Comment, CommentVote, ForumPost, Vote
 
 # ---------------- Helpers ----------------
 def _is_ajax(request):
+    # header name yang dipakai fetch() kita adalah X-Requested-With
     return request.headers.get("X-Requested-With") == "XMLHttpRequest"
 
 
@@ -80,7 +81,6 @@ def _build_comment_tree(post, user):
 
 # ---------------- Posts ----------------
 def post_list(request):
-    # annotate jumlah komentar aktif -> biar counter muncul saat initial render
     posts = (
         ForumPost.objects
         .select_related("author")
@@ -147,7 +147,7 @@ def delete_post(request, post_id):
     post = get_object_or_404(ForumPost, id=post_id)
     if not (request.user.is_staff or request.user == post.author):
         return JsonResponse({"ok": False, "error": "forbidden"}, status=403)
-    post.delete()  # CASCADE semua komentar & sub-replies
+    post.delete()  # CASCADE ke komentar
     return JsonResponse({"ok": True})
 
 
@@ -202,6 +202,25 @@ def comment_add(request, post_id):
 
 @login_required
 @require_POST
+def comment_edit(request, post_id, comment_id):
+    """EDIT reply/comment via AJAX."""
+    post = get_object_or_404(ForumPost, id=post_id)
+    c = get_object_or_404(Comment, id=comment_id, post=post, is_active=True)
+
+    if not (request.user.is_staff or c.author_id == request.user.id):
+        return JsonResponse({"ok": False, "error": "forbidden"}, status=403)
+
+    content = (request.POST.get("content") or "").strip()
+    if not content:
+        return JsonResponse({"ok": False, "error": "empty content"}, status=400)
+
+    c.content = content
+    c.save(update_fields=["content"])
+    return JsonResponse({"ok": True, "content": c.content})
+
+
+@login_required
+@require_POST
 def comment_delete(request, post_id, comment_id):
     post = get_object_or_404(ForumPost, id=post_id)
     c = get_object_or_404(Comment, id=comment_id, post=post, is_active=True)
@@ -214,6 +233,7 @@ def comment_delete(request, post_id, comment_id):
 @login_required
 @require_POST
 def comment_vote(request, post_id, comment_id, action):
+    # (Masih disediakan; di UI reply bisa di-nonaktifkan. Endpoint ini aman untuk dipakai/diabaikan.)
     get_object_or_404(ForumPost, id=post_id)
     c = get_object_or_404(Comment, id=comment_id, post_id=post_id, is_active=True)
     val = CommentVote.UP if action == "up" else CommentVote.DOWN
@@ -233,3 +253,18 @@ def comment_vote(request, post_id, comment_id, action):
         or 0
     )
     return JsonResponse({"ok": True, "score": c.score, "user_vote": user_vote})
+
+@login_required
+@require_POST
+def comment_edit(request, post_id, comment_id):
+    """Edit isi reply/comment (owner-only atau staff)."""
+    post = get_object_or_404(ForumPost, id=post_id)
+    c = get_object_or_404(Comment, id=comment_id, post=post, is_active=True)
+    if not (request.user.is_staff or c.author_id == request.user.id):
+        return JsonResponse({"ok": False, "error": "forbidden"}, status=403)
+    content = (request.POST.get("content") or "").strip()
+    if not content:
+        return JsonResponse({"ok": False, "error": "empty"}, status=400)
+    c.content = content
+    c.save(update_fields=["content"])
+    return JsonResponse({"ok": True, "content": c.content})

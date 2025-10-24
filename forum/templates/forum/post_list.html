@@ -54,97 +54,94 @@
               {{ post.content }}
             </p>
           </div>
+        </div>
 
-          <!-- ACTIONS & TIME (DESAIN BARU) -->
-          <div class="ml-auto flex flex-col items-end gap-3">
-            <div class="text-xs sm:text-sm text-[var(--yellow)] whitespace-nowrap body-font">
+        <!-- FOOTER BAR -->
+        <div class="mt-4 flex items-center justify-between">
+          <!-- LEFT: Comments toggle -->
+          <button type="button"
+                  class="js-toggle-comments inline-flex items-center gap-2 text-sm px-3 py-1 rounded hover:bg-[var(--indigo)]
+                         body-font"
+                  data-post="{{ post.id }}">
+            <svg aria-hidden="true" viewBox="0 0 20 20" width="18" height="18" class="opacity-80">
+              <path fill="currentColor" d="M10 1a9 9 0 00-9 9c0 1.947.79 3.58 1.935 4.957L.231 17.661A.784.784 0 00.785 19H10a9 9 0 009-9 9 9 0 00-9-9z"></path>
+            </svg>
+            <span class="uppercase tracking-wide">COMMENTS (<span id="c-count-{{ post.id }}">{{ post.active_comments|default:0 }}</span>)</span>
+          </button>
+
+          <!-- RIGHT: vote + time + actions -->
+          <div class="flex items-center gap-3 sm:gap-4">
+            <!-- Vote pill -->
+            <span class="inline-flex items-center gap-3 rounded-full px-3 sm:px-4 py-1.5
+                         bg-[var(--white)] text-[var(--indigo-dark)]
+                         ring-1 ring-[rgb(0_0_0/0.08)] shadow-sm select-none">
+              <form action="{% url 'forum:upvote' post.id %}" method="post" class="inline-flex js-vote" data-post-id="{{ post.id }}" data-role="up">
+                {% csrf_token %}
+                <button type="button" class="js-vote-btn group inline-flex items-center justify-center h-7 w-7 rounded">
+                  <svg class="icon-solid hidden" viewBox="0 0 20 20" width="20" height="20" fill="currentColor"><path d="M10 19a3.966 3.966 0 01-3.96-3.962V10.98H2.838a1.731 1.731 0 01-1.605-1.073 1.734 1.734 0 01.377-1.895L9.364.254a.925.925 0 011.272 0l7.754 7.759c.498.499.646 1.242.376 1.894-.27.652-.9 1.073-1.605 1.073h-3.202v4.058A3.965 3.965 0 019.999 19H10z"/></svg>
+                  <svg class="icon-outline text-[rgb(0_0_0/0.45)] group-hover:text-[var(--indigo-dark)]"
+                       viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7 7h-4v6a3 3 0 0 1-6 0V10H5l7-7z"/></svg>
+                  <span class="sr-only">Upvote</span>
+                </button>
+              </form>
+
+              <span class="body-font text-base js-score" id="score-{{ post.id }}">{{ post.score }}</span>
+
+              <form action="{% url 'forum:downvote' post.id %}" method="post" class="inline-flex js-vote" data-post-id="{{ post.id }}" data-role="down">
+                {% csrf_token %}
+                <button type="button" class="js-vote-btn group inline-flex items-center justify-center h-7 w-7 rounded">
+                  <svg class="icon-solid hidden" viewBox="0 0 20 20" width="20" height="20" fill="currentColor"><path d="M10 1a3.966 3.966 0 013.96 3.962V9.02h3.202c.706 0 1.335.42 1.605 1.073.27.652.122 1.396-.377 1.895l-7.754 7.759a.925.925 0 01-1.272 0l-7.754-7.76a1.734 1.734 0 01-.376-1.894c.27-.652.9-1.073 1.605-1.073h3.202V4.962A3.965 3.965 0 0110 1z"/></svg>
+                  <svg class="icon-outline text-[rgb(0_0_0/0.45)] group-hover:text-[var(--indigo-dark)]"
+                       viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21l-7-7h4V8a3 3 0 0 1 6 0v6h4l-7 7z"/></svg>
+                  <span class="sr-only">Downvote</span>
+                </button>
+              </form>
+            </span>
+
+            <!-- Time -->
+            <div class="text-sm text-[var(--yellow)] whitespace-nowrap body-font">
               {% if post.local_created %}{{ post.local_created|date:"g:i A · M d, Y" }}{% else %}{{ post.created_at|date:"g:i A · M d, Y" }}{% endif %}
             </div>
 
-            {% if (request.user.is_authenticated and post.author_id == request.user.id) or request.user.is_staff %}
-            <div class="flex items-center gap-3">
-              <button
-                class="js-post-edit inline-flex items-center justify-center px-5 py-2
-                       rounded-full border border-[var(--yellow)] text-[var(--yellow)]
-                       hover:bg-[var(--yellow)] hover:text-[var(--indigo-dark)]
-                       focus:outline-none focus-visible:ring-4 focus-visible:ring-[var(--yellow)]/30
-                       transition shadow-sm"
-                data-id="{{ post.id }}">
-                Edit
-              </button>
+            <!-- Actions (edit/delete) -->
+            {% if request.user.is_authenticated %}
+              {% if request.user.is_staff or request.user.id == post.author_id %}
+                <button class="js-post-edit inline-flex items-center justify-center px-5 py-2 rounded-full
+                               border border-[var(--yellow)] text-[var(--yellow)]
+                               hover:bg-[var(--yellow)] hover:text-[var(--indigo-dark)]
+                               transition shadow-sm" data-id="{{ post.id }}">Edit</button>
 
-              <button
-                class="js-post-del inline-flex items-center justify-center px-5 py-2
-                       rounded-full border border-[var(--yellow)] text-[var(--yellow)]
-                       hover:bg-[var(--yellow)] hover:text-[var(--indigo-dark)]
-                       focus:outline-none focus-visible:ring-4 focus-visible:ring-[var(--yellow)]/30
-                       transition shadow-sm"
-                data-id="{{ post.id }}">
-                Delete
-              </button>
-            </div>
+                <form action="{% url 'forum:delete_post' post.id %}" method="post" class="js-delete inline-flex">
+                  {% csrf_token %}
+                  <button type="button"
+                          class="js-delete-btn inline-flex items-center justify-center px-5 py-2 rounded-full
+                                 border border-[var(--yellow)] text-[var(--yellow)]
+                                 hover:bg-[var(--yellow)] hover:text-[var(--indigo-dark)]
+                                 transition shadow-sm">Delete</button>
+                </form>
+              {% endif %}
             {% endif %}
           </div>
-        </div>
-
-        <!-- POST VOTE -->
-        <div class="mt-4 flex flex-wrap items-center gap-4 justify-between">
-          <span class="inline-flex items-center gap-3 rounded-full px-3 sm:px-4 py-1.5
-                       bg-[var(--white)] text-[var(--indigo-dark)]
-                       ring-1 ring-[rgb(0_0_0/0.08)] shadow-sm select-none">
-            <form action="{% url 'forum:upvote' post.id %}" method="post" class="inline-flex js-vote" data-post-id="{{ post.id }}" data-role="up">
-              {% csrf_token %}
-              <button type="button" class="js-vote-btn group inline-flex items-center justify-center h-7 w-7 rounded">
-                <svg class="icon-solid hidden" viewBox="0 0 20 20" width="20" height="20" fill="currentColor"><path d="M10 19a3.966 3.966 0 01-3.96-3.962V10.98H2.838a1.731 1.731 0 01-1.605-1.073 1.734 1.734 0 01.377-1.895L9.364.254a.925.925 0 011.272 0l7.754 7.759c.498.499.646 1.242.376 1.894-.27.652-.9 1.073-1.605 1.073h-3.202v4.058A3.965 3.965 0 019.999 19H10z"/></svg>
-                <svg class="icon-outline text-[rgb(0_0_0/0.45)] group-hover:text-[var(--indigo-dark)]"
-                     viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7 7h-4v6a3 3 0 0 1-6 0V10H5l7-7z"/></svg>
-                <span class="sr-only">Upvote</span>
-              </button>
-            </form>
-
-            <span class="body-font text-base js-score" id="score-{{ post.id }}">{{ post.score }}</span>
-
-            <form action="{% url 'forum:downvote' post.id %}" method="post" class="inline-flex js-vote" data-post-id="{{ post.id }}" data-role="down">
-              {% csrf_token %}
-              <button type="button" class="js-vote-btn group inline-flex items-center justify-center h-7 w-7 rounded">
-                <svg class="icon-solid hidden" viewBox="0 0 20 20" width="20" height="20" fill="currentColor"><path d="M10 1a3.966 3.966 0 013.96 3.962V9.02h3.202c.706 0 1.335.42 1.605 1.073.27.652.122 1.396-.377 1.895l-7.754 7.759a.925.925 0 01-1.272 0l-7.754-7.76a1.734 1.734 0 01-.376-1.894c.27-.652.9-1.073 1.605-1.073h3.202V4.962A3.965 3.965 0 0110 1z"/></svg>
-                <svg class="icon-outline text-[rgb(0_0_0/0.45)] group-hover:text-[var(--indigo-dark)]"
-                     viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21l-7-7h4V8a3 3 0 0 1 6 0v6h4l-7 7z"/></svg>
-                <span class="sr-only">Downvote</span>
-              </button>
-            </form>
-          </span>
         </div>
 
         <hr class="mt-5 border-[var(--indigo-dark)]"/>
 
         <!-- COMMENTS -->
         <section class="mt-4">
-          <div class="flex items-center justify-between mb-2">
-            <button type="button"
-                    class="js-toggle-comments inline-flex items-center gap-2 text-sm px-3 py-1 rounded hover:bg-[var(--indigo)]"
-                    data-post="{{ post.id }}">
-              <svg aria-hidden="true" viewBox="0 0 20 20" width="16" height="16" class="opacity-80">
-                <path fill="currentColor" d="M10 1a9 9 0 00-9 9c0 1.947.79 3.58 1.935 4.957L.231 17.661A.784.784 0 00.785 19H10a9 9 0 009-9 9 9 0 00-9-9z"></path>
-              </svg>
-              <span>Comments (<span id="c-count-{{ post.id }}">{{ post.active_comments|default:0 }}</span>)</span>
-            </button>
-          </div>
-
           <div id="c-wrap-{{ post.id }}" class="hidden space-y-4">
-            <ul id="c-list-{{ post.id }}" class="space-y-3"></ul>
+            <ul id="c-list-{{ post.id }}" class="space-y-4"></ul>
 
             {% if request.user.is_authenticated %}
             <form class="js-c-form flex flex-col gap-2" data-post="{{ post.id }}" action="{% url 'forum:comment_add' post.id %}" method="post">
               {% csrf_token %}
               <textarea name="content" rows="3"
                 class="w-full rounded-xl border border-[var(--indigo-dark)] bg-[var(--indigo-dark)]
-                       text-[var(--white)] p-3 focus:outline-none"
+                       text-[var(--white)] p-3 focus:outline-none body-font"
                 placeholder="Write comments..." required></textarea>
               <button class="self-end px-4 py-2 rounded bg-[var(--yellow)] text-[var(--indigo-dark)]">Kirim</button>
             </form>
             {% else %}
-              <p class="text-sm opacity-80">Silakan login untuk berkomentar.</p>
+              <p class="text-sm opacity-80 body-font">Silakan login untuk berkomentar.</p>
             {% endif %}
           </div>
         </section>
@@ -167,13 +164,13 @@
   <div class="relative z-10 w-full max-w-xl rounded-2xl border border-[var(--indigo-light)]
               p-6 bg-[var(--indigo)] text-[var(--white)]">
     <h3 class="heading-font text-2xl text-center leading-none text-[var(--yellow)]">TELL US YOUR STORY</h3>
-    <p class="text-center opacity-70 mt-2 mb-4">What stories do you have right now?</p>
+    <p class="text-center opacity-70 mt-2 mb-4 body-font">What stories do you have right now?</p>
 
     <form action="{% url 'forum:create_post' %}" method="post" class="space-y-3">
       {% csrf_token %}
       <textarea name="content" rows="5"
                 class="w-full rounded-xl border border-[var(--indigo-dark)]
-                       bg-[var(--indigo-dark)] text-[var(--white)] p-3 focus:outline-none"
+                       bg-[var(--indigo-dark)] text-[var(--white)] p-3 focus:outline-none body-font"
                 placeholder="Write your thoughts here..." required></textarea>
       <div class="flex justify-end gap-3 pt-2">
         <button type="button" id="closeModal"
@@ -187,9 +184,24 @@
 </div>
 {% endif %}
 
+<!-- MODAL: Confirm Delete (dipakai post) -->
+<div id="confirmDelete" class="fixed inset-0 hidden items-center justify-center">
+  <div class="absolute inset-0 bg-black/60"></div>
+  <div class="relative z-50 w-[320px] rounded-xl border border-[var(--indigo-light)]
+              bg-[var(--indigo)] text-[var(--white)] p-5">
+    <div class="heading-font text-lg mb-2">Delete?</div>
+    <p class="text-sm opacity-75 body-font">This action cannot be undone.</p>
+    <div class="mt-5 flex justify-end gap-2">
+      <button id="confirmCancel" class="px-4 py-2 rounded border border-[var(--indigo-dark)]
+                                      hover:bg-[var(--indigo-light)]">Cancel</button>
+      <button id="confirmOk" class="heading-font px-4 py-2 rounded bg-[var(--yellow)] text-[var(--indigo-dark)]">Delete</button>
+    </div>
+  </div>
+</div>
+
 <!-- ==== SCRIPTS ==== -->
 <script>
-/* modal */
+/* ===================== MODAL ADD ===================== */
 const modal=document.getElementById('postModal');
 const openBtn=document.getElementById('openModal');
 const closeBtn=document.getElementById('closeModal');
@@ -199,263 +211,295 @@ if(openBtn)openBtn.addEventListener('click',openModal);
 if(closeBtn)closeBtn.addEventListener('click',closeModal);
 if(modal)modal.addEventListener('click',e=>{if(e.target===modal)closeModal();});
 
-/* utils */
-function csrfFrom(el){const i=el.querySelector('input[name="csrfmiddlewaretoken"]');return i?i.value:'';}
-function el(id){return document.getElementById(id);}
-function esc(s){return (s||'').toString().replace(/[&<>"']/g,m=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;', "'":'&#39;' }[m]));}
-window.IS_AUTH = ("{{ request.user.is_authenticated|yesno:'true,false' }}" === "true");
+/* ===================== TOAST ===================== */
+function showToast(msg){
+  if(window.showToast){window.showToast(msg);return;}
+  let t=document.getElementById('__toast');
+  if(!t){
+    t=document.createElement('div');
+    t.id='__toast';
+    t.className='fixed bottom-6 left-1/2 -translate-x-1/2 px-4 py-2 rounded shadow z-50 transition-opacity';
+    t.style.background='var(--indigo-dark)';
+    t.style.color='var(--white)';
+    t.style.opacity=0;
+    document.body.appendChild(t);
+  }
+  t.textContent=msg; t.style.opacity=1; setTimeout(()=>t.style.opacity=0,1500);
+}
 
-/* ====== POST VOTE ====== */
-function setActiveIcons(form,isActive){const solid=form.querySelector('.icon-solid');const outline=form.querySelector('.icon-outline');if(!solid||!outline)return; if(isActive){solid.classList.remove('hidden');outline.classList.add('hidden');} else {solid.classList.add('hidden');outline.classList.remove('hidden');}}
+/* ===================== UTILS ===================== */
+window.IS_AUTH = ("{{ request.user.is_authenticated|yesno:'true,false' }}" === "true");
+function el(id){return document.getElementById(id);}
+function esc(s){return (s||'').toString().replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;', "'":'&#39;'}[m]));}
+function csrfFrom(scope=document){
+  const input=scope.querySelector('input[name="csrfmiddlewaretoken"]');
+  if(input) return input.value;
+  const m=document.cookie.match(/(?:^|;\s*)csrftoken=([^;]+)/);
+  return m?decodeURIComponent(m[1]):'';
+}
+/* Format waktu: g:i A · M d, Y (Asia/Jakarta) */
+function fmtDate(s){
+  try{
+    const d = (s instanceof Date) ? s : new Date(s);
+    if(isNaN(d)) return esc(s||'');
+    const t = new Intl.DateTimeFormat('en-US',{
+      hour:'numeric', minute:'2-digit', hour12:true, timeZone:'Asia/Jakarta'
+    }).format(d);
+    const mdY = new Intl.DateTimeFormat('en-US',{
+      month:'short', day:'2-digit', year:'numeric', timeZone:'Asia/Jakarta'
+    }).format(d);
+    return `${t} · ${mdY}`;
+  }catch{return esc(s||'');}
+}
+
+/* ===================== VOTE POST (AJAX) ===================== */
+function setActiveIcons(form,isActive){
+  const solid=form.querySelector('.icon-solid'); const outline=form.querySelector('.icon-outline');
+  if(!solid||!outline) return;
+  if(isActive){solid.classList.remove('hidden'); outline.classList.add('hidden');}
+  else {solid.classList.add('hidden'); outline.classList.remove('hidden');}
+}
 document.querySelectorAll('form.js-vote .js-vote-btn').forEach(btn=>{
   btn.addEventListener('click',async(e)=>{
     const form=e.currentTarget.closest('form.js-vote'); const csrf=csrfFrom(form); const postId=form.dataset.postId;
     try{
       const res=await fetch(form.action,{method:'POST',headers:{'X-CSRFToken':csrf,'X-Requested-With':'XMLHttpRequest'}});
-      if(!res.ok)throw new Error('bad'); const data=await res.json(); if(!data.ok)throw new Error('fail');
-      const scoreEl=el(`score-${postId}`); if(scoreEl)scoreEl.textContent=data.score;
+      if(!res.ok)throw 0; const data=await res.json(); if(!data.ok)throw 0;
+      const scoreEl=el(`score-${postId}`); if(scoreEl) scoreEl.textContent=data.score;
       const pill=form.closest('span'); const upForm=pill.querySelector('form.js-vote[data-role="up"]'); const downForm=pill.querySelector('form.js-vote[data-role="down"]');
       setActiveIcons(upForm,data.user_vote===1); setActiveIcons(downForm,data.user_vote===-1);
-    }catch{console.warn('Failed to vote');}
+    }catch{ showToast('Failed to vote'); }
   });
 });
 
-/* ====== COMMENTS (semua JS UX seperti versi sebelumnya: counter, reply toggle, delete, vote) ====== */
-let OPEN_REPLY_FORM = null;
+/* ===================== CONFIRM DELETE MODAL (POST) ===================== */
+const confirmWrap = document.getElementById('confirmDelete');
+const confirmOk = document.getElementById('confirmOk');
+const confirmCancel = document.getElementById('confirmCancel');
+let pendingAction = null;
+function openConfirm(runFn){ pendingAction = runFn; confirmWrap.classList.remove('hidden'); confirmWrap.classList.add('flex'); }
+function closeConfirm(){ confirmWrap.classList.add('hidden'); confirmWrap.classList.remove('flex'); pendingAction=null; }
+if(confirmCancel) confirmCancel.addEventListener('click', closeConfirm);
+if(confirmWrap) confirmWrap.addEventListener('click', e=>{ if(e.target===confirmWrap) closeConfirm(); });
+if(confirmOk){ confirmOk.addEventListener('click', async ()=>{ if(!pendingAction){ closeConfirm(); return; } try{ await pendingAction(); } finally{ closeConfirm(); } }); }
 
-function voteButtonsHTML(postId, c){
-  const upActive = c.user_vote === 1 ? '' : 'opacity-50';
-  const downActive = c.user_vote === -1 ? '' : 'opacity-50';
-  return `
-  <div class="inline-flex items-center gap-2">
-    <button class="js-c-vote ${upActive}" data-post="${postId}" data-id="${c.id}" data-act="up" title="Upvote">▲</button>
-    <span class="min-w-[2ch] text-center js-c-score" id="cscore-${c.id}">${c.score}</span>
-    <button class="js-c-vote ${downActive}" data-post="${postId}" data-id="${c.id}" data-act="down" title="Downvote">▼</button>
-  </div>`;
-}
-function toggleRepliesHTML(c){
-  if(!c.replies_count) return '';
-  return `<button class="js-toggle-replies text-xs underline opacity-80 hover:opacity-100"
-                  data-id="${c.id}">View replies (${c.replies_count})</button>`;
-}
+/* ===================== DELETE POST (AJAX + confirm) ===================== */
+document.querySelectorAll('.js-delete-btn').forEach(btn=>{
+  btn.addEventListener('click',(e)=>{
+    const form=e.currentTarget.closest('form.js-delete');
+    const csrf=csrfFrom(form); const url=form.action; const article=form.closest('article');
+    openConfirm(async ()=>{
+      const res=await fetch(url,{method:'POST',headers:{'X-CSRFToken':csrf,'X-Requested-With':'XMLHttpRequest'}});
+      if(!res.ok) throw 0; const data=await res.json(); if(!data.ok) throw 0;
+      article.style.transition='opacity .2s, transform .2s'; article.style.opacity='0'; article.style.transform='scale(0.98)';
+      setTimeout(()=>article.remove(),180);
+      showToast('Post deleted');
+    });
+  });
+});
+
+/* ===================== COMMENTS (load / render) ===================== */
+/* Visible-branch version */
 function oneCommentHTML(postId, c, level=0){
-  const pad = Math.min(level*14, 56);
+  const STEP = 14; // indent width per level (px)
+  const indent = Math.max(level - 1, 0) * STEP;
+  const replyCount = (Array.isArray(c.replies) ? c.replies.length : (c.reply_count || 0)) || 0;
+  const hasChildren = replyCount > 0;
+
   return `
-  <li id="c-${c.id}" class="rounded-lg p-3" style="margin-left:${pad}px">
-    <div class="flex items-start justify-between gap-3">
-      <div class="text-xs body-font">
-        <span class="text-[var(--yellow)] font-semibold">${esc(c.author)}</span>
-        <span class="text-[var(--yellow)]"> · ${c.created}</span>
+  <li id="c-${c.id}" class="rounded-lg">
+    <div class="flex">
+      ${level > 0 ? `<div style="width:${indent}px"></div>` : ``}
+      ${level > 0 ? `
+        <div class="relative mr-3" style="width:${STEP}px">
+          <span class="absolute left-1/2 -translate-x-1/2 top-0 bottom-0 border-l border-[var(--indigo-dark)]/50"></span>
+        </div>
+      ` : ``}
+
+      <div class="flex-1 relative">
+        ${level > 0 ? `<span class="absolute -left-3 top-4 w-3 border-t border-[var(--indigo-dark)]/50"></span>` : ``}
+
+        <div class="text-sm opacity-100 text-[var(--yellow)] flex items-center gap-2">
+          <span class="font-bebas text-base sm:text-lg leading-none tracking-wide align-middle">
+            ${esc(c.author)}
+          </span>
+          <span class="body-font align-middle"> · ${esc(fmtDate(c.created_iso || c.created))}</span>
+        </div>
+
+        <div class="mt-1 body-font js-r-content whitespace-pre-line">${esc(c.content)}</div>
+
+        <div class="mt-2 flex items-center gap-4 body-font">
+            ${window.IS_AUTH ? `<a href="#" class="js-reply-btn text-sm underline underline-offset-2 hover:opacity-70 opacity-50" data-post="${postId}" data-id="${c.id}">Reply</a>` : ''}
+            ${hasChildren ? `<a href="#" class="js-replies-toggle text-sm underline underline-offset-2 opacity-50 hover:opacity-70" data-id="${c.id}" data-count="${replyCount}">View replies (${replyCount})</a>` : ''}
+        </div>
+
+        <div class="js-replies space-y-4 mt-4 ${hasChildren ? 'hidden' : ''}"></div>
       </div>
-      ${window.IS_AUTH ? voteButtonsHTML(postId, c) : ''}
     </div>
-    <div class="mt-1 whitespace-pre-line">${esc(c.content)}</div>
-    <div class="mt-2 flex items-center gap-3">
-      ${toggleRepliesHTML(c)}
-      ${window.IS_AUTH ? `<button class="js-reply-btn text-xs underline opacity-80 hover:opacity-100" data-post="${postId}" data-id="${c.id}">Reply</button>` : ''}
-      ${window.IS_AUTH && c.is_owner ? `<button class="js-c-del text-xs underline opacity-80 hover:opacity-100" data-id="${c.id}">Delete</button>` : ''}
-    </div>
-    <div class="js-replies space-y-3 mt-3 hidden"></div>
   </li>`;
 }
+
 function renderTree(postId, items, container, level=0){
   for(const c of items){
-    container.insertAdjacentHTML('beforeend', oneCommentHTML(postId, c, level));
-    if(c.replies && c.replies.length){
-      const li = el(`c-${c.id}`); const sub = li.querySelector('.js-replies');
+    container.insertAdjacentHTML('beforeend', oneCommentHTML(postId,c,level));
+    const sub = el(`c-${c.id}`).querySelector('.js-replies');
+    if(sub && c.replies && c.replies.length){
+      // render children but keep hidden initially (toggle will show)
       renderTree(postId, c.replies, sub, level+1);
     }
   }
 }
+
 async function loadComments(postId){
-  const list = el(`c-list-${postId}`); if(!list) return;
-  list.innerHTML = '';
+  const list=el(`c-list-${postId}`); if(!list) return; list.innerHTML='';
   try{
-    const url = `{% url 'forum:comment_list' 0 %}`.replace('/0/','/'+postId+'/') + `?t=${Date.now()}`;
-    const res = await fetch(url, { headers:{'X-Requested-With':'XMLHttpRequest','Cache-Control':'no-cache'}, cache:'no-store' });
-    if(!res.ok) throw 0; const data = await res.json(); if(!data.ok) throw 0;
+    const url=`{% url 'forum:comment_list' 0 %}`.replace('/0/','/'+postId+'/')+`?t=${Date.now()}`;
+    const res=await fetch(url,{headers:{'X-Requested-With':'XMLHttpRequest','Cache-Control':'no-cache'},cache:'no-store'});
+    if(!res.ok) throw 0; const data=await res.json(); if(!data.ok) throw 0;
     renderTree(postId, data.items, list, 0);
-    const cnt = document.getElementById(`c-count-${postId}`); if(cnt) cnt.textContent = data.count;
-  }catch{ console.warn('Failed to fetch comments'); }
+    const cnt=el(`c-count-${postId}`); if(cnt) cnt.textContent=data.count;
+  }catch{ showToast('Gagal memuat komentar'); }
 }
+
 document.querySelectorAll('.js-toggle-comments').forEach(btn=>{
   btn.addEventListener('click', async ()=>{
-    const postId = btn.dataset.post;
-    const wrap = el(`c-wrap-${postId}`);
-    if(!wrap) return;
-    const opening = wrap.classList.contains('hidden');
-    wrap.classList.toggle('hidden');
-    if(opening){ await loadComments(postId); }
+    const postId=btn.dataset.post; const wrap=el(`c-wrap-${postId}`); if(!wrap) return;
+    const opening=wrap.classList.contains('hidden'); wrap.classList.toggle('hidden'); if(opening){ await loadComments(postId); }
   });
 });
+
+/* Create comment */
 document.querySelectorAll('form.js-c-form').forEach(f=>{
   f.addEventListener('submit', async (e)=>{
     e.preventDefault();
-    const postId = f.dataset.post, csrf = csrfFrom(f);
-    const fd = new FormData(f);
+    const postId=f.dataset.post, csrf=csrfFrom(f); const fd=new FormData(f);
     try{
-      const res = await fetch(f.action, {method:'POST', headers:{'X-Requested-With':'XMLHttpRequest','X-CSRFToken':csrf}, body:fd});
-      if(!res.ok) throw 0; const data = await res.json(); if(!data.ok) throw 0;
-      const list = el(`c-list-${postId}`);
-      list.insertAdjacentHTML('afterbegin', oneCommentHTML(postId, data.item, 0));
+      const res=await fetch(f.action,{method:'POST',headers:{'X-Requested-With':'XMLHttpRequest','X-CSRFToken':csrf},body:fd});
+      if(!res.ok) throw 0; const data=await res.json(); if(!data.ok) throw 0;
+      const list=el(`c-list-${postId}`); list.insertAdjacentHTML('afterbegin', oneCommentHTML(postId,data.item,0));
       f.reset();
-      const cnt = document.getElementById(`c-count-${postId}`); if(cnt) cnt.textContent = (parseInt(cnt.textContent||'0',10)+1);
-    }catch{ alert('Gagal kirim komentar'); }
+      const cnt=el(`c-count-${postId}`); if(cnt) cnt.textContent=(parseInt(cnt.textContent||'0',10)+1);
+    }catch{ showToast('Gagal kirim komentar'); }
   });
 });
+
+let OPEN_REPLY_FORM=null;
+
+/* ===================== DELEGATED HANDLERS (Reply + Show/Hide replies) ===================== */
 document.addEventListener('click', async (e)=>{
-  const rep = e.target.closest('.js-reply-btn');
+  /* open reply form */
+  const rep=e.target.closest('.js-reply-btn');
   if(rep){
-    const postId = rep.dataset.post, parentId = rep.dataset.id;
-    const li = el(`c-${parentId}`); if(!li) return;
-    if(OPEN_REPLY_FORM){ OPEN_REPLY_FORM.remove(); OPEN_REPLY_FORM = null; }
-    const actionUrl = `{% url 'forum:comment_add' 0 %}`.replace('/0/','/'+postId+'/');
-    const csrfHTML = document.querySelector('form.js-c-form input[name=csrfmiddlewaretoken]').outerHTML;
+    e.preventDefault();
+    const postId=rep.dataset.post, parentId=rep.dataset.id, li=el(`c-${parentId}`);
+    if(!li) return;
+    if(OPEN_REPLY_FORM){ OPEN_REPLY_FORM.remove(); OPEN_REPLY_FORM=null; }
+    const csrfHTML=(document.querySelector('form.js-c-form input[name=csrfmiddlewaretoken]')||{outerHTML:''}).outerHTML;
+    const actionUrl=`{% url 'forum:comment_add' 0 %}`.replace('/0/','/'+postId+'/');
     li.insertAdjacentHTML('beforeend', `
-      <form class="js-reply-form mt-2 flex flex-col gap-2" data-post="${postId}" data-parent="${parentId}" action="${actionUrl}" method="post">
+      <form class="js-reply-form mt-3 flex flex-col gap-2" data-post="${postId}" data-parent="${parentId}" action="${actionUrl}" method="post">
         ${csrfHTML}
         <textarea name="content" rows="2" class="w-full rounded-xl border border-[var(--indigo-dark)]
-                 bg-[var(--indigo-dark)] text-[var(--white)] p-3 focus:outline-none"
+                 bg-[var(--indigo-dark)] text-[var(--white)] p-3 focus:outline-none body-font"
                  placeholder="Write a reply..." required></textarea>
-        <div class="flex justify-end">
-          <button class="px-3 py-1.5 rounded bg-[var(--yellow)] text-[var(--indigo-dark)]">Reply</button>
+        <div class="flex justify-end gap-2">
+          <button class="px-3 py-1.5 rounded bg-[var(--yellow)] text-[var(--indigo-dark)] js-reply-send">Reply</button>
+          <button type="button" class="px-3 py-1.5 rounded border border-[var(--indigo-dark)] js-reply-cancel">Cancel</button>
         </div>
       </form>
     `);
-    OPEN_REPLY_FORM = li.querySelector('form.js-reply-form');
-    return;
+    OPEN_REPLY_FORM=li.querySelector('form.js-reply-form'); return;
   }
-  const rform = e.target.closest('form.js-reply-form');
-  if(rform && e.target.tagName === 'BUTTON'){
+
+  if(e.target.closest('.js-reply-cancel')){
     e.preventDefault();
-    const postId = rform.dataset.post, parentId = rform.dataset.parent;
-    const csrf = csrfFrom(rform);
-    const fd = new FormData(rform); fd.append('parent', parentId);
-    try{
-      const res = await fetch(rform.getAttribute('action'), {method:'POST', headers:{'X-Requested-With':'XMLHttpRequest','X-CSRFToken':csrf}, body:fd});
-      if(!res.ok) throw 0; const data = await res.json(); if(!data.ok) throw 0;
-      const parentLi = el(`c-${parentId}`);
-      const repliesWrap = parentLi.querySelector('.js-replies');
-      let toggle = parentLi.querySelector('.js-toggle-replies');
-      if(!toggle){
-        parentLi.querySelector('.mt-2').insertAdjacentHTML('afterbegin',
-          `<button class="js-toggle-replies text-xs underline opacity-80 hover:opacity-100" data-id="${parentId}">View replies (1)</button>`);
-        toggle = parentLi.querySelector('.js-toggle-replies');
-      }else{
-        const m = toggle.textContent.match(/\((\d+)\)/); const n = m? parseInt(m[1],10)+1 : 1;
-        toggle.textContent = `View replies (${n})`;
-      }
-      repliesWrap.classList.remove('hidden');
-      repliesWrap.insertAdjacentHTML('beforeend', oneCommentHTML(postId, data.item, 1));
-      rform.remove(); OPEN_REPLY_FORM = null;
-      const cnt = document.getElementById(`c-count-${postId}`); if(cnt) cnt.textContent = (parseInt(cnt.textContent||'0',10)+1);
-    }catch{ alert('Gagal kirim reply'); }
-    return;
-  }
-  const del = e.target.closest('.js-c-del');
-  if(del){
-    if(!confirm('Hapus komentar ini beserta semua balasannya?')) return;
-    const commentId = del.dataset.id;
-    const li = el(`c-${commentId}`); if(!li) return;
-    const postId = li.closest('article').id.replace('post-','');
-    const csrf = document.querySelector('form.js-c-form[data-post="'+postId+'"] input[name=csrfmiddlewaretoken]').value;
-    const url = `{% url 'forum:comment_delete' 0 0 %}`.replace('/0/0/','/'+postId+'/'+commentId+'/');
-    try{
-      const res = await fetch(url, {method:'POST', headers:{'X-Requested-With':'XMLHttpRequest','X-CSRFToken':csrf}});
-      if(!res.ok) throw 0;
-      await loadComments(postId);
-    }catch{ alert('Gagal hapus komentar'); }
-    return;
-  }
-  const vbtn = e.target.closest('.js-c-vote');
-  if(vbtn){
-    const postId = vbtn.dataset.post, cid = vbtn.dataset.id, act = vbtn.dataset.act;
-    const csrf = document.querySelector('form.js-c-form[data-post="'+postId+'"] input[name=csrfmiddlewaretoken]').value;
-    const url = `{% url 'forum:comment_vote' 0 0 'up' %}`.replace('/0/0/up','/'+postId+'/'+cid+'/'+act);
-    try{
-      const res = await fetch(url, {method:'POST', headers:{'X-Requested-With':'XMLHttpRequest','X-CSRFToken':csrf}});
-      if(!res.ok) throw 0; const data = await res.json(); if(!data.ok) throw 0;
-      const scoreEl = el('cscore-'+cid); if(scoreEl) scoreEl.textContent = data.score;
-      const li = el('c-'+cid);
-      li.querySelectorAll('.js-c-vote').forEach(b=>{
-        b.classList.add('opacity-50');
-        if((data.user_vote===1 && b.dataset.act==='up') || (data.user_vote===-1 && b.dataset.act==='down')){
-          b.classList.remove('opacity-50');
-        }
-      });
-    }catch{ alert('Gagal vote'); }
-    return;
-  }
-  const tbtn = e.target.closest('.js-toggle-replies');
-  if(tbtn){
-    const li = el(`c-${tbtn.dataset.id}`); if(!li) return;
-    const box = li.querySelector('.js-replies'); if(!box) return;
-    const hidden = box.classList.contains('hidden');
-    box.classList.toggle('hidden');
-    const m = tbtn.textContent.match(/\((\d+)\)/); const n = m? m[1] : '';
-    tbtn.textContent = (hidden ? `Hide replies (${n})` : `View replies (${n})`);
+    const frm=e.target.closest('form.js-reply-form');
+    if(frm){ frm.remove(); OPEN_REPLY_FORM=null; }
     return;
   }
 
-  /* POST edit/delete (AJAX + confirm) */
+  if(e.target.closest('.js-reply-send')){
+    e.preventDefault();
+    const rform=e.target.closest('form.js-reply-form'); if(!rform) return;
+    const postId=rform.dataset.post, parentId=rform.dataset.parent, csrf=csrfFrom(rform);
+    const fd=new FormData(rform); fd.append('parent', parentId);
+    try{
+      const res=await fetch(rform.action,{method:'POST',headers:{'X-Requested-With':'XMLHttpRequest','X-CSRFToken':csrf},body:fd});
+      if(!res.ok) throw 0; const data=await res.json(); if(!data.ok) throw 0;
+
+      const parentLi = el(`c-${parentId}`);
+      const sub = parentLi.querySelector('.js-replies');
+      const toggle = parentLi.querySelector('.js-replies-toggle');
+
+      sub.classList.remove('hidden');
+      sub.insertAdjacentHTML('beforeend', oneCommentHTML(postId,data.item,1));
+
+      const newCount = (toggle ? parseInt(toggle.dataset.count||'0',10) : 0) + 1;
+      if(toggle){
+        toggle.dataset.count = String(newCount);
+        toggle.textContent = `Hide replies (${newCount})`;
+      }else{
+        const controls = parentLi.querySelector('.mt-2.flex.items-center.gap-4.body-font');
+        controls.insertAdjacentHTML('beforeend',
+          `<a href="#" class="js-replies-toggle text-sm underline underline-offset-2 text-[var(--yellow)] hover:brightness-110" data-id="${parentId}" data-count="${newCount}">Hide replies (${newCount})</a>`
+        );
+      }
+
+      const cnt=el(`c-count-${postId}`); if(cnt) cnt.textContent=(parseInt(cnt.textContent||'0',10)+1);
+
+      rform.remove(); OPEN_REPLY_FORM=null;
+    }catch{ showToast('Gagal kirim reply'); }
+    return;
+  }
+
+  /* toggle view/hide replies */
+  const tog = e.target.closest('.js-replies-toggle');
+  if(tog){
+    e.preventDefault();
+    const id = tog.dataset.id;
+    const li = el(`c-${id}`);
+    const sub = li?.querySelector('.js-replies');
+    if(!sub) return;
+    const count = parseInt(tog.dataset.count||'0',10);
+    const willShow = sub.classList.contains('hidden');
+    sub.classList.toggle('hidden');
+    tog.textContent = willShow ? `Hide replies (${count})` : `View replies (${count})`;
+  }
+
+  /* EDIT POST */
   const pEdit = e.target.closest('.js-post-edit');
   if(pEdit){
-    const id = pEdit.dataset.id;
-    const contentEl = document.getElementById('post-content-'+id);
+    const id=pEdit.dataset.id;
+    const contentEl=document.getElementById('post-content-'+id);
     if(!contentEl) return;
-    const existing = document.getElementById('post-edit-form-'+id);
-    if(existing){ existing.remove(); return; }
-    const csrfHTML = document.querySelector('form.js-c-form input[name=csrfmiddlewaretoken]')?.outerHTML || '';
+    if(document.getElementById('post-edit-form-'+id)) return;
+    const csrfHTML=(document.querySelector('form.js-c-form input[name=csrfmiddlewaretoken]')||{outerHTML:''}).outerHTML;
     contentEl.insertAdjacentHTML('afterend', `
-      <form id="post-edit-form-${id}" class="mt-2 flex flex-col gap-2" method="post" action="{% url 'forum:edit_post' 0 %}".replace('/0/','/${id}/')>
+      <form id="post-edit-form-${id}" class="mt-3 flex flex-col gap-2 js-post-edit-form" data-id="${id}">
         ${csrfHTML}
-        <textarea rows="4" class="w-full rounded-xl border border-[var(--indigo-dark)] bg-[var(--indigo-dark)] text-[var(--white)] p-3">${contentEl.textContent.trim()}</textarea>
+        <textarea rows="4" class="w-full rounded-xl border border-[var(--indigo-dark)] bg-[var(--indigo-dark)]
+                 text-[var(--white)] p-3 focus:outline-none body-font">${contentEl.textContent.trim()}</textarea>
         <div class="flex gap-2 justify-end">
-          <button type="button" class="js-post-save px-3 py-1.5 rounded bg-[var(--yellow)] text-[var(--indigo-dark)]" data-id="${id}">Save</button>
-          <button type="button" class="js-post-cancel px-3 py-1.5 rounded border border-[var(--indigo-dark)]" data-id="${id}">Cancel</button>
+          <button class="px-3 py-1.5 rounded bg-[var(--yellow)] text-[var(--indigo-dark)] js-post-save">Save</button>
+          <button type="button" class="px-3 py-1.5 rounded border border-[var(--indigo-dark)] js-post-cancel">Cancel</button>
         </div>
       </form>
     `);
     return;
   }
-  const pCancel = e.target.closest('.js-post-cancel');
-  if(pCancel){
-    const id = pCancel.dataset.id;
-    const form = document.getElementById('post-edit-form-'+id);
-    if(form) form.remove();
-    return;
-  }
-  const pSave = e.target.closest('.js-post-save');
-  if(pSave){
-    const id = pSave.dataset.id;
-    const form = document.getElementById('post-edit-form-'+id);
-    if(!form) return;
-    const csrf = csrfFrom(form);
-    const ta = form.querySelector('textarea');
+  if(e.target.closest('.js-post-cancel')){ e.preventDefault(); e.target.closest('form.js-post-edit-form')?.remove(); return; }
+  if(e.target.closest('.js-post-save')){
+    e.preventDefault();
+    const form=e.target.closest('form.js-post-edit-form'); const id=form.dataset.id;
+    const ta=form.querySelector('textarea'); const csrf=csrfFrom(form);
     try{
-      const res = await fetch(`{% url 'forum:edit_post' 0 %}`.replace('/0/','/'+id+'/'), {
-        method:'POST', headers:{'X-Requested-With':'XMLHttpRequest','X-CSRFToken':csrf,'Content-Type':'application/x-www-form-urlencoded'},
-        body: new URLSearchParams({content: ta.value})
-      });
-      if(!res.ok) throw 0; const data = await res.json(); if(!data.ok) throw 0;
-      document.getElementById('post-content-'+id).textContent = data.content;
-      form.remove();
-    }catch{ alert('Gagal menyimpan perubahan'); }
+      const url=`{% url 'forum:edit_post' 0 %}`.replace('/0/','/'+id+'/');
+      const res=await fetch(url,{method:'POST',headers:{'X-Requested-With':'XMLHttpRequest','X-CSRFToken':csrf,'Content-Type':'application/x-www-form-urlencoded'},body:new URLSearchParams({content:ta.value})});
+      if(!res.ok) throw 0; const data=await res.json(); if(!data.ok) throw 0;
+      document.getElementById('post-content-'+id).textContent=data.content;
+      form.remove(); showToast('Post updated');
+    }catch{ showToast('Gagal update post'); }
     return;
-  }
-  const pDel = e.target.closest('.js-post-del');
-  if(pDel){
-    if(!confirm('Hapus postingan ini beserta semua komentarnya?')) return;
-    const id = pDel.dataset.id;
-    const anyCsrf = document.querySelector('input[name=csrfmiddlewaretoken]');
-    const csrf = anyCsrf ? anyCsrf.value : '';
-    try{
-      const res = await fetch(`{% url 'forum:delete_post' 0 %}`.replace('/0/','/'+id+'/'), {
-        method:'POST', headers:{'X-Requested-With':'XMLHttpRequest','X-CSRFToken':csrf}
-      });
-      if(!res.ok) throw 0; const data = await res.json(); if(!data.ok) throw 0;
-      const art = document.getElementById('post-'+id); if(art) art.remove();
-    }catch{ alert('Gagal hapus post'); }
   }
 });
 </script>
