@@ -42,7 +42,7 @@ class Vote(models.Model):
 
 
 class Comment(models.Model):
-    post = models.ForeignKey(ForumPost, related_name="comments", on_delete=models.CASCADE)  # CASCADE ke post
+    post = models.ForeignKey(ForumPost, related_name="comments", on_delete=models.CASCADE)
     author = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         null=True, blank=True,
@@ -52,7 +52,7 @@ class Comment(models.Model):
     name = models.CharField(max_length=100, blank=True)
     content = models.TextField()
     parent = models.ForeignKey(
-        "self", null=True, blank=True, on_delete=models.CASCADE, related_name="replies"  # CASCADE subtree
+        "self", null=True, blank=True, on_delete=models.CASCADE, related_name="replies"
     )
     is_active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -63,30 +63,5 @@ class Comment(models.Model):
     def display_name(self):
         return (self.author.get_username() if self.author else None) or (self.name or "Anon")
 
-    @property
-    def score(self) -> int:
-        return self.comment_votes.aggregate(total=Sum("value"))["total"] or 0
-
     def __str__(self) -> str:
         return f"Comment({self.id}) by {self.display_name()}"
-
-
-class CommentVote(models.Model):
-    UP, DOWN = 1, -1
-    VALUE_CHOICES = ((UP, "Upvote"), (DOWN, "Downvote"))
-
-    comment = models.ForeignKey(
-        Comment, related_name="comment_votes", on_delete=models.CASCADE
-    )
-    user = models.ForeignKey(
-        settings.AUTH_USER_MODEL, related_name="comment_votes", on_delete=models.CASCADE
-    )
-    value = models.SmallIntegerField(choices=VALUE_CHOICES)
-    created_at = models.DateTimeField(auto_now_add=True)
-
-    class Meta:
-        constraints = [
-            models.UniqueConstraint(
-                fields=["comment", "user"], name="unique_vote_per_user_per_comment"
-            ),
-        ]

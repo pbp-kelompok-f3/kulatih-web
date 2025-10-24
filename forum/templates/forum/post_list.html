@@ -12,6 +12,7 @@
             <span class="heading-font inline-block mt-2 ml-1 text-lg sm:text-xl px-3 py-1 rounded tracking-wide
                         bg-[var(--white)] text-[var(--indigo-dark)]">SHARE YOUR THOUGHTS</span>
         </div>
+
         <div class="sm:self-end">
             {% if request.user.is_authenticated %}
             <button id="openModal"
@@ -31,7 +32,49 @@
         </div>
         </div>
 
-        <!-- LIST POSTS -->
+        <!-- FILTER BAR (Search + My posts) -->
+        <form method="get" class="rounded-xl border border-[var(--indigo-light)] bg-[var(--indigo)]/40 p-3 sm:p-4 mb-2">
+        <div class="flex flex-col sm:flex-row gap-3 sm:items-center">
+            <div class="flex-1">
+            <input
+                type="text"
+                name="q"
+                value="{{ q|default:'' }}"
+                placeholder="Search posts or author..."
+                class="w-full rounded-md px-3 py-2 body-font
+                    bg-[var(--indigo-dark)] border border-[var(--indigo-light)]
+                    text-[var(--white)] placeholder:text-[var(--white)]/50 focus:outline-none"
+            />
+            </div>
+
+            <label class="inline-flex items-center gap-2 text-sm body-font">
+            <input
+                type="checkbox"
+                name="mine"
+                value="1"
+                {% if mine %}checked{% endif %}
+                {% if not request.user.is_authenticated %}disabled{% endif %}
+                class="rounded border-[var(--indigo-light)] bg-[var(--indigo-dark)]"
+            />
+            <span>My posts</span>
+            {% if not request.user.is_authenticated %}
+                <span class="opacity-60">(login required)</span>
+            {% endif %}
+            </label>
+
+            <div class="flex gap-2">
+            <button class="px-4 py-2 rounded-md bg-[var(--yellow)] text-[var(--indigo-dark)] heading-font">
+                Apply
+            </button>
+            <a href="{% url 'forum:post_list' %}"
+                class="px-4 py-2 rounded-md border border-[var(--indigo-light)] hover:bg-[var(--indigo)] body-font">
+                Clear
+            </a>
+            </div>
+        </div>
+        </form>
+
+        <!-- POSTS -->
         <div id="forum-posts" class="space-y-6">
         {% for post in posts %}
         <article id="post-{{ post.id }}"
@@ -58,10 +101,9 @@
 
             <!-- FOOTER BAR -->
             <div class="mt-4 flex items-center justify-between">
-            <!-- LEFT: Comments toggle -->
+            <!-- LEFT: toggle comments -->
             <button type="button"
-                    class="js-toggle-comments inline-flex items-center gap-2 text-sm px-3 py-1 rounded hover:bg-[var(--indigo)]
-                            body-font"
+                    class="js-toggle-comments inline-flex items-center gap-2 text-sm px-3 py-1 rounded hover:bg-[var(--indigo)] body-font"
                     data-post="{{ post.id }}">
                 <svg aria-hidden="true" viewBox="0 0 20 20" width="18" height="18" class="opacity-80">
                 <path fill="currentColor" d="M10 1a9 9 0 00-9 9c0 1.947.79 3.58 1.935 4.957L.231 17.661A.784.784 0 00.785 19H10a9 9 0 009-9 9 9 0 00-9-9z"></path>
@@ -69,9 +111,9 @@
                 <span class="uppercase tracking-wide">COMMENTS (<span id="c-count-{{ post.id }}">{{ post.active_comments|default:0 }}</span>)</span>
             </button>
 
-            <!-- RIGHT: vote + time + actions -->
+            <!-- RIGHT: vote + time + author-only actions -->
             <div class="flex items-center gap-3 sm:gap-4">
-                <!-- Vote pill -->
+                <!-- vote pill -->
                 <span class="inline-flex items-center gap-3 rounded-full px-3 sm:px-4 py-1.5
                             bg-[var(--white)] text-[var(--indigo-dark)]
                             ring-1 ring-[rgb(0_0_0/0.08)] shadow-sm select-none">
@@ -84,9 +126,7 @@
                     <span class="sr-only">Upvote</span>
                     </button>
                 </form>
-
                 <span class="body-font text-base js-score" id="score-{{ post.id }}">{{ post.score }}</span>
-
                 <form action="{% url 'forum:downvote' post.id %}" method="post" class="inline-flex js-vote" data-post-id="{{ post.id }}" data-role="down">
                     {% csrf_token %}
                     <button type="button" class="js-vote-btn group inline-flex items-center justify-center h-7 w-7 rounded">
@@ -98,28 +138,26 @@
                 </form>
                 </span>
 
-                <!-- Time -->
+                <!-- time -->
                 <div class="text-sm text-[var(--yellow)] whitespace-nowrap body-font">
                 {% if post.local_created %}{{ post.local_created|date:"g:i A · M d, Y" }}{% else %}{{ post.created_at|date:"g:i A · M d, Y" }}{% endif %}
                 </div>
 
-                <!-- Actions (edit/delete) -->
-                {% if request.user.is_authenticated %}
-                {% if request.user.is_staff or request.user.id == post.author_id %}
-                    <button class="js-post-edit inline-flex items-center justify-center px-5 py-2 rounded-full
+                <!-- author-only actions -->
+                {% if request.user.is_authenticated and request.user.id == post.author_id %}
+                <button class="js-post-edit inline-flex items-center justify-center px-5 py-2 rounded-full
                                 border border-[var(--yellow)] text-[var(--yellow)]
                                 hover:bg-[var(--yellow)] hover:text-[var(--indigo-dark)]
                                 transition shadow-sm" data-id="{{ post.id }}">Edit</button>
 
-                    <form action="{% url 'forum:delete_post' post.id %}" method="post" class="js-delete inline-flex">
+                <form action="{% url 'forum:delete_post' post.id %}" method="post" class="js-delete inline-flex">
                     {% csrf_token %}
                     <button type="button"
                             class="js-delete-btn inline-flex items-center justify-center px-5 py-2 rounded-full
-                                    border border-[var(--yellow)] text-[var(--yellow)]
-                                    hover:bg-[var(--yellow)] hover:text-[var(--indigo-dark)]
-                                    transition shadow-sm">Delete</button>
-                    </form>
-                {% endif %}
+                                border border-[var(--yellow)] text-[var(--yellow)]
+                                hover:bg-[var(--yellow)] hover:text-[var(--indigo-dark)]
+                                transition shadow-sm">Delete</button>
+                </form>
                 {% endif %}
             </div>
             </div>
@@ -129,20 +167,19 @@
             <!-- COMMENTS -->
             <section class="mt-4">
             <div id="c-wrap-{{ post.id }}" class="hidden space-y-4">
-                <ul id="c-list-{{ post.id }}" class="space-y-4"></ul>
-
+                <div class="flex items-center gap-4">
                 {% if request.user.is_authenticated %}
-                <form class="js-c-form flex flex-col gap-2" data-post="{{ post.id }}" action="{% url 'forum:comment_add' post.id %}" method="post">
-                {% csrf_token %}
-                <textarea name="content" rows="3"
-                    class="w-full rounded-xl border border-[var(--indigo-dark)] bg-[var(--indigo-dark)]
-                        text-[var(--white)] p-3 focus:outline-none body-font"
-                    placeholder="Write comments..." required></textarea>
-                <button class="self-end px-4 py-2 rounded bg-[var(--yellow)] text-[var(--indigo-dark)]">Kirim</button>
-                </form>
-                {% else %}
-                <p class="text-sm opacity-80 body-font">Silakan login untuk berkomentar.</p>
+                    <a href="#" class="js-post-reply text-sm underline underline-offset-2 opacity-70 hover:opacity-100"
+                    data-post="{{ post.id }}">Reply</a>
                 {% endif %}
+                <span class="text-xs opacity-60 body-font">to this post.</span>
+                </div>
+
+                <!-- compose holder (root) -->
+                <div id="c-compose-{{ post.id }}"></div>
+
+                <!-- daftar komentar -->
+                <ul id="c-list-{{ post.id }}" class="space-y-4"></ul>
             </div>
             </section>
         </article>
@@ -184,7 +221,7 @@
     </div>
     {% endif %}
 
-    <!-- MODAL: Confirm Delete (dipakai post) -->
+    <!-- MODAL: Confirm Delete -->
     <div id="confirmDelete" class="fixed inset-0 hidden items-center justify-center">
     <div class="absolute inset-0 bg-black/60"></div>
     <div class="relative z-50 w-[320px] rounded-xl border border-[var(--indigo-light)]
@@ -201,7 +238,7 @@
 
     <!-- ==== SCRIPTS ==== -->
     <script>
-    /* ===================== MODAL ADD ===================== */
+    /* ---------- Modal add post ---------- */
     const modal=document.getElementById('postModal');
     const openBtn=document.getElementById('openModal');
     const closeBtn=document.getElementById('closeModal');
@@ -211,7 +248,7 @@
     if(closeBtn)closeBtn.addEventListener('click',closeModal);
     if(modal)modal.addEventListener('click',e=>{if(e.target===modal)closeModal();});
 
-    /* ===================== TOAST ===================== */
+    /* ---------- Toast ---------- */
     function showToast(msg){
     if(window.showToast){window.showToast(msg);return;}
     let t=document.getElementById('__toast');
@@ -227,7 +264,7 @@
     t.textContent=msg; t.style.opacity=1; setTimeout(()=>t.style.opacity=0,1500);
     }
 
-    /* ===================== UTILS ===================== */
+    /* ---------- Utils ---------- */
     window.IS_AUTH = ("{{ request.user.is_authenticated|yesno:'true,false' }}" === "true");
     function el(id){return document.getElementById(id);}
     function esc(s){return (s||'').toString().replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;', "'":'&#39;'}[m]));}
@@ -237,22 +274,17 @@
     const m=document.cookie.match(/(?:^|;\s*)csrftoken=([^;]+)/);
     return m?decodeURIComponent(m[1]):'';
     }
-    /* Format waktu: g:i A · M d, Y (Asia/Jakarta) */
-    function fmtDate(s){
+    function fmtDate(iso){
     try{
-        const d = (s instanceof Date) ? s : new Date(s);
-        if(isNaN(d)) return esc(s||'');
-        const t = new Intl.DateTimeFormat('en-US',{
-        hour:'numeric', minute:'2-digit', hour12:true, timeZone:'Asia/Jakarta'
-        }).format(d);
-        const mdY = new Intl.DateTimeFormat('en-US',{
-        month:'short', day:'2-digit', year:'numeric', timeZone:'Asia/Jakarta'
-        }).format(d);
+        const d=new Date(iso);
+        if(isNaN(d)) return esc(iso||'');
+        const t=new Intl.DateTimeFormat('en-US',{hour:'numeric',minute:'2-digit',hour12:true,timeZone:'Asia/Jakarta'}).format(d);
+        const mdY=new Intl.DateTimeFormat('en-US',{month:'short',day:'2-digit',year:'numeric',timeZone:'Asia/Jakarta'}).format(d);
         return `${t} · ${mdY}`;
-    }catch{return esc(s||'');}
+    }catch{return esc(iso||'');}
     }
 
-    /* ===================== VOTE POST (AJAX) ===================== */
+    /* ---------- Vote post (AJAX) ---------- */
     function setActiveIcons(form,isActive){
     const solid=form.querySelector('.icon-solid'); const outline=form.querySelector('.icon-outline');
     if(!solid||!outline) return;
@@ -272,7 +304,7 @@
     });
     });
 
-    /* ===================== CONFIRM DELETE MODAL (POST) ===================== */
+    /* ---------- Confirm delete post ---------- */
     const confirmWrap = document.getElementById('confirmDelete');
     const confirmOk = document.getElementById('confirmOk');
     const confirmCancel = document.getElementById('confirmCancel');
@@ -283,73 +315,57 @@
     if(confirmWrap) confirmWrap.addEventListener('click', e=>{ if(e.target===confirmWrap) closeConfirm(); });
     if(confirmOk){ confirmOk.addEventListener('click', async ()=>{ if(!pendingAction){ closeConfirm(); return; } try{ await pendingAction(); } finally{ closeConfirm(); } }); }
 
-    /* ===================== DELETE POST (AJAX + confirm) ===================== */
-    document.querySelectorAll('.js-delete-btn').forEach(btn=>{
-    btn.addEventListener('click',(e)=>{
-        const form=e.currentTarget.closest('form.js-delete');
-        const csrf=csrfFrom(form); const url=form.action; const article=form.closest('article');
-        openConfirm(async ()=>{
+    document.addEventListener('click',(e)=>{
+    const del=e.target.closest('.js-delete-btn');
+    if(!del) return;
+    const form=del.closest('form.js-delete');
+    const csrf=csrfFrom(form); const url=form.action; const article=form.closest('article');
+    openConfirm(async ()=>{
         const res=await fetch(url,{method:'POST',headers:{'X-CSRFToken':csrf,'X-Requested-With':'XMLHttpRequest'}});
         if(!res.ok) throw 0; const data=await res.json(); if(!data.ok) throw 0;
         article.style.transition='opacity .2s, transform .2s'; article.style.opacity='0'; article.style.transform='scale(0.98)';
         setTimeout(()=>article.remove(),180);
         showToast('Post deleted');
-        });
     });
     });
 
-    /* ===================== COMMENTS (load / render) ===================== */
-    /* Visible-branch version */
+    /* ---------- Comments: render with branch lines ---------- */
     function oneCommentHTML(postId, c, level=0){
-    const STEP = 14; // indent width per level (px)
+    const STEP = 14;
     const indent = Math.max(level - 1, 0) * STEP;
-    const replyCount = (Array.isArray(c.replies) ? c.replies.length : (c.reply_count || 0)) || 0;
+    const replyCount = (Array.isArray(c.replies) ? c.replies.length : (c.replies_count || 0)) || 0;
     const hasChildren = replyCount > 0;
 
     return `
     <li id="c-${c.id}" class="rounded-lg">
         <div class="flex">
         ${level > 0 ? `<div style="width:${indent}px"></div>` : ``}
-        ${level > 0 ? `
-            <div class="relative mr-3" style="width:${STEP}px">
-            <span class="absolute left-1/2 -translate-x-1/2 top-0 bottom-0 border-l border-[var(--indigo-dark)]/50"></span>
-            </div>
-        ` : ``}
-
+        ${level > 0 ? `<div class="relative mr-3" style="width:${STEP}px"><span class="absolute left-1/2 -translate-x-1/2 top-0 bottom-0 border-l border-[var(--indigo-dark)]/50"></span></div>` : ``}
         <div class="flex-1 relative">
             ${level > 0 ? `<span class="absolute -left-3 top-4 w-3 border-t border-[var(--indigo-dark)]/50"></span>` : ``}
-
-            <div class="text-sm opacity-100 text-[var(--yellow)] flex items-center gap-2">
-            <span class="font-bebas text-base sm:text-lg leading-none tracking-wide align-middle">
-                ${esc(c.author)}
-            </span>
-            <span class="body-font align-middle"> · ${esc(fmtDate(c.created_iso || c.created))}</span>
+            <div class="text-sm text-[var(--yellow)] flex items-center gap-2">
+            <span class="font-bebas text-base sm:text-lg leading-none tracking-wide">${esc(c.author)}</span>
+            <span class="body-font"> · ${esc(fmtDate(c.created_iso || c.created))}</span>
             </div>
-
-            <div class="mt-1 body-font js-r-content whitespace-pre-line">${esc(c.content)}</div>
-
+            <div class="mt-1 body-font whitespace-pre-line">${esc(c.content)}</div>
             <div class="mt-2 flex items-center gap-4 body-font">
-                ${window.IS_AUTH ? `<a href="#" class="js-reply-btn text-sm underline underline-offset-2 hover:opacity-70 opacity-50" data-post="${postId}" data-id="${c.id}">Reply</a>` : ''}
-                ${hasChildren ? `<a href="#" class="js-replies-toggle text-sm underline underline-offset-2 opacity-50 hover:opacity-70" data-id="${c.id}" data-count="${replyCount}">View replies (${replyCount})</a>` : ''}
+            ${window.IS_AUTH ? `<a href="#" class="js-reply-btn text-sm underline underline-offset-2 opacity-50 hover:opacity-70" data-post="${postId}" data-id="${c.id}">Reply</a>` : ``}
+            ${hasChildren ? `<a href="#" class="js-replies-toggle text-sm underline underline-offset-2 opacity-50 hover:opacity-70" data-id="${c.id}" data-count="${replyCount}">View replies (${replyCount})</a>` : ``}
             </div>
-
             <div class="js-replies space-y-4 mt-4 ${hasChildren ? 'hidden' : ''}"></div>
         </div>
         </div>
     </li>`;
     }
-
     function renderTree(postId, items, container, level=0){
     for(const c of items){
         container.insertAdjacentHTML('beforeend', oneCommentHTML(postId,c,level));
         const sub = el(`c-${c.id}`).querySelector('.js-replies');
         if(sub && c.replies && c.replies.length){
-        // render children but keep hidden initially (toggle will show)
         renderTree(postId, c.replies, sub, level+1);
         }
     }
     }
-
     async function loadComments(postId){
     const list=el(`c-list-${postId}`); if(!list) return; list.innerHTML='';
     try{
@@ -360,7 +376,6 @@
         const cnt=el(`c-count-${postId}`); if(cnt) cnt.textContent=data.count;
     }catch{ showToast('Gagal memuat komentar'); }
     }
-
     document.querySelectorAll('.js-toggle-comments').forEach(btn=>{
     btn.addEventListener('click', async ()=>{
         const postId=btn.dataset.post; const wrap=el(`c-wrap-${postId}`); if(!wrap) return;
@@ -368,139 +383,146 @@
     });
     });
 
-    /* Create comment */
-    document.querySelectorAll('form.js-c-form').forEach(f=>{
-    f.addEventListener('submit', async (e)=>{
-        e.preventDefault();
-        const postId=f.dataset.post, csrf=csrfFrom(f); const fd=new FormData(f);
-        try{
-        const res=await fetch(f.action,{method:'POST',headers:{'X-Requested-With':'XMLHttpRequest','X-CSRFToken':csrf},body:fd});
-        if(!res.ok) throw 0; const data=await res.json(); if(!data.ok) throw 0;
-        const list=el(`c-list-${postId}`); list.insertAdjacentHTML('afterbegin', oneCommentHTML(postId,data.item,0));
-        f.reset();
-        const cnt=el(`c-count-${postId}`); if(cnt) cnt.textContent=(parseInt(cnt.textContent||'0',10)+1);
-        }catch{ showToast('Gagal kirim komentar'); }
-    });
+    /* ---------- Unified compose (reply post & comment; single-open) ---------- */
+    function composeHTML(actionUrl, postId, parentId){
+    return `
+        <form class="js-compose mt-3 flex flex-col gap-2" data-post="${postId}" ${parentId?`data-parent="${parentId}"`:''} action="${actionUrl}" method="post">
+        ${(document.querySelector('input[name=csrfmiddlewaretoken]')||{outerHTML:''}).outerHTML}
+        <textarea name="content" rows="4" class="w-full rounded-xl border border-[var(--indigo-dark)]
+                bg-[var(--indigo-dark)] text-[var(--white)] p-3 focus:outline-none body-font"
+                placeholder="Write a reply..." required></textarea>
+        <div class="flex justify-end gap-2">
+            <button class="px-4 py-2 rounded bg-[var(--yellow)] text-[var(--indigo-dark)] js-compose-send">Reply</button>
+            <button type="button" class="px-4 py-2 rounded border border-[var(--indigo-dark)] js-compose-cancel">Cancel</button>
+        </div>
+        </form>`;
+    }
+    let OPEN_COMPOSE=null;
+    function closeCompose(){ if(OPEN_COMPOSE){ OPEN_COMPOSE.remove(); OPEN_COMPOSE=null; } }
+    function openCompose(container, actionUrl, postId, parentId=null){
+    closeCompose();
+    container.insertAdjacentHTML('beforeend', composeHTML(actionUrl, postId, parentId));
+    OPEN_COMPOSE = container.querySelector('form.js-compose:last-of-type');
+    setTimeout(()=>OPEN_COMPOSE?.querySelector('textarea')?.focus(),0);
+    }
+
+    /* open compose on post */
+    document.addEventListener('click',(e)=>{
+    const pr=e.target.closest('.js-post-reply');
+    if(!pr) return;
+    e.preventDefault();
+    const postId=pr.dataset.post;
+    const holder=el(`c-compose-${postId}`);
+    const actionUrl=`{% url 'forum:comment_add' 0 %}`.replace('/0/','/'+postId+'/');
+    openCompose(holder, actionUrl, postId, null);
     });
 
-    let OPEN_REPLY_FORM=null;
+    /* open compose on comment */
+    document.addEventListener('click',(e)=>{
+    const rep = e.target.closest('.js-reply-btn');
+    if(!rep) return;
+    e.preventDefault();
 
-    /* ===================== DELEGATED HANDLERS (Reply + Show/Hide replies) ===================== */
+    const postId   = rep.dataset.post;
+    const parentId = rep.dataset.id;
+    const li       = document.getElementById(`c-${parentId}`);
+    if(!li) return;
+
+    const sub    = li.querySelector('.js-replies');
+    const toggle = li.querySelector('.js-replies-toggle');
+    if(sub && sub.classList.contains('hidden')){
+        sub.classList.remove('hidden');
+        if (toggle) {
+        const count = parseInt(toggle.dataset.count || '0', 10);
+        toggle.textContent = `Hide replies (${count})`;
+        }
+    }
+
+    const actionUrl = `{% url 'forum:comment_add' 0 %}`.replace('/0/','/'+postId+'/');
+    openCompose(sub || li, actionUrl, postId, parentId);
+    });
+
+    /* cancel compose */
+    document.addEventListener('click',(e)=>{
+    if(e.target.closest('.js-compose-cancel')){ e.preventDefault(); closeCompose(); }
+    });
+
+    /* send compose */
     document.addEventListener('click', async (e)=>{
-    /* open reply form */
-    const rep=e.target.closest('.js-reply-btn');
-    if(rep){
-        e.preventDefault();
-        const postId=rep.dataset.post, parentId=rep.dataset.id, li=el(`c-${parentId}`);
-        if(!li) return;
-        if(OPEN_REPLY_FORM){ OPEN_REPLY_FORM.remove(); OPEN_REPLY_FORM=null; }
-        const csrfHTML=(document.querySelector('form.js-c-form input[name=csrfmiddlewaretoken]')||{outerHTML:''}).outerHTML;
-        const actionUrl=`{% url 'forum:comment_add' 0 %}`.replace('/0/','/'+postId+'/');
-        li.insertAdjacentHTML('beforeend', `
-        <form class="js-reply-form mt-3 flex flex-col gap-2" data-post="${postId}" data-parent="${parentId}" action="${actionUrl}" method="post">
-            ${csrfHTML}
-            <textarea name="content" rows="2" class="w-full rounded-xl border border-[var(--indigo-dark)]
-                    bg-[var(--indigo-dark)] text-[var(--white)] p-3 focus:outline-none body-font"
-                    placeholder="Write a reply..." required></textarea>
-            <div class="flex justify-end gap-2">
-            <button class="px-3 py-1.5 rounded bg-[var(--yellow)] text-[var(--indigo-dark)] js-reply-send">Reply</button>
-            <button type="button" class="px-3 py-1.5 rounded border border-[var(--indigo-dark)] js-reply-cancel">Cancel</button>
-            </div>
-        </form>
-        `);
-        OPEN_REPLY_FORM=li.querySelector('form.js-reply-form'); return;
-    }
-
-    if(e.target.closest('.js-reply-cancel')){
-        e.preventDefault();
-        const frm=e.target.closest('form.js-reply-form');
-        if(frm){ frm.remove(); OPEN_REPLY_FORM=null; }
-        return;
-    }
-
-    if(e.target.closest('.js-reply-send')){
-        e.preventDefault();
-        const rform=e.target.closest('form.js-reply-form'); if(!rform) return;
-        const postId=rform.dataset.post, parentId=rform.dataset.parent, csrf=csrfFrom(rform);
-        const fd=new FormData(rform); fd.append('parent', parentId);
-        try{
-        const res=await fetch(rform.action,{method:'POST',headers:{'X-Requested-With':'XMLHttpRequest','X-CSRFToken':csrf},body:fd});
+    const btn=e.target.closest('.js-compose-send');
+    if(!btn) return;
+    e.preventDefault();
+    const form=e.target.closest('form.js-compose'); if(!form) return;
+    const postId=form.dataset.post, parentId=form.dataset.parent||null, csrf=csrfFrom(form);
+    const fd=new FormData(form); if(parentId) fd.append('parent', parentId);
+    try{
+        const res=await fetch(form.action,{method:'POST',headers:{'X-Requested-With':'XMLHttpRequest','X-CSRFToken':csrf},body:fd});
         if(!res.ok) throw 0; const data=await res.json(); if(!data.ok) throw 0;
 
-        const parentLi = el(`c-${parentId}`);
-        const sub = parentLi.querySelector('.js-replies');
-        const toggle = parentLi.querySelector('.js-replies-toggle');
-
+        if(parentId){
+        const parentLi=el(`c-${parentId}`), sub=parentLi.querySelector('.js-replies'), toggle=parentLi.querySelector('.js-replies-toggle');
         sub.classList.remove('hidden');
         sub.insertAdjacentHTML('beforeend', oneCommentHTML(postId,data.item,1));
-
-        const newCount = (toggle ? parseInt(toggle.dataset.count||'0',10) : 0) + 1;
-        if(toggle){
-            toggle.dataset.count = String(newCount);
-            toggle.textContent = `Hide replies (${newCount})`;
-        }else{
-            const controls = parentLi.querySelector('.mt-2.flex.items-center.gap-4.body-font');
+        const newCount=(toggle?parseInt(toggle.dataset.count||'0',10):0)+1;
+        if(toggle){ toggle.dataset.count=String(newCount); toggle.textContent=`Hide replies (${newCount})`; }
+        else{
+            const controls=parentLi.querySelector('.mt-2.flex.items-center.gap-4.body-font');
+            if(controls){
             controls.insertAdjacentHTML('beforeend',
-            `<a href="#" class="js-replies-toggle text-sm underline underline-offset-2 text-[var(--white)] hover:brightness-110" data-id="${parentId}" data-count="${newCount}">Hide replies (${newCount})</a>`
-            );
+                `<a href="#" class="js-replies-toggle text-sm underline underline-offset-2 opacity-50 hover:opacity-70" data-id="${parentId}" data-count="${newCount}">Hide replies (${newCount})</a>`);
+            }
         }
-
+        }else{
+        const list=el(`c-list-${postId}`); list.insertAdjacentHTML('afterbegin', oneCommentHTML(postId,data.item,0));
+        }
         const cnt=el(`c-count-${postId}`); if(cnt) cnt.textContent=(parseInt(cnt.textContent||'0',10)+1);
-
-        rform.remove(); OPEN_REPLY_FORM=null;
-        }catch{ showToast('Gagal kirim reply'); }
-        return;
-    }
+        closeCompose();
+    }catch{ showToast('Gagal kirim reply'); }
+    });
 
     /* toggle view/hide replies */
-    const tog = e.target.closest('.js-replies-toggle');
-    if(tog){
-        e.preventDefault();
-        const id = tog.dataset.id;
-        const li = el(`c-${id}`);
-        const sub = li?.querySelector('.js-replies');
-        if(!sub) return;
-        const count = parseInt(tog.dataset.count||'0',10);
-        const willShow = sub.classList.contains('hidden');
-        sub.classList.toggle('hidden');
-        tog.textContent = willShow ? `Hide replies (${count})` : `View replies (${count})`;
-    }
+    document.addEventListener('click',(e)=>{
+    const tog=e.target.closest('.js-replies-toggle'); if(!tog) return;
+    e.preventDefault();
+    const id=tog.dataset.id, li=el(`c-${id}`), sub=li?.querySelector('.js-replies'); if(!sub) return;
+    const count=parseInt(tog.dataset.count||'0',10);
+    const willShow=sub.classList.contains('hidden');
+    sub.classList.toggle('hidden');
+    tog.textContent = willShow ? `Hide replies (${count})` : `View replies (${count})`;
+    });
 
-    /* EDIT POST */
-    const pEdit = e.target.closest('.js-post-edit');
-    if(pEdit){
-        const id=pEdit.dataset.id;
-        const contentEl=document.getElementById('post-content-'+id);
-        if(!contentEl) return;
-        if(document.getElementById('post-edit-form-'+id)) return;
-        const csrfHTML=(document.querySelector('form.js-c-form input[name=csrfmiddlewaretoken]')||{outerHTML:''}).outerHTML;
-        contentEl.insertAdjacentHTML('afterend', `
+    /* ---------- Inline edit post ---------- */
+    document.addEventListener('click',(e)=>{
+    const pEdit=e.target.closest('.js-post-edit'); if(!pEdit) return;
+    const id=pEdit.dataset.id, contentEl=document.getElementById('post-content-'+id);
+    if(!contentEl) return;
+    if(document.getElementById('post-edit-form-'+id)) return;
+    const csrfHTML=(document.querySelector('input[name=csrfmiddlewaretoken]')||{outerHTML:''}).outerHTML;
+    contentEl.insertAdjacentHTML('afterend', `
         <form id="post-edit-form-${id}" class="mt-3 flex flex-col gap-2 js-post-edit-form" data-id="${id}">
-            ${csrfHTML}
-            <textarea rows="4" class="w-full rounded-xl border border-[var(--indigo-dark)] bg-[var(--indigo-dark)]
-                    text-[var(--white)] p-3 focus:outline-none body-font">${contentEl.textContent.trim()}</textarea>
-            <div class="flex gap-2 justify-end">
+        ${csrfHTML}
+        <textarea rows="4" class="w-full rounded-xl border border-[var(--indigo-dark)] bg-[var(--indigo-dark)]
+                text-[var(--white)] p-3 focus:outline-none body-font">${contentEl.textContent.trim()}</textarea>
+        <div class="flex gap-2 justify-end">
             <button class="px-3 py-1.5 rounded bg-[var(--yellow)] text-[var(--indigo-dark)] js-post-save">Save</button>
             <button type="button" class="px-3 py-1.5 rounded border border-[var(--indigo-dark)] js-post-cancel">Cancel</button>
-            </div>
+        </div>
         </form>
-        `);
-        return;
-    }
+    `);
+    });
+    document.addEventListener('click', async (e)=>{
     if(e.target.closest('.js-post-cancel')){ e.preventDefault(); e.target.closest('form.js-post-edit-form')?.remove(); return; }
-    if(e.target.closest('.js-post-save')){
-        e.preventDefault();
-        const form=e.target.closest('form.js-post-edit-form'); const id=form.dataset.id;
-        const ta=form.querySelector('textarea'); const csrf=csrfFrom(form);
-        try{
+    const save=e.target.closest('.js-post-save'); if(!save) return;
+    e.preventDefault();
+    const form=e.target.closest('form.js-post-edit-form'); const id=form.dataset.id;
+    const ta=form.querySelector('textarea'); const csrf=csrfFrom(form);
+    try{
         const url=`{% url 'forum:edit_post' 0 %}`.replace('/0/','/'+id+'/');
         const res=await fetch(url,{method:'POST',headers:{'X-Requested-With':'XMLHttpRequest','X-CSRFToken':csrf,'Content-Type':'application/x-www-form-urlencoded'},body:new URLSearchParams({content:ta.value})});
         if(!res.ok) throw 0; const data=await res.json(); if(!data.ok) throw 0;
         document.getElementById('post-content-'+id).textContent=data.content;
         form.remove(); showToast('Post updated');
-        }catch{ showToast('Gagal update post'); }
-        return;
-    }
+    }catch{ showToast('Gagal update post'); }
     });
 </script>
 {% endblock %}
