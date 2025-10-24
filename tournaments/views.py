@@ -86,8 +86,6 @@ def tournament_show(request, tournament_id):
         if hasattr(tournament.pembuatTournaments, 'user')
         else "Unknown"
     )
-
-    # Tambahan buat ngecek role
     is_coach = hasattr(request.user, 'coach')
     is_member = hasattr(request.user, 'member')
 
@@ -137,49 +135,37 @@ def create_tournament(request):
 @login_required
 
 def delete_tournament(request, tournament_id):
-    # Terima POST (dari form biasa) atau DELETE (dari fetch)
     if request.method not in ["POST", "DELETE"]:
         return JsonResponse({'error': 'Invalid request method'}, status=405)
 
     tournament = get_object_or_404(Tournament, idTournaments=tournament_id)
-
-    # Cek kepemilikan coach
     if not hasattr(request.user, 'coach') or request.user.coach != tournament.pembuatTournaments:
         return JsonResponse({'error': 'Kamu tidak berhak menghapus tournament ini'}, status=403)
 
     tournament.delete()
-
-    # Kalau dari AJAX request (fetch)
     if request.headers.get('x-requested-with') == 'XMLHttpRequest':
         return JsonResponse({'message': 'Tournament berhasil dihapus!'})
 
-    # Kalau dari form biasa
     return redirect('tournaments:tournament_view')
 
 @csrf_exempt
 @login_required
 def assign_tournament(request, tournament_id):
-    # Hanya boleh POST
     if request.method != 'POST':
         return JsonResponse({'error': 'Invalid request method'}, status=405)
 
     tournament = get_object_or_404(Tournament, idTournaments=tournament_id)
 
-    # Pastikan user adalah member
     if not hasattr(request.user, 'member'):
         return JsonResponse({'error': 'Hanya member yang dapat mendaftar ke turnamen.'}, status=403)
 
     member = request.user.member
 
-    # Cek apakah turnamen sudah ditutup
     if not tournament.flagTournaments:
         return JsonResponse({'error': 'Pendaftaran turnamen ini sudah ditutup.'}, status=400)
 
-    # Cek apakah member sudah terdaftar sebelumnya
     if tournament.pesertaTournaments.filter(pk=member.pk).exists():
         return JsonResponse({'message': 'Anda sudah terdaftar di turnamen ini!'}, status=200)
-
-    # Tambahkan member ke peserta turnamen
     tournament.pesertaTournaments.add(member)
     tournament.save()
 
@@ -194,7 +180,6 @@ def edit_tournament_ajax(request, tournament_id):
     tournament = get_object_or_404(Tournament, idTournaments=tournament_id)
 
     if request.method == "GET":
-        # kirim data buat isi modal
         return JsonResponse({
             "namaTournaments": tournament.namaTournaments,
             "lokasiTournaments": tournament.lokasiTournaments,

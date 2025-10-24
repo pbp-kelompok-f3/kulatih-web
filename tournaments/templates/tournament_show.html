@@ -4,13 +4,9 @@
 {% block content %}
 <div class="min-h-screen bg-[#191831] flex flex-col items-center py-10 px-6 text-white">
   <div class="max-w-4xl w-full bg-[#111024] bg-opacity-70 rounded-2xl shadow-lg overflow-hidden flex flex-col md:flex-row border border-black">
-    
-    <!-- POSTER -->
     <div class="md:w-1/2">
       <img src="{{ tournament.posterTournaments }}" alt="{{ tournament.namaTournaments }}" class="w-full h-full object-cover">
     </div>
-
-    <!-- DETAIL -->
     <div class="md:w-1/2 p-6 flex flex-col justify-between">
       <div>
         <h2 class="text-3xl font-bold mb-2">{{ tournament.namaTournaments }}</h2>
@@ -28,8 +24,6 @@
           </li>
         </ul>
       </div>
-
-      <!-- HOST & STATUS -->
       <div class="mt-6 border-t border-blue-700 pt-4 text-sm flex justify-between items-center">
         <p class="text-gray-300">Hosted by <span class="font-semibold">{{ tournament.pembuatTournaments }}</span></p>
         {% if tournament.flagTournaments %}
@@ -38,11 +32,8 @@
           <span class="px-3 py-1 bg-red-600 rounded-full text-xs">Closed</span>
         {% endif %}
       </div>
-
-      <!-- ACTION BUTTONS -->
       <div class="mt-6">
         {% if user.is_authenticated and user == tournament.pembuatTournaments.user %}
-          <!-- COACH / PEMBUAT -->
           <div class="flex gap-3">
             <button 
               id="edit-btn"
@@ -75,7 +66,6 @@
   </div>
 
   {% if user.is_authenticated and user == tournament.pembuatTournaments.user %}
-  <!-- LIST PESERTA -->
   <div class="mt-10 w-full">
       <h3 class="text-2xl font-bold mb-4 text-center">Daftar Peserta</h3>
 
@@ -97,8 +87,6 @@
   </div>
   {% endif %}
 </div>
-
-<!-- EDIT MODAL -->
 <div id="editModal" class="fixed inset-0 bg-black/60 hidden justify-center items-center z-50">
   <div class="bg-[#1e1b3a] p-6 rounded-xl w-full max-w-lg relative animate-fadeIn">
     <h2 class="text-2xl font-bold mb-4">Edit Tournament</h2>
@@ -131,7 +119,6 @@ document.addEventListener('DOMContentLoaded', () => {
   const editUrl = `/tournament/${tournamentId}/edit-ajax/`;
   const assignUrl = `/tournament/assign/${tournamentId}/`;
 
-  // ===== EDIT TOURNAMENT =====
   editBtn?.addEventListener('click', async () => {
     try {
       const res = await fetch(editUrl);
@@ -196,7 +183,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  // ===== ASSIGN TOURNAMENT =====
   assignBtn?.addEventListener('click', async (e) => {
     e.preventDefault();
     try {

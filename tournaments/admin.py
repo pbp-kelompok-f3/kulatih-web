@@ -23,8 +23,6 @@ class TournamentAdmin(admin.ModelAdmin):
         'flagTournaments'
     )
     ordering = ('-tanggalTournaments',)
-
-    # ❌ Semua field read-only
     readonly_fields = (
         'namaTournaments',
         'tipeTournaments',
@@ -37,8 +35,6 @@ class TournamentAdmin(admin.ModelAdmin):
         'flagTournaments',
         'idTournaments',
     )
-
-    # ❌ Nonaktifkan tombol tambah, hapus, edit
     def has_add_permission(self, request):
         return False
 

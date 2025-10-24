@@ -8,14 +8,10 @@
 {% block content %}
 <div class="bg-[#0b0b23] min-h-screen text-white pt-20 pb-10">
   <div class="max-w-7xl mx-auto px-6">
-
-    <!-- HEADER -->
     <div class="text-center mb-10">
       <h1 class="text-4xl md:text-5xl font-extrabold tracking-wide mb-4">
         FIND YOUR PERFECT TOURNAMENT
       </h1>
-
-      <!-- TOGGLE BUTTONS -->
       <div class="flex justify-center gap-3 mt-4">
         <button id="allBtn" class="px-5 py-2 bg-yellow-400 text-black rounded-full font-bold transition">
           All Tournaments
@@ -35,8 +31,6 @@
         {% endif %}
       </div>
     </div>
-
-    <!-- SEARCH BAR -->
     <div class="relative mb-10 flex justify-center">
       <input id="searchInput" type="text" placeholder="Search Tournament or Location"
         class="w-full md:w-2/3 bg-[#1b1b3a] border border-gray-700 rounded-xl py-3 px-4 pl-12 text-gray-300 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-yellow-400" />
@@ -47,13 +41,8 @@
           d="M21 21l-4.35-4.35M17 10a7 7 0 11-14 0 7 7 0 0114 0z" />
       </svg>
     </div>
-
-    <!-- TOURNAMENT GRID -->
     <div id="tournamentGrid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
-      <!-- Cards akan dimuat lewat JS -->
     </div>
-
-    <!-- EMPTY STATE -->
     <div id="emptyState" class="hidden text-center mt-10 text-gray-400">
       <p>No tournaments found.</p>
     </div>
@@ -70,8 +59,6 @@ document.addEventListener("DOMContentLoaded", function() {
   const myBtn = document.getElementById("myBtn");
 
   let tournaments = [];
-
-  // --- Load All Tournaments ---
   async function loadTournaments() {
     try {
       const response = await fetch(window.location.href, {
@@ -84,8 +71,6 @@ document.addEventListener("DOMContentLoaded", function() {
       console.error("Error loading tournaments:", err);
     }
   }
-
-  // --- Render Tournament Cards ---
   function renderTournaments(list) {
     grid.innerHTML = "";
 
@@ -116,8 +101,6 @@ document.addEventListener("DOMContentLoaded", function() {
       grid.appendChild(card);
     });
   }
-
-  // --- Search Logic ---
   searchInput.addEventListener("input", () => {
     const query = searchInput.value.toLowerCase();
     const filtered = tournaments.filter(t =>
@@ -127,15 +110,11 @@ document.addEventListener("DOMContentLoaded", function() {
     );
     renderTournaments(filtered);
   });
-
-  // --- All Button ---
   allBtn.addEventListener("click", () => {
     allBtn.classList.add("bg-yellow-400", "text-black");
     myBtn?.classList.remove("bg-yellow-400", "text-black");
     renderTournaments(tournaments);
   });
-
-  // --- My Button (AJAX Fetch) ---
   myBtn?.addEventListener("click", async () => {
     allBtn.classList.remove("bg-yellow-400", "text-black");
     myBtn.classList.add("bg-yellow-400", "text-black");
@@ -156,8 +135,6 @@ document.addEventListener("DOMContentLoaded", function() {
       alert("Gagal mengambil data turnamen kamu.");
     }
   });
-
-  // Load awal
   loadTournaments();
 });
 </script>
