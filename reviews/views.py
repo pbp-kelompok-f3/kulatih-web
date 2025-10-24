@@ -29,18 +29,17 @@ def coach_reviews_json(request, coach_id):
     sort = (request.GET.get("sort") or "").lower()
     if   sort == "highest": order_by = "-rating"
     elif sort == "lowest":  order_by = "rating"
-    else:                   order_by = "-created_at"  # DEFAULT: terbaru di atas
+    else:                   order_by = "-created_at"  
 
     qs = (
         Review.objects
         .filter(coach=coach)
         .select_related("reviewer__user")
-        .order_by(order_by, "-id")  # tie-breaker stabil
+        .order_by(order_by, "-id")  
     )
     
     stats = qs.aggregate(avg=Avg("rating"), total=Count("id"))
 
-    # user login -> member_id untuk flag is_owner
     try:
         me_member_id = Member.objects.get(user=request.user).id
     except Exception:
@@ -130,18 +129,15 @@ def create_review_json(request, coach_id):
     """
     coach = get_object_or_404(Coach, pk=coach_id)
 
-    # larang self-review jika user adalah coach tsb
     coach_user_id = getattr(getattr(coach, "user", None), "id", None)
     if coach_user_id and coach_user_id == request.user.id:
         return JsonResponse({"error": "not_allowed"}, status=403)
 
-    # user harus punya profile Member
     try:
         member = Member.objects.get(user=request.user)
     except Member.DoesNotExist:
         return JsonResponse({"error": "member_profile_required"}, status=403)
 
-    # parse body JSON
     try:
         payload = json.loads(request.body.decode("utf-8") or "{}")
     except Exception:
@@ -150,7 +146,6 @@ def create_review_json(request, coach_id):
     rating = payload.get("rating")
     comment = (payload.get("comment") or "").strip()
 
-    # validasi rating 1..5 (integer)
     if isinstance(rating, str) and rating.isdigit():
         rating = int(rating)
     if not isinstance(rating, int) or not (1 <= rating <= 5):

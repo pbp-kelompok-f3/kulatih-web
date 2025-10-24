@@ -1,141 +1,192 @@
-from django.test import TestCase
-from django.contrib.auth import get_user_model
+# reviews/tests.py
+import json
+import uuid
+from django.test import TestCase, Client
 from django.urls import reverse
+from django.contrib.auth import get_user_model
+from django.utils import timezone
+
+from users.models import Coach, Member
 from reviews.models import Review
 
 User = get_user_model()
 
-class ReviewsApiTests(TestCase):
+
+class ReviewsViewsTests(TestCase):
     def setUp(self):
-        # akun dasar
-        self.coach = User.objects.create_user(username="coach", password="x")
-        self.user = User.objects.create_user(username="user", password="x")
-        self.other = User.objects.create_user(username="other", password="x")
-        self.admin = User.objects.create_user(username="admin", password="x", is_staff=True)
+        self.client = Client()
 
-    # ------- helpers -------
-    def login(self, who="user"):
-        creds = {"user": ("user", "x"),
-                 "coach": ("coach", "x"),
-                 "other": ("other", "x"),
-                 "admin": ("admin", "x")}[who]
-        self.client.login(username=creds[0], password=creds[1])
-
-    def create_review(self, reviewer, coach=None, rating=5, comment="ok"):
-        return Review.objects.create(
-            coach=coach or self.coach,
-            reviewer=reviewer,
-            rating=rating,
-            comment=comment,
+        # users
+        self.user_member = User.objects.create_user(
+            username="member1", email="m1@example.com", password="pass12345"
+        )
+        self.user_other = User.objects.create_user(
+            username="other", email="o@example.com", password="pass12345"
+        )
+        self.user_admin = User.objects.create_user(
+            username="admin", email="a@example.com", password="pass12345", is_staff=True
         )
 
-    # ------- READ -------
-    def test_list_empty_stats(self):
-        url = reverse("reviews:coach_reviews_json", args=[self.coach.id])
-        res = self.client.get(url).json()
-        self.assertEqual(res["stats"]["total"], 0)
-        self.assertIsNone(res["stats"]["avg"])
+        # profiles
+        self.member = Member.objects.create(user=self.user_member)
+        self.other_member = Member.objects.create(user=self.user_other)
 
-    def test_list_sorting_highest_lowest(self):
-        self.create_review(self.user, rating=5)
-        self.create_review(self.other, rating=2)
-        url = reverse("reviews:coach_reviews_json", args=[self.coach.id])
+        # coaches (pk UUID)
+        self.coach_user = User.objects.create_user(
+            username="coachuser", email="c@example.com", password="pass12345"
+        )
+        self.coach = Coach.objects.create(id=uuid.uuid4(), user=self.coach_user)
 
+        self.other_coach = Coach.objects.create(id=uuid.uuid4(), user=self.user_admin)
+
+        # existing review from member -> coach
+        self.review = Review.objects.create(
+            coach=self.coach, reviewer=self.member, rating=4, comment="good", created_at=timezone.now()
+        )
+
+    # LIST (coach_reviews_json)
+    def test_list_default_latest(self):
+        # create older and newer to test ordering
+        Review.objects.create(coach=self.coach, reviewer=self.other_member, rating=2, comment="meh")
+        url = reverse("reviews:coach_reviews_json", args=[self.coach.id])
+        res = self.client.get(url)  
+        self.assertEqual(res.status_code, 200)
+        data = res.json()
+        self.assertIn("items", data)
+        self.assertGreaterEqual(len(data["items"]), 2)
+        self.assertEqual(data["items"][0]["rating"], 2)
+
+    def test_list_sort_highest_lowest(self):
+        Review.objects.create(coach=self.coach, reviewer=self.other_member, rating=1, comment="bad")
         # highest
-        res = self.client.get(url + "?sort=highest").json()
-        self.assertEqual([item["rating"] for item in res["items"]], [5, 2])
-
+        url = reverse("reviews:coach_reviews_json", args=[self.coach.id])
+        res = self.client.get(url, {"sort": "highest"})
+        ratings = [it["rating"] for it in res.json()["items"]]
+        self.assertEqual(ratings, sorted(ratings, reverse=True))
         # lowest
-        res = self.client.get(url + "?sort=lowest").json()
-        self.assertEqual([item["rating"] for item in res["items"]], [2, 5])
+        res = self.client.get(url, {"sort": "lowest"})
+        ratings = [it["rating"] for it in res.json()["items"]]
+        self.assertEqual(ratings, sorted(ratings))
 
-    def test_pagination(self):
-        # 12 reviews random (pakai users berbeda-beda)
-        for i in range(12):
-            u = User.objects.create_user(username=f"u{i}")
-            self.create_review(u, rating=3)
-        url = reverse("reviews:coach_reviews_json", args=[self.coach.id]) + "?page=2&page_size=5"
-        res = self.client.get(url).json()
-        self.assertEqual(res["pagination"]["page"], 2)
-        self.assertEqual(len(res["items"]), 5)
-        self.assertEqual(res["pagination"]["total_items"], 12)
+    def test_list_pagination(self):
+        for i in range(15):
+            u = User.objects.create_user(
+                username=f"tmp{i}", email=f"t{i}@ex.com", password="x"
+            )
+            m = Member.objects.create(user=u)
+            Review.objects.create(
+                coach=self.coach, reviewer=m, rating=3, comment=str(i)
+            )
 
-    # ------- CREATE -------
-    def test_create_success_once(self):
-        self.login("user")
+        url = reverse("reviews:coach_reviews_json", args=[self.coach.id])
+        res = self.client.get(url, {"page": 2, "page_size": 5})
+        self.assertEqual(res.status_code, 200)
+        data = res.json()
+        self.assertEqual(data["pagination"]["page_size"], 5)
+        self.assertEqual(data["pagination"]["page"], 2)
+        self.assertTrue(data["pagination"]["has_previous"])
+        self.assertTrue(data["pagination"]["has_next"])
+
+    # DETAIL JSON
+    def test_review_detail_json(self):
+        url = reverse("reviews:review_detail_json", args=[self.review.id])
+        res = self.client.get(url)
+        self.assertEqual(res.status_code, 200)
+        data = res.json()
+        self.assertEqual(data["id"], str(self.review.id))
+        self.assertEqual(data["rating"], 4)
+        self.assertIn("coach", data)
+        self.assertIn("reviewer", data)
+
+    # CREATE
+    def test_create_requires_login(self):
         url = reverse("reviews:create_review_json", args=[self.coach.id])
-        res = self.client.post(url, data='{"rating":5,"comment":"gas"}',
-                               content_type="application/json")
+        res = self.client.post(url, data=json.dumps({"rating": 5}), content_type="application/json")
+        # Django will redirect to login (302) or 302->200 for test client, accept 302
+        self.assertIn(res.status_code, (302, 401, 403))
+
+    def test_create_success(self):
+        self.client.login(username="member1", password="pass12345")
+        # create review for other_coach to avoid unique clash with existing
+        url = reverse("reviews:create_review_json", args=[self.other_coach.id])
+        res = self.client.post(url, data=json.dumps({"rating": 5, "comment": "great"}), content_type="application/json")
         self.assertEqual(res.status_code, 201)
-        # coba lagi → should fail (unique)
-        res2 = self.client.post(url, data='{"rating":4}',
-                                content_type="application/json")
-        self.assertEqual(res2.status_code, 400)
-        self.assertEqual(Review.objects.filter(coach=self.coach, reviewer=self.user).count(), 1)
+        data = res.json()
+        self.assertEqual(data["rating"], 5)
+        self.assertEqual(data["comment"], "great")
 
-    def test_create_forbid_self_review(self):
-        self.login("coach")
+    def test_create_forbidden_self_review(self):
+        # login as coach user and try to review himself -> 403
+        self.client.login(username="coachuser", password="pass12345")
         url = reverse("reviews:create_review_json", args=[self.coach.id])
-        res = self.client.post(url, data='{"rating":4}', content_type="application/json")
+        res = self.client.post(url, data=json.dumps({"rating": 5}), content_type="application/json")
         self.assertEqual(res.status_code, 403)
 
-    def test_create_invalid_rating(self):
-        self.login("user")
+    def test_create_unique_per_member_coach(self):
+        self.client.login(username="member1", password="pass12345")
         url = reverse("reviews:create_review_json", args=[self.coach.id])
-        bad = self.client.post(url, data='{"rating":"abc"}', content_type="application/json")
-        self.assertEqual(bad.status_code, 400)
+        # already has self.review for (member, coach) -> should 400 with error
+        res = self.client.post(url, data=json.dumps({"rating": 5}), content_type="application/json")
+        self.assertEqual(res.status_code, 400)
+        self.assertIn("error", res.json())
 
-    def test_create_invalid_json(self):
-        self.login("user")
-        url = reverse("reviews:create_review_json", args=[self.coach.id])
-        bad = self.client.post(url, data='{not-json}', content_type="application/json")
-        self.assertEqual(bad.status_code, 400)
+    def test_create_validate_rating(self):
+        self.client.login(username="member1", password="pass12345")
+        url = reverse("reviews:create_review_json", args=[self.other_coach.id])
+        res = self.client.post(url, data=json.dumps({"rating": 10}), content_type="application/json")
+        self.assertEqual(res.status_code, 400)
 
-    # ------- UPDATE -------
-    def test_update_by_owner(self):
-        r = self.create_review(self.user, rating=3)
-        self.login("user")
-        url = reverse("reviews:update_review_json", args=[r.id])
-        res = self.client.patch(url, data='{"rating":5,"comment":"up"}',
-                                content_type="application/json")
+    # UPDATE
+    def test_update_owner_ok(self):
+        self.client.login(username="member1", password="pass12345")
+        url = reverse("reviews:update_review_json", args=[self.review.id])
+        res = self.client.post(url, data=json.dumps({"rating": 5, "comment": "upd"}), content_type="application/json")
         self.assertEqual(res.status_code, 200)
-        r.refresh_from_db()
-        self.assertEqual(r.rating, 5)
-        self.assertEqual(r.comment, "up")
+        self.review.refresh_from_db()
+        self.assertEqual(self.review.rating, 5)
+        self.assertEqual(self.review.comment, "upd")
 
-    def test_update_forbidden_if_not_owner(self):
-        r = self.create_review(self.user, rating=3)
-        self.login("other")
-        url = reverse("reviews:update_review_json", args=[r.id])
-        res = self.client.patch(url, data='{"rating":4}', content_type="application/json")
+    def test_update_non_owner_forbidden(self):
+        self.client.login(username="other", password="pass12345")
+        url = reverse("reviews:update_review_json", args=[self.review.id])
+        res = self.client.post(url, data=json.dumps({"rating": 1}), content_type="application/json")
         self.assertEqual(res.status_code, 403)
 
-    def test_update_by_admin_allowed(self):
-        r = self.create_review(self.user, rating=2)
-        self.login("admin")
-        url = reverse("reviews:update_review_json", args=[r.id])
-        res = self.client.patch(url, data='{"rating":4}', content_type="application/json")
+    def test_update_admin_ok(self):
+        self.client.login(username="admin", password="pass12345")
+        url = reverse("reviews:update_review_json", args=[self.review.id])
+        res = self.client.post(url, data=json.dumps({"rating": 3}), content_type="application/json")
         self.assertEqual(res.status_code, 200)
+        self.review.refresh_from_db()
+        self.assertEqual(self.review.rating, 3)
 
-    # ------- DELETE -------
-    def test_delete_by_owner(self):
-        r = self.create_review(self.user, rating=4)
-        self.login("user")
-        url = reverse("reviews:delete_review_json", args=[r.id])
-        res = self.client.delete(url)
+    def test_update_validate_rating_range(self):
+        self.client.login(username="member1", password="pass12345")
+        url = reverse("reviews:update_review_json", args=[self.review.id])
+        res = self.client.post(url, data=json.dumps({"rating": 0}), content_type="application/json")
+        self.assertEqual(res.status_code, 400)
+
+    # DELETE
+    def test_delete_owner_ok(self):
+        self.client.login(username="member1", password="pass12345")
+        url = reverse("reviews:delete_review_json", args=[self.review.id])
+        res = self.client.post(url)  # you also accept DELETE, but POST is fine
         self.assertEqual(res.status_code, 200)
-        self.assertFalse(Review.objects.filter(pk=r.id).exists())
+        self.assertFalse(Review.objects.filter(id=self.review.id).exists())
 
-    def test_delete_forbidden_if_not_owner(self):
-        r = self.create_review(self.user, rating=4)
-        self.login("other")
+    def test_delete_non_owner_forbidden(self):
+        self.client.login(username="other", password="pass12345")
+        # recreate a review to delete
+        r = Review.objects.create(coach=self.other_coach, reviewer=self.member, rating=3)
         url = reverse("reviews:delete_review_json", args=[r.id])
-        res = self.client.delete(url)
+        res = self.client.post(url)
         self.assertEqual(res.status_code, 403)
+        self.assertTrue(Review.objects.filter(id=r.id).exists())
 
-    def test_delete_by_admin_allowed(self):
-        r = self.create_review(self.user, rating=4)
-        self.login("admin")
-        url = reverse("reviews:delete_review_json", args=[r.id])
-        res = self.client.delete(url)
+    # PAGE
+    def test_review_detail_page_renders(self):
+        url = reverse("reviews:review_detail_page", args=[self.review.id])
+        res = self.client.get(url)
         self.assertEqual(res.status_code, 200)
+        self.assertContains(res, "RATING AND FEEDBACK")
+        self.assertContains(res, str(self.review.rating))

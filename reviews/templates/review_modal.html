@@ -1,4 +1,3 @@
-{# Props wajib: coach_id; optional: coach_username #}
 
 <div id="rfm-{{ coach_id }}" class="fixed inset-0 hidden items-center justify-center z-[100]"
      style="background:rgba(0,0,0,.6);">
@@ -74,7 +73,7 @@
   }
   function closeModal(){ modal.classList.add("hidden"); modal.classList.remove("flex"); }
 
-  // tombol pemicu di Booking History
+  // tombol di Booking History
   document.addEventListener("click", function(e){
     const btn = e.target.closest('[data-review-open="{{ coach_id }}"]');
     if (btn){ e.preventDefault(); openModal(btn); }
@@ -95,7 +94,7 @@
 
     if (!res.ok){ alert(data.error || "Failed to submit review."); return; }
 
-    // ubah tombol pemicu jadi "View your review" -> ke Review Detail
+    // "View your review" -> ke Review Detail
     const t = modal._triggerBtn;
     if (t){
       const detailUrl = "{% url 'reviews:review_detail_page' 0 %}".replace('/0/', '/' + data.id + '/');

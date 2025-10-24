@@ -13,4 +13,6 @@ urlpatterns = [
     # AJAX & API
     path('ajax/cancel/<int:booking_id>/', views.ajax_cancel, name='ajax_cancel'),
     path('ajax/reschedule/<int:booking_id>/', views.ajax_reschedule, name='ajax_reschedule'),
+
+    
 ]

@@ -5,6 +5,11 @@
 <div class="min-h-screen px-6 py-10 flex justify-center" style="background:var(--indigo-dark); color:var(--white);">
   <div class="w-full max-w-4xl">
 
+    <style>
+      .rf-star{ color:#3c395f; }           
+      .rf-star--filled{ color:var(--yellow); } 
+    </style>
+
     <!-- Header -->
     <div class="flex items-center justify-between mb-4">
       <h2 class="heading-font text-[28px] md:text-[32px]" style="color:var(--yellow);">
@@ -17,32 +22,35 @@
     <!-- Card -->
     <article class="rounded-2xl border px-5 py-4" style="background:var(--indigo-light); border-color:#2e2b55;">
       <div class="flex gap-4">
-        <!-- Avatar initial -->
+        <!-- initial -->
         <div class="w-12 h-12 rounded-full flex items-center justify-center" style="background:#2f2c56;">
           <span class="heading-font text-xl">
             {{ reviewer_username|default:"?"|slice:":1"|upper }}
           </span>
         </div>
 
-        <div class="flex-1">
-          <div class="flex items-start justify-between">
-            <div>
-              <div class="font-bevietnam font-semibold">@{{ reviewer_username }}</div>
+        <div class="flex-1 min-w-0">
+          <div class="flex items-start justify-between gap-3">
+            <div class="min-w-0">
+              <div class="font-bevietnam font-semibold truncate">@{{ reviewer_username }}</div>
 
-              <!-- rating wrapper -> akan diupdate live setelah edit -->
-              <div class="font-bevietnam opacity-90 text-sm" data-review-rating-wrap>
+              <!-- rating wrapper -->
+              <div class="font-bevietnam opacity-90 text-sm mt-0.5" data-review-rating-wrap>
                 {{ review.rating }}
-                <span style="color:var(--yellow);">
-                  {% for _ in ""|center:review.rating %}★{% endfor %}
-                </span>
-                <span style="color:#3c395f;">
-                  {% for _ in ""|center:5-review.rating %}★{% endfor %}
+                <span>
+                  {% for _ in "12345" %}
+                    {% if forloop.counter <= review.rating %}
+                      <span class="rf-star rf-star--filled">★</span>
+                    {% else %}
+                      <span class="rf-star">★</span>
+                    {% endif %}
+                  {% endfor %}
                 </span>
               </div>
             </div>
 
             {% if is_owner %}
-            <div class="flex gap-2">
+            <div class="flex gap-2 shrink-0">
               <button id="btn-edit"
                       class="px-4 py-2 rounded-lg font-bevietnam text-sm"
                       style="background:#ffd666; color:#28253e;">
@@ -50,15 +58,19 @@
               </button>
               <button id="btn-delete"
                       class="px-4 py-2 rounded-lg font-bevietnam text-sm"
-                      style="background:#e24b4b; color:white;">
+                      style="background:#e24b4b; color:#fff;">
                 DELETE
               </button>
             </div>
             {% endif %}
           </div>
 
-          <!-- comment wrapper -> juga diupdate live -->
-          <p class="font-bevietnam mt-3 opacity-90" data-review-comment>{{ review.comment }}</p>
+          <!-- Comment -->
+          <p class="font-bevietnam mt-3 opacity-90"
+             data-review-comment
+             style="white-space:pre-wrap; overflow-wrap:anywhere; word-break:break-word;">
+            {{ review.comment }}
+          </p>
         </div>
       </div>
     </article>
@@ -68,8 +80,7 @@
 
 {% if is_owner %}
 <!-- ===== Edit Modal (prefilled) ===== -->
-<div id="rfe-modal" class="fixed inset-0 hidden items-center justify-center z-[100]"
-     style="background:rgba(0,0,0,.6);">
+<div id="rfe-modal" class="fixed inset-0 hidden items-center justify-center z-[100]" style="background:rgba(0,0,0,.6);">
   <div class="w-[92vw] max-w-[680px] rounded-2xl border p-6"
        style="background:var(--indigo); border-color:#2e2b55; color:var(--white);">
     <div class="mb-4">
@@ -77,7 +88,7 @@
       <div class="font-bevietnam opacity-75 text-sm">You can update your rating & feedback.</div>
     </div>
 
-    <!-- Stars (punya cursor-pointer) -->
+    <!-- Stars -->
     <div class="mb-3">
       <div class="font-bevietnam text-sm opacity-80 mb-1">YOUR RATING</div>
       <div class="flex gap-2 text-3xl select-none">
@@ -109,15 +120,45 @@
   </div>
 </div>
 
+<!-- ===== Confirm Delete Modal ===== -->
+<div id="confirmDelete" class="fixed inset-0 hidden items-center justify-center z-[110]">
+  <div class="absolute inset-0 bg-black/60"></div>
+  <div class="relative z-10 w-[320px] rounded-xl border border-[var(--indigo-light)]
+              bg-[var(--indigo)] text-[var(--white)] p-5">
+    <div class="heading-font text-lg mb-2">Delete?</div>
+    <p class="text-sm opacity-75">This action cannot be undone.</p>
+    <div class="mt-5 flex justify-end gap-2">
+      <button id="confirmCancel" class="px-4 py-2 rounded border border-[var(--indigo-dark)]
+                                      hover:bg-[var(--indigo-light)]">Cancel</button>
+      <button id="confirmOk" class="heading-font px-4 py-2 rounded bg-[var(--yellow)] text-[var(--indigo-dark)]">
+        Delete
+      </button>
+    </div>
+  </div>
+</div>
+
 <script>
 (function(){
   // ---------- helpers ----------
   function getCookie(name){
-    const m = document.cookie.match('(^|;)\\s*'+name+'\\s*=\\s*([^;]+)');
-    return m ? m.pop() : '';
+    const m = document.cookie.match('(^|;)\\s*'+name+'\\s*=\\s*([^;]+)'); return m ? m.pop() : '';
   }
-  function paintStars(n){
-    stars.forEach((s, i)=>{ s.style.color = (i < n) ? "var(--yellow)" : "#3c395f"; });
+  function paintStars(n){ stars.forEach((s,i)=>{ s.style.color = (i < n) ? "var(--yellow)" : "#3c395f"; }); }
+
+  // mini toast
+  function showToast(msg){
+    try{
+      let t = document.getElementById('toast');
+      if(!t){
+        t = document.createElement('div'); t.id='toast';
+        t.style.position='fixed'; t.style.bottom='20px'; t.style.left='50%'; t.style.transform='translateX(-50%)';
+        t.style.background='var(--indigo-light)'; t.style.color='var(--white)';
+        t.style.border='1px solid #2e2b55'; t.style.padding='10px 14px'; t.style.borderRadius='10px';
+        t.style.zIndex='9999'; document.body.appendChild(t);
+      }
+      t.textContent = msg; t.style.opacity='1';
+      setTimeout(()=>{ t.style.transition='opacity .4s'; t.style.opacity='0'; }, 1200);
+    }catch(e){}
   }
 
   // ---------- DOM ----------
@@ -129,6 +170,17 @@
   const modal     = document.getElementById('rfe-modal');
   const stars     = modal.querySelectorAll('.rfe-star');
   const commentEl = document.getElementById('rfe-comment');
+
+  // confirm modal DOM
+  const confirmWrap   = document.getElementById('confirmDelete');
+  const confirmOk     = document.getElementById('confirmOk');
+  const confirmCancel = document.getElementById('confirmCancel');
+  let pendingAction = null;
+  function openConfirm(runFn){ pendingAction = runFn; confirmWrap.classList.remove('hidden'); confirmWrap.classList.add('flex'); }
+  function closeConfirm(){ confirmWrap.classList.add('hidden'); confirmWrap.classList.remove('flex'); pendingAction=null; }
+  if(confirmCancel) confirmCancel.addEventListener('click', closeConfirm);
+  if(confirmWrap)   confirmWrap.addEventListener('click', e=>{ if(e.target===confirmWrap) closeConfirm(); });
+  if(confirmOk){ confirmOk.addEventListener('click', async ()=>{ if(!pendingAction){ closeConfirm(); return; } try{ await pendingAction(); } finally{ closeConfirm(); } }); }
 
   // nilai awal dari server
   const initialRating = Number('{{ review.rating|default:0 }}') || 0;
@@ -142,7 +194,6 @@
   }
   function closeModal(){ modal.classList.add('hidden'); modal.classList.remove('flex'); }
 
-  // bintang interaktif
   stars.forEach(btn=>{
     btn.addEventListener('mouseenter', ()=>paintStars(+btn.dataset.val));
     btn.addEventListener('mouseleave', ()=>paintStars(rating));
@@ -154,14 +205,14 @@
   document.getElementById('rfe-cancel').onclick = closeModal;
   modal.addEventListener('click', (e)=>{ if (e.target === modal) closeModal(); });
 
-  // ---------- submit update (AJAX) ----------
+  // submit update (AJAX)
   document.getElementById('rfe-submit').onclick = async function(){
     if (!rating){ alert("Please select a rating (1–5)."); return; }
     const url = "{% url 'reviews:update_review_json' review.id %}";
     const payload = { rating: rating, comment: commentEl.value || "" };
 
     const res = await fetch(url, {
-      method: "POST", // server kamu menerima PATCH/PUT/POST
+      method: "POST",
       headers: { "Content-Type":"application/json", "X-CSRFToken": getCookie("csrftoken") },
       body: JSON.stringify(payload),
     });
@@ -170,25 +221,28 @@
 
     // update tampilan rating & comment di halaman ini
     if (ratingWrap){
-      const filled = '★'.repeat(data.rating);
-      const empty  = '★'.repeat(5 - data.rating);
-      ratingWrap.innerHTML = `${data.rating} <span style="color:var(--yellow)">${filled}</span><span style="color:#3c395f">${empty}</span>`;
+      const starsHTML = [1,2,3,4,5].map(n =>
+        `<span class="${n <= data.rating ? 'rf-star rf-star--filled' : 'rf-star'}">★</span>`
+      ).join('');
+      ratingWrap.innerHTML = `${data.rating} <span>${starsHTML}</span>`;
     }
     if (commentP){ commentP.textContent = data.comment || ''; }
-
+    showToast('Review updated');
     closeModal();
   };
 
-  // ---------- delete ----------
-  btnDel && (btnDel.onclick = async function(){
-    if (!confirm('Delete this review?')) return;
+  // ---------- delete (AJAX + confirm modal) ----------
+  btnDel && (btnDel.onclick = function(){
     const url = "{% url 'reviews:delete_review_json' review.id %}";
-    const res = await fetch(url, { method:'POST', headers:{'X-CSRFToken': getCookie('csrftoken')} });
-    const data = await res.json().catch(()=> ({}));
-    if (!res.ok){ alert(data.error || 'Failed to delete.'); return; }
-    // balik ke coach detail
-    window.location.href = "{% url 'users:coach_detail' review.coach_id %}";
+    openConfirm(async ()=>{
+      const res = await fetch(url, { method:'POST', headers:{'X-CSRFToken': getCookie('csrftoken'), 'X-Requested-With':'XMLHttpRequest'} });
+      const data = await res.json().catch(()=> ({}));
+      if (!res.ok){ alert(data.error || 'Failed to delete.'); return; }
+      showToast('Review deleted');
+      window.location.href = "{% url 'users:coach_detail' review.coach_id %}";
+    });
   });
+
 })();
 </script>
 {% endif %}
