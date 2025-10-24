@@ -5,17 +5,13 @@ from django.db.models import Q
 from django.shortcuts import get_object_or_404, redirect, render
 from .forms import CommunityCreateForm, MessageForm
 from .models import Community, Membership, Message
-<<<<<<< HEAD
 from django.http import JsonResponse
 import json
-=======
->>>>>>> forum-modul-izzati
 
 # COMMUNITY MAIN PAGE
 def community_home(request):
     q = request.GET.get('q', '').strip()
     communities = Community.objects.all()
-<<<<<<< HEAD
 
     if request.user.is_authenticated:
         joined_ids = set(
@@ -25,8 +21,6 @@ def community_home(request):
     else:
         joined_ids = set()
 
-=======
->>>>>>> forum-modul-izzati
     if q:
         communities = communities.filter(
             Q(name__icontains=q) |
@@ -48,18 +42,13 @@ def community_home(request):
 
 
 # CREATE COMMUNITY (otomatis kalo create = admin)
-<<<<<<< HEAD
 @login_required
-=======
-#@login_required
->>>>>>> forum-modul-izzati
 def community_create(request):
     if request.method == 'POST':
         form = CommunityCreateForm(request.POST)
         if form.is_valid():
             community = form.save(user=request.user)
 
-<<<<<<< HEAD
             # Otomatis gabung sebagai admin
             Membership.objects.get_or_create(
                 community=community,
@@ -79,23 +68,6 @@ def community_create(request):
 # COMMUNITY DETAIL (info lengkap + tombol Join Us)
 def community_detail(request, id):
     c = get_object_or_404(Community, id=id)
-=======
-            # buat membership admin
-            Membership.objects.get_or_create(
-                community=community, user=request.user,
-                defaults={'role': 'admin'}
-            )
-            messages.success(request, 'Community berhasil dibuat.')
-            return redirect('community:detail', slug=community.slug)
-    else:
-        form = CommunityCreateForm()
-    return render(request, 'community/create.html', {'form': form})
-
-
-# COMMUNITY DETAIL (info lengkap + tombol Join Us)
-def community_detail(request, slug):
-    c = get_object_or_404(Community, slug=slug)
->>>>>>> forum-modul-izzati
     is_member = False
     if request.user.is_authenticated:
         is_member = Membership.objects.filter(user=request.user, community=c).exists()
@@ -106,18 +78,11 @@ def community_detail(request, slug):
     })
 
 
-<<<<<<< HEAD
 
 # JOIN (tambah membership, otomatis hitung, add ke My Community List)
 @login_required
 def join_community(request, id):
     c = get_object_or_404(Community, id=id)
-=======
-# JOIN (tambah membership, otomatis hitung, add ke My Community List)
-#@login_required
-def join_community(request, slug):
-    c = get_object_or_404(Community, slug=slug)
->>>>>>> forum-modul-izzati
     mem, created = Membership.objects.get_or_create(community=c, user=request.user, defaults={'role': 'user'})
     if created:
         messages.success(request, f'Kamu bergabung di {c.name}.')
@@ -127,48 +92,28 @@ def join_community(request, slug):
 
 
 # MY COMMUNITY LIST (daftar komunitas yang di join)
-<<<<<<< HEAD
 @login_required
-=======
-#@login_required
->>>>>>> forum-modul-izzati
 def my_community_list(request):
     memberships = Membership.objects.filter(user=request.user).select_related('community').order_by('joined_at')
     return render(request, 'community/my_list.html', {'memberships': memberships})
 
 
 # LEAVE (hapus membership, balikin ke Community main)
-<<<<<<< HEAD
 @login_required
 def leave_community(request, id):
     c = get_object_or_404(Community, id=id)
-=======
-#@login_required
-def leave_community(request, slug):
-    c = get_object_or_404(Community, slug=slug)
->>>>>>> forum-modul-izzati
     Membership.objects.filter(user=request.user, community=c).delete()
     messages.success(request, f'Kamu keluar dari {c.name}.')
     return redirect('community:home')
 
 
 # MY COMMUNITY GROUP (group chat)
-<<<<<<< HEAD
 @login_required
 def my_community_group(request, id):
     c = get_object_or_404(Community, id=id)
     if not Membership.objects.filter(user=request.user, community=c).exists():
         messages.error(request, 'Kamu harus bergabung terlebih dahulu.')
         return redirect('community:detail', id=id)
-=======
-#@login_required
-def my_community_group(request, slug):
-    c = get_object_or_404(Community, slug=slug)
-    # hanya anggota yang boleh kirim/lihat chat
-    if not Membership.objects.filter(user=request.user, community=c).exists():
-        messages.error(request, 'Kamu harus bergabung terlebih dahulu.')
-        return redirect('community:detail', slug=slug)
->>>>>>> forum-modul-izzati
 
     if request.method == 'POST':
         form = MessageForm(request.POST)
@@ -177,12 +122,8 @@ def my_community_group(request, slug):
             msg.community = c
             msg.sender = request.user
             msg.save()
-<<<<<<< HEAD
             return redirect('community:my_group', id=id)
 
-=======
-            return redirect('community:my_group', slug=slug)  # PRG pattern
->>>>>>> forum-modul-izzati
     else:
         form = MessageForm()
 
@@ -192,7 +133,6 @@ def my_community_group(request, slug):
         'form': form,
         'messages': messages_qs,
     })
-<<<<<<< HEAD
 
 
 from django.http import JsonResponse
@@ -247,5 +187,3 @@ def delete_message(request, id, msg_id):
         return JsonResponse({'success': True})
     return JsonResponse({'error': 'Invalid request'}, status=400)
 
-=======
->>>>>>> forum-modul-izzati

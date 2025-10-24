@@ -1,5 +1,4 @@
 {% extends "base.html" %}
-<<<<<<< HEAD
 {% load static %}
 {% block title %}Community{% endblock %}
 {% block content %}
@@ -64,44 +63,5 @@
   </div>
 
 </section>
-=======
-{% block title %}Community{% endblock %}
-{% block content %}
-
-<h1>WELCOME TO OUR COMMUNITY</h1>
-
-<div class="searchbar">
-  <form method="get" action=".">
-    <input type="text" name="q" placeholder="Search community" value="{{ q }}">
-  </form>
-  <div class="right">
-    <a class="btn btn-outline" href="{% url 'community:my_list' %}">My Community</a>
-    <a class="btn" href="{% url 'community:create' %}">Make Community</a>
-  </div>
-</div>
-
-<hr>
-
-{% for c in communities %}
-  <div class="card row">
-    <div class="circle">
-      {% if c.profile_image_url %}<img src="{{ c.profile_image_url }}" alt="pfp">{% endif %}
-    </div>
-    <div>
-      <div class="bold">{{ c.name }}</div>
-      <div class="small">{{ c.short_description }}</div>
-      <div class="small">Members: {{ c.members_count }}</div>
-      <div style="margin-top:8px;">
-        <a class="btn btn-outline" href="{% url 'community:detail' c.slug %}">View</a>
-        {% if user.is_authenticated and c.id in joined_ids %}
-          <span class="small">Already joined</span>
-        {% endif %}
-      </div>
-    </div>
-  </div>
-{% empty %}
-  <p>Tidak ada community.</p>
-{% endfor %}
->>>>>>> forum-modul-izzati
 
 {% endblock %}

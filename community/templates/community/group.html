@@ -1,5 +1,4 @@
 {% extends "base.html" %}
-<<<<<<< HEAD
 {% load static %}
 {% block title %}Community Group{% endblock %}
 {% block content %}
@@ -104,29 +103,4 @@ document.addEventListener('click', async e => {
 });
 </script>
 
-=======
-{% block title %}{{ community.name }} Group{% endblock %}
-{% block content %}
-
-<a class="btn btn-outline" href="{% url 'community:my_list' %}">Back to My Community List</a>
-<h2 class="bold" style="margin-top:12px;">WELCOME TO {{ community.name|upper }}</h2>
-
-<div class="chatbox">
-  {% for msg in messages %}
-    <div class="bubble {% if msg.sender_id == user.id %}me{% endif %}">
-      <div class="sender">{{ msg.sender.username }}</div>
-      <div>{{ msg.text }}</div>
-      <div class="small">{{ msg.created_at|date:"Y-m-d H:i" }}</div>
-    </div>
-  {% empty %}
-    <p class="small">Belum ada pesan.</p>
-  {% endfor %}
-</div>
-
-<form method="post" class="form-inline">
-  {% csrf_token %}
-  {{ form.text }}
-  <button class="btn" type="submit">Send</button>
-</form>
->>>>>>> forum-modul-izzati
 {% endblock %}
