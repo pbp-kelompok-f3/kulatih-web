@@ -1,0 +1,226 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block meta %}
+<title>My Bookings</title>
+{% endblock meta %}
+
+{% block content %}
+<div class="min-h-screen bg-[var(--indigo)] px-6 py-10 text-[var(--white)]">
+  <div class="max-w-4xl mx-auto">
+
+    <!-- Header Section -->
+    <div class="mb-10 text-left">
+      <h1 class="heading-font text-[var(--yellow)] text-5xl mb-4">MY BOOKINGS</h1>
+    </div>
+
+
+    <!-- Tabs -->
+    <div class="flex justify-center mb-10">
+      <div class="flex w-full max-w-4xl rounded-md overflow-hidden border border-[rgba(255,255,255,0.2)] bg-[var(--indigo)]">
+        <button id="btn-upcoming"
+          class="flex-1 py-3 font-semibold text-sm transition-all bg-[var(--yellow)] text-[var(--indigo-dark)]">
+          Upcoming
+        </button>
+        <button id="btn-history"
+          class="flex-1 py-3 font-semibold text-sm transition-all bg-transparent text-[var(--white)] border-l border-[rgba(255,255,255,0.2)]">
+          Booking History
+        </button>
+      </div>
+    </div>
+
+
+
+    <!-- Booking List -->
+    {% if bookings %}
+      <div id="bookings-container" class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {% for b in bookings %}
+        <article
+          class="booking-card rounded-2xl bg-[var(--indigo-light)] border border-[var(--indigo-light)] p-6 shadow-[0_8px_24px_rgba(0,0,0,.3)] relative"
+          data-category="{% if b.status == 'cancelled' or b.status == 'completed' or b.date < today %}history{% else %}upcoming{% endif %}">
+
+          <!-- Status badge -->
+          <span class="absolute top-4 right-4 heading-font px-2.5 py-0.5 rounded text-[11px] font-bold uppercase
+            {% if b.status == 'confirmed' %} bg-green-700 text-white
+            {% elif b.status == 'pending' %} bg-[var(--yellow)] text-[var(--indigo-dark)]
+            {% elif b.status == 'rescheduled' %} bg-purple-600 text-white
+            {% elif b.status == 'completed' %} bg-[var(--gray)] text-[var(--white)]
+            {% else %} bg-gray-600 text-white {% endif %}">
+            {{ b.get_status_display }}
+          </span>
+
+          <!-- Header Info -->
+          <div class="flex items-center gap-2 mb-4 text-sm opacity-80">
+            <i class="fa-regular fa-calendar"></i>
+            <div>{{ b.date|date:"l, d F Y" }} · {{ b.start_time|time:"H:i" }}–{{ b.end_time|time:"H:i" }} WIB</div>
+          </div>
+
+          <!-- Coach Section -->
+          <div class="flex items-center gap-4 mb-4">
+            <img src="{% static 'images/default-coach.png' %}" alt="coach photo"
+                class="w-16 h-16 rounded-full object-cover border border-[rgba(255,255,255,0.2)]">
+            <div>
+              <div class="heading-font text-xl leading-tight">
+                {% for c in b.coach.all %}{{ c.name }}{% if not forloop.last %}, {% endif %}{% empty %}Coach{% endfor %}
+              </div>
+              <div class="text-sm text-[var(--gray)]">
+                {% for c in b.coach.all %}{{ c.sport }}{% if not forloop.last %}, {% endif %}{% endfor %}
+              </div>
+            </div>
+          </div>
+
+          <!-- Location -->
+          <div class="flex items-center gap-2 text-sm text-[var(--gray)] mb-6">
+            <i class="fa-solid fa-location-dot"></i>
+            <span>{% if b.coach.first %}{{ b.coach.first.location|default:"Location not set" }}{% else %}No location{% endif %}</span>
+          </div>
+
+          <!-- Action Buttons -->
+          <div class="flex flex-wrap gap-2">
+            {% if b.status not in 'cancelled completed' %}
+              <button class="cancel-btn heading-font px-4 py-1.5 rounded-md bg-red-600 text-white text-sm"
+                      data-cancel-url="{% url 'booking:ajax_cancel' b.id %}">Cancel</button>
+              <a class="heading-font px-4 py-1.5 rounded-md bg-[var(--yellow)] text-[var(--indigo-dark)] text-sm cursor-pointer">View Details</a>
+              <button class="res-btn heading-font px-4 py-1.5 rounded-md bg-[var(--indigo-dark)] text-[var(--white)] text-sm"
+                      data-res-id="{{ b.id }}">Reschedule</button>
+            {% elif b.status == 'completed' %}
+              <a class="heading-font px-4 py-1.5 rounded-md bg-[var(--yellow)] text-[var(--indigo-dark)] text-sm cursor-pointer">Leave Review</a>
+              <a class="heading-font px-4 py-1.5 rounded-md bg-[var(--indigo-dark)] text-[var(--white)] text-sm cursor-pointer">Book Again</a>
+            {% elif b.status == 'cancelled' %}
+              <span class="heading-font px-4 py-1.5 rounded-md bg-gray-600 text-white text-sm cursor-default">Cancelled</span>
+            {% endif %}
+          </div>
+
+          <!-- Hidden reschedule form -->
+          <form class="res-form hidden mt-4" data-res-form="{{ b.id }}">
+            {% csrf_token %}
+            <div class="grid grid-cols-3 gap-2">
+              <input type="date" name="new_date" value="{{ b.date|date:'Y-m-d' }}"
+                    class="rounded-md px-2 py-2 text-sm bg-[var(--indigo-dark)] border border-[var(--indigo-dark)] text-[var(--white)]" required>
+              <input type="time" name="new_start_time" value="{{ b.start_time|time:'H:i' }}"
+                    class="rounded-md px-2 py-2 text-sm bg-[var(--indigo-dark)] border border-[var(--indigo-dark)] text-[var(--white)]" required>
+              <input type="time" name="new_end_time" value="{{ b.end_time|time:'H:i' }}"
+                    class="rounded-md px-2 py-2 text-sm bg-[var(--indigo-dark)] border border-[var(--indigo-dark)] text-[var(--white)]" required>
+            </div>
+            <div class="mt-3 flex gap-2">
+              <button type="button" class="save-res-btn heading-font px-4 py-2 rounded-md bg-[var(--yellow)] text-[var(--indigo-dark)] text-sm"
+                      data-res-save="{{ b.id }}" data-url="{% url 'booking:ajax_reschedule' b.id %}">Save</button>
+              <button type="button" class="cancel-res-btn heading-font px-4 py-2 rounded-md bg-[var(--indigo-dark)] text-[var(--white)] text-sm"
+                      data-res-cancel="{{ b.id }}">Cancel</button>
+            </div>
+          </form>
+        </article>
+        {% endfor %}
+      </div>
+    {% else %}
+      <div class="rounded-2xl p-16 text-center bg-[var(--indigo-light)] border border-[var(--indigo-light)] shadow-[0_12px_40px_rgba(0,0,0,.35)]">
+        <h2 class="heading-font text-3xl mb-2">NO BOOKINGS</h2>
+        <p class="opacity-70">You don’t have any bookings yet.</p>
+      </div>
+    {% endif %}
+ </div>
+</div>
+
+<!-- JS -->
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    const btnUpcoming = document.getElementById('btn-upcoming');
+    const btnHistory = document.getElementById('btn-history');
+    const cards = document.querySelectorAll('.booking-card');
+
+    // FILTER TAB
+    function showCategory(category) {
+      cards.forEach(card => {
+        card.style.display = (card.dataset.category === category) ? 'block' : 'none';
+      });
+    }
+
+    function setActiveTab(tab) {
+  if (tab === 'upcoming') {
+    btnUpcoming.classList.add('bg-[var(--yellow)]', 'text-[var(--indigo-dark)]');
+    btnUpcoming.classList.remove('bg-transparent', 'text-[var(--white)]');
+    btnHistory.classList.add('bg-transparent', 'text-[var(--white)]');
+    btnHistory.classList.remove('bg-[var(--yellow)]', 'text-[var(--indigo-dark)]');
+  } else {
+    btnHistory.classList.add('bg-[var(--yellow)]', 'text-[var(--indigo-dark)]');
+    btnHistory.classList.remove('bg-transparent', 'text-[var(--white)]');
+    btnUpcoming.classList.add('bg-transparent', 'text-[var(--white)]');
+    btnUpcoming.classList.remove('bg-[var(--yellow)]', 'text-[var(--indigo-dark)]');
+  }
+}
+
+
+    btnUpcoming.addEventListener('click', () => {
+      showCategory('upcoming');
+      setActiveTab('upcoming');
+    });
+
+    btnHistory.addEventListener('click', () => {
+      showCategory('history');
+      setActiveTab('history');
+    });
+
+    // default: Upcoming
+    showCategory('upcoming');
+    setActiveTab('upcoming');
+
+    // AJAX CANCEL
+    document.querySelectorAll('.cancel-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        if (!confirm('Are you sure you want to cancel this booking?')) return;
+        fetch(btn.dataset.cancelUrl, {
+          method: 'POST',
+          headers: { 'X-CSRFToken': '{{ csrf_token }}' },
+        })
+        .then(res => res.json())
+        .then(data => {
+          if (data.ok) {
+            alert('Booking cancelled!');
+            btn.closest('.booking-card').querySelector('.heading-font.text-sm').innerText = 'Cancelled';
+            btn.closest('.booking-card').style.opacity = '0.7';
+            btn.closest('.booking-card').dataset.category = 'history';
+          } else alert('Failed: ' + data.error);
+        })
+        .catch(() => alert('Error cancelling booking.'));
+      });
+    });
+
+    // SHOW RESCHEDULE FORM
+    document.querySelectorAll('.res-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const form = document.querySelector(`[data-res-form="${btn.dataset.resId}"]`);
+        form.classList.toggle('hidden');
+      });
+    });
+
+    // AJAX RESCHEDULE SAVE
+    document.querySelectorAll('.save-res-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const form = document.querySelector(`[data-res-form="${btn.dataset.resSave}"]`);
+        const formData = new FormData(form);
+        fetch(btn.dataset.url, {
+          method: 'POST',
+          headers: { 'X-CSRFToken': '{{ csrf_token }}' },
+          body: formData
+        })
+        .then(res => res.json())
+        .then(data => {
+          if (data.ok) {
+            alert('Booking rescheduled successfully!');
+            location.reload();
+          } else alert('Failed: ' + data.error);
+        })
+        .catch(() => alert('Error saving reschedule.'));
+      });
+    });
+
+    // CANCEL RESCHEDULE FORM
+    document.querySelectorAll('.cancel-res-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const form = document.querySelector(`[data-res-form="${btn.dataset.resCancel}"]`);
+        form.classList.add('hidden');
+      });
+    });
+  });
+</script>
+{% endblock content %}

@@ -13,8 +13,7 @@
       <div class="w-56 h-56 bg-[var(--indigo-dark)] rounded-full flex items-center justify-center overflow-hidden shadow-lg">
         {% if community.profile_image_url %}
           <img src="{{ community.profile_image_url }}" alt="Community Picture"
-          class="w-24 h-24 rounded-full object-cover border-2 border-yellow-400">
-
+              class="w-full h-full object-cover rounded-full border-4 border-[var(--yellow)] shadow-md">
         {% else %}
           <span class="text-[var(--yellow)] text-5xl font-bebas">?</span>
         {% endif %}
