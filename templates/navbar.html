@@ -1,15 +1,15 @@
-<nav class="flex items-center justify-between w-full h-20 px-4 sm:px-10 lg:px-20 bg-gradient-to-b from-[var(--indigo-light)] to-[var(--indigo-dark)] border-b border-gray-800 font-bebas relative md:sticky md:top-0 md:z-50 shadow-lg transition-all duration-300">
+<nav class="flex items-center justify-between w-full h-20 px-4 sm:px-10 lg:px-20 bg-[var(--indigo-dark)] border-b border-gray-800 font-bebas relative md:sticky md:top-0 md:z-50 shadow-lg transition-all duration-300">
     <div class="flex items-center">
         <h1 class="text-4xl">
             <a href="{% url 'main:show_main' %}" class="text-white">KU</a><a href="{% url 'main:show_main' %}" class="text-yellow-400">LATIH</a>
         </h1>
     </div>
     <div class="hidden md:flex absolute left-1/2 transform -translate-x-1/2">
-        <div class="flex items-center gap-x-8 text-white tracking-wide text-2xl z-10">
+        <div class="flex items-center gap-x-8 text-[var(--white)] tracking-wide text-2xl z-10 tracking-wider">
             <a href="{% url 'users:coach_list' %}" class="hover:text-[var(--yellow)]">COACH</a>
-            <a href="#" class="hover:text-yellow-400">FORUM</a>
-            <a href="#" class="hover:text-yellow-400">COMMUNITY</a>
-            <a href="{% url 'tournaments:tournament_view' %}" class="hover:text-yellow-400">TOURNAMENTS</a>
+            <a href="#" class="hover:text-[var(--yellow)]">FORUM</a>
+            <a href="#" class="hover:text-[var(--yellow)]">COMMUNITY</a>
+            <a href="{% url 'tournaments:tournament_view' %}" class="hover:text-[var(--yellow)]">TOURNAMENTS</a>
         </div>
     </div>
     <div class="flex items-center space-x-3">
@@ -41,7 +41,7 @@
                 </div>
                 <a href="{% url 'users:show_profile' %}" class="block px-4 py-2 text-sm text-white hover:bg-[#2e2b5a] transition-colors duration-200">My Profile</a>
                 <a href="{% url 'users:show_profile' %}?action=edit" class="block px-4 py-2 text-sm text-white hover:bg-[#2e2b5a] transition-colors duration-200">Edit Profile</a>
-                <a href="#" class="block px-4 py-2 text-sm text-white hover:bg-[#2e2b5a] border-b border-gray-700 transition-colors duration-200">My Bookings</a>
+                <a href="{% url 'booking:list' %}" class="block px-4 py-2 text-sm text-white hover:bg-[#2e2b5a] border-b border-gray-700 transition-colors duration-200">My Bookings</a>
                 <form method="post" action="{% url 'users:logout' %}">
                     {% csrf_token %}
                     <button type="submit" class="block w-full text-left px-4 py-2 text-sm text-white hover:bg-[#2e2b5a] transition-colors duration-200">

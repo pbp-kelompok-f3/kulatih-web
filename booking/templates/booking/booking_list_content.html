@@ -1,23 +1,17 @@
-{% extends 'base.html' %}
 {% load static %}
 
-{% block meta %}
-<title>My Bookings</title>
-{% endblock meta %}
-
-{% block content %}
-<div class="min-h-screen bg-[var(--indigo)] px-6 py-10 text-[var(--white)]">
-  <div class="max-w-4xl mx-auto">
+<section class="bg-[var(--indigo)] px-8 md:px-20 pb-14 text-[var(--white)]">
+  <div class="max-w-6xl mx-auto">
 
     <!-- Header Section -->
-    <div class="mb-10 text-left">
-      <h1 class="heading-font text-[var(--yellow)] text-5xl mb-4">MY BOOKINGS</h1>
+    <div class="mb-6 text-left">
+      <h1 class="heading-font text-[var(--yellow)] text-5xl">MY BOOKINGS</h1>
     </div>
 
 
     <!-- Tabs -->
     <div class="flex justify-center mb-10">
-      <div class="flex w-full max-w-4xl rounded-md overflow-hidden border border-[rgba(255,255,255,0.2)] bg-[var(--indigo)]">
+      <div class="flex w-full max-w-6xl rounded-xl overflow-hidden border border-[rgba(255,255,255,0.2)] bg-[var(--indigo)]">
         <button id="btn-upcoming"
           class="flex-1 py-3 font-semibold text-sm transition-all bg-[var(--yellow)] text-[var(--indigo-dark)]">
           Upcoming
@@ -29,14 +23,12 @@
       </div>
     </div>
 
-
-
     <!-- Booking List -->
     {% if bookings %}
       <div id="bookings-container" class="grid grid-cols-1 md:grid-cols-2 gap-6">
         {% for b in bookings %}
         <article
-          class="booking-card rounded-2xl bg-[var(--indigo-light)] border border-[var(--indigo-light)] p-6 shadow-[0_8px_24px_rgba(0,0,0,.3)] relative"
+          class="booking-card rounded-2xl bg-[var(--indigo-light)] border border-[var(--indigo-light)] p-6 shadow-lg relative"
           data-category="{% if b.status == 'cancelled' or b.status == 'completed' or b.date < today %}history{% else %}upcoming{% endif %}">
 
           <!-- Status badge -->
@@ -113,13 +105,13 @@
         {% endfor %}
       </div>
     {% else %}
-      <div class="rounded-2xl p-16 text-center bg-[var(--indigo-light)] border border-[var(--indigo-light)] shadow-[0_12px_40px_rgba(0,0,0,.35)]">
+      <div class="rounded-2xl p-16 text-center bg-[var(--indigo-light)] border border-[var(--indigo-light)] shadow-lg">
         <h2 class="heading-font text-3xl mb-2">NO BOOKINGS</h2>
         <p class="opacity-70">You don’t have any bookings yet.</p>
       </div>
     {% endif %}
  </div>
-</div>
+</section>
 
 <!-- JS -->
 <script>
@@ -223,4 +215,3 @@
     });
   });
 </script>
-{% endblock content %}
