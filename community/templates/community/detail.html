@@ -31,25 +31,33 @@
 
   </div>
 
-  <!-- Tombol Join -->
-  <div class="mt-16">
-    {% if user.is_authenticated %}
-      {% if joined %}
-        <button class="px-10 py-4 bg-[var(--yellow)] text-[var(--indigo-dark)] font-bebas text-2xl rounded-2xl shadow-md opacity-70 cursor-not-allowed">
-          YOU'VE JOINED THIS COMMUNITY
-        </button>
-      {% else %}
-        <a href="{% url 'community:join' community.slug %}" 
-           class="px-10 py-4 bg-[var(--yellow)] text-[var(--indigo-dark)] font-bebas text-2xl rounded-2xl shadow-md hover:scale-105 transition-transform">
-          JOIN US NOW
-        </a>
-      {% endif %}
-    {% else %}
-      <a href="{% url 'community:join' community.slug %}" 
-         class="px-10 py-4 bg-[var(--yellow)] text-[var(--indigo-dark)] font-bebas text-2xl rounded-2xl shadow-md hover:scale-105 transition-transform">
-        JOIN US NOW
-      </a>
-    {% endif %}
+<!-- Tombol Join -->
+<div class="mt-16">
+  {% if user.is_authenticated %}
+    {% if not is_member %}
+    <!-- Belum join -->
+    <a href="{% url 'community:join' community.id %}"
+      class="px-10 py-4 bg-[var(--yellow)] text-[var(--indigo-dark)] font-bebas text-2xl rounded-2xl shadow-md hover:scale-105 transition-transform">
+      JOIN US NOW
+    </a>
+  {% else %}
+    <!-- Sudah join -->
+    <a href="{% url 'community:my_group' community.id %}"
+      class="px-10 py-4 bg-[var(--yellow)] text-[var(--indigo-dark)] font-bebas text-2xl rounded-2xl shadow-md hover:scale-105 transition-transform">
+      VIEW GROUP
+    </a>
+  {% endif %}
+
+  {% else %}
+    <a href="{% url 'community:join' community.id %}"
+       class="px-10 py-4 bg-[var(--yellow)] text-[var(--indigo-dark)] font-bebas text-2xl rounded-2xl shadow-md hover:scale-105 transition-transform">
+      JOIN US NOW
+    </a>
+  {% endif %}
+</div>
+
+  
+
   </div>
 
 </section>
