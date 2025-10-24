@@ -1,4 +1,3 @@
-# reviews/views.py — final, sesuai flow terbaru
 import json
 
 from django.contrib.auth.decorators import login_required
@@ -9,6 +8,8 @@ from django.db.models import Avg, Count
 from django.http import JsonResponse, HttpResponseBadRequest
 from django.shortcuts import get_object_or_404
 from django.views.decorators.http import require_GET, require_POST, require_http_methods
+from django.shortcuts import render
+
 
 from .models import Review
 from users.models import Coach, Member
@@ -18,25 +19,28 @@ User = get_user_model()
 
 # READ
 @require_GET
-def coach_reviews_json(request, coach_id: int) -> JsonResponse:
+def coach_reviews_json(request, coach_id):
+    """
+    List review suatu coach + statistik & pagination.
+    Sinkron dengan users: coach_id bertipe UUID.
+    """
     coach = get_object_or_404(Coach, pk=coach_id)
 
-    sort = (request.GET.get("sort") or "newest").lower()
+    sort = (request.GET.get("sort") or "").lower()
     if   sort == "highest": order_by = "-rating"
     elif sort == "lowest":  order_by = "rating"
-    elif sort == "oldest":  order_by = "created_at"
-    else:                   order_by = "-created_at"
+    else:                   order_by = "-created_at"  # DEFAULT: terbaru di atas
 
     qs = (
         Review.objects
         .filter(coach=coach)
-        .select_related("reviewer__user")   # ambil username tanpa N+1
-        .order_by(order_by, "-id")
+        .select_related("reviewer__user")
+        .order_by(order_by, "-id")  # tie-breaker stabil
     )
-
+    
     stats = qs.aggregate(avg=Avg("rating"), total=Count("id"))
 
-    # siapa user login -> member_id (kalau ada) untuk flag is_owner
+    # user login -> member_id untuk flag is_owner
     try:
         me_member_id = Member.objects.get(user=request.user).id
     except Exception:
@@ -63,8 +67,8 @@ def coach_reviews_json(request, coach_id: int) -> JsonResponse:
     for r in page_obj.object_list:
         reviewer_username = getattr(getattr(r.reviewer, "user", None), "username", str(r.reviewer_id))
         items.append({
-            "id": r.id,
-            "reviewer_id": r.reviewer_id,
+            "id": str(r.id),                        
+            "reviewer_id": str(r.reviewer_id),
             "reviewer_username": reviewer_username,
             "rating": r.rating,
             "comment": r.comment,
@@ -74,7 +78,7 @@ def coach_reviews_json(request, coach_id: int) -> JsonResponse:
 
     coach_username = getattr(getattr(coach, "user", None), "username", str(coach.id))
     data = {
-        "coach": {"id": coach.id, "username": coach_username},
+        "coach": {"id": str(coach.id), "username": coach_username},
         "stats": {"avg": stats["avg"], "total": stats["total"]},
         "sort": sort,
         "pagination": {
@@ -107,9 +111,9 @@ def review_detail_json(request, review_id: int) -> JsonResponse:
     coach_username = getattr(getattr(r.coach, "user", None), "username", str(r.coach_id))
 
     return JsonResponse({
-        "id": r.id,
-        "coach": {"id": r.coach_id, "username": coach_username},
-        "reviewer": {"id": r.reviewer_id, "username": reviewer_username},
+        "id": str(r.id),
+        "coach": {"id": str(r.coach_id), "username": coach_username},
+        "reviewer": {"id": str(r.reviewer_id), "username": reviewer_username},
         "rating": r.rating,
         "comment": r.comment,
         "created_at": r.created_at.isoformat(),
@@ -118,12 +122,15 @@ def review_detail_json(request, review_id: int) -> JsonResponse:
 
 
 # CREATE
-
 @login_required
 @require_POST
-def create_review_json(request, coach_id: int) -> JsonResponse:
+def create_review_json(request, coach_id):
+    """
+    Buat review oleh Member terhadap Coach (coach_id = UUID).
+    """
     coach = get_object_or_404(Coach, pk=coach_id)
 
+    # larang self-review jika user adalah coach tsb
     coach_user_id = getattr(getattr(coach, "user", None), "id", None)
     if coach_user_id and coach_user_id == request.user.id:
         return JsonResponse({"error": "not_allowed"}, status=403)
@@ -134,7 +141,7 @@ def create_review_json(request, coach_id: int) -> JsonResponse:
     except Member.DoesNotExist:
         return JsonResponse({"error": "member_profile_required"}, status=403)
 
-    # parse body
+    # parse body JSON
     try:
         payload = json.loads(request.body.decode("utf-8") or "{}")
     except Exception:
@@ -157,24 +164,22 @@ def create_review_json(request, coach_id: int) -> JsonResponse:
             comment=comment[:1000],
         )
     except IntegrityError:
-        # unique (coach, reviewer)
         return JsonResponse({"error": "already_reviewed"}, status=400)
 
     return JsonResponse({
         "message": "created",
-        "id": obj.id,
-        "coach_id": coach.id,
-        "reviewer_id": member.id,
+        "id": str(obj.id),
+        "coach_id": str(coach.id),
+        "reviewer_id": str(member.id),
         "rating": obj.rating,
         "comment": obj.comment,
         "created_at": obj.created_at.isoformat(),
     }, status=201)
 
 
-# UPDATE 
-
+# UPDATE
 @login_required
-@require_http_methods(["PATCH", "PUT", "POST"])  
+@require_http_methods(["PATCH", "PUT", "POST"])
 def update_review_json(request, review_id: int) -> JsonResponse:
     review = get_object_or_404(Review, pk=review_id)
 
@@ -189,6 +194,7 @@ def update_review_json(request, review_id: int) -> JsonResponse:
     if not (is_admin or owner_ok):
         return JsonResponse({"error": "forbidden"}, status=403)
 
+    # parse body
     try:
         payload = json.loads(request.body.decode("utf-8") or "{}")
     except Exception:
@@ -216,16 +222,15 @@ def update_review_json(request, review_id: int) -> JsonResponse:
 
     return JsonResponse({
         "message": "updated",
-        "id": review.id,
+        "id": str(review.id),
         "rating": review.rating,
         "comment": review.comment,
     }, status=200)
 
 
 # DELETE
-
 @login_required
-@require_http_methods(["DELETE", "POST"]) 
+@require_http_methods(["DELETE", "POST"])
 def delete_review_json(request, review_id: int) -> JsonResponse:
     review = get_object_or_404(Review, pk=review_id)
 
@@ -241,4 +246,25 @@ def delete_review_json(request, review_id: int) -> JsonResponse:
         return JsonResponse({"error": "forbidden"}, status=403)
 
     review.delete()
-    return JsonResponse({"message": "deleted", "id": review_id}, status=200)
+    return JsonResponse({"message": "deleted", "id": str(review_id)}, status=200)
+
+@require_GET
+def review_detail_page(request, review_id: int):
+    r = get_object_or_404(
+        Review.objects.select_related("reviewer__user", "coach__user"),
+        pk=review_id,
+    )
+    # flag owner
+    try:
+        me_member_id = Member.objects.get(user=request.user).id
+    except Exception:
+        me_member_id = None
+    is_owner = (me_member_id == r.reviewer_id)
+
+    ctx = {
+        "review": r,
+        "is_owner": is_owner,
+        "coach_username": getattr(getattr(r.coach, "user", None), "username", str(r.coach_id)),
+        "reviewer_username": getattr(getattr(r.reviewer, "user", None), "username", str(r.reviewer_id)),
+    }
+    return render(request, "review_detail.html", ctx)
