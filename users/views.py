@@ -1,13 +1,13 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.db import transaction
+from django.http import JsonResponse
 from django.contrib import messages
 from django.contrib.auth import login, authenticate, logout
 from django.contrib.auth.forms import AuthenticationForm
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
+
 from .models import Member, Coach
-
-
 from .forms import (
     MemberRegistrationForm,
     CoachRegistrationForm,
@@ -15,7 +15,6 @@ from .forms import (
     MemberEditForm,
     CoachEditForm
 )
-from .models import Member, Coach
 
 # Create your views here.
 
@@ -113,18 +112,35 @@ def show_profile(request):
     # Check if user is Member or Coach
     if hasattr(request.user, 'member'):
         profile = request.user.member
-        template = 'profile_member.html'
+        template = 'users/profile_member.html'
+        profile_form = MemberEditForm(instance=profile)
     elif hasattr(request.user, 'coach'):
         profile = request.user.coach
-        template = 'profile_coach.html'
-    else: 
-        # Handle cases like superuser or user without profile
-        return render(request, 'main:show_main')
-        
+        template = 'users/profile_coach.html'
+        profile_form = CoachEditForm(instance=profile)
+    else:
+        # Fallback for users without a profile (e.g., superuser)
+        messages.info(request, "You don't have a member or coach profile.")
+        return redirect('main:show_main')
+
+    user_form = UserEditForm(instance=request.user)
+
     context = {
-        'user': request.user,
-        'profile': profile
+        'profile': profile,
+        'user_form': user_form,
+        'profile_form': profile_form,
     }
+
+    # You need to decide which template to render here.
+    # Assuming you want to show the modal on the user's profile page.
+    if hasattr(request.user, 'member'):
+        template = 'profile_member.html'
+        profile = request.user.member
+    else:
+        template = 'profile_coach.html'
+        profile = request.user.coach
+
+    context['profile'] = profile
     return render(request, template, context)
 
 login_required(login_url='/login')
@@ -142,27 +158,60 @@ def edit_profile(request):
         return redirect('main:show_main')
 
     if request.method == 'POST':
-        # Create forms with submitted data
         user_form = UserEditForm(request.POST, instance=request.user)
-        profile_form = ProfileEditForm(request.POST, request.FILES, instance=profile_instance)
+        profile_form = ProfileEditForm(request.POST, instance=profile_instance)
         
+        is_ajax = request.headers.get('x-requested-with') == 'XMLHttpRequest'
+
         if user_form.is_valid() and profile_form.is_valid():
             user_form.save()
             profile_form.save()
+            
+            if is_ajax:
+                return JsonResponse({
+                    'success': True,
+                    'user': {
+                        'first_name': request.user.first_name,
+                        'last_name': request.user.last_name,
+                        'email': request.user.email,
+                    },
+                    'profile': {
+                        'city': profile_instance.city,
+                        'phone': profile_instance.phone,
+                        'description': profile_instance.description,
+                        'profile_photo': profile_instance.profile_photo,
+                    }
+                })
+
             messages.success(request, 'Your profile has been updated successfully!')
             return redirect('users:show_profile')
+        elif is_ajax:
+            errors = user_form.errors.as_json() + profile_form.errors.as_json()
+            return JsonResponse({'success': False, 'errors': errors}, status=400)
+
     else:
         # For a GET request, create the initial forms with existing data
         user_form = UserEditForm(instance=request.user)
         profile_form = ProfileEditForm(instance=profile_instance)
 
+    # This context will be used for GET requests and invalid non-AJAX POSTs
     context = {
         'user_form': user_form,
         'profile_form': profile_form
     }
-    return render(request, 'edit_profile.html', context)
+    
+    # This will render the profile page with the forms
+    # You need to decide which template to render here.
+    # Assuming you want to show the modal on the user's profile page.
+    if hasattr(request.user, 'member'):
+        template = 'profile_member.html'
+        profile = request.user.member
+    else:
+        template = 'profile_coach.html'
+        profile = request.user.coach
 
-# COACH LIST 
+    context['profile'] = profile
+    return render(request, f'users/{template}', context)
 
 # COACH LIST 
 

@@ -13,6 +13,7 @@ class Member(models.Model):
     profile_photo = models.URLField(blank=True, null=True)
     city = models.CharField(max_length=100)
     phone = models.CharField(max_length=20)
+    description = models.TextField(blank=True, null=True)
 
     def __str__(self):
         return self.user.username
@@ -41,6 +42,7 @@ class Coach(models.Model):
     profile_photo = models.URLField(blank=True, null=True)
     city = models.CharField(max_length=100)
     phone = models.CharField(max_length=20)
+    description = models.TextField(blank=True, null=True)
     
     sport = models.CharField(max_length=20, choices=SPORT_CHOICES, default='other')
     hourly_fee = models.PositiveIntegerField(default=0)
