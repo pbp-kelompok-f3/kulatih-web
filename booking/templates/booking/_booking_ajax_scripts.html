@@ -1,0 +1,63 @@
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+  const btnUpcoming = document.getElementById("btn-upcoming");
+  const btnHistory = document.getElementById("btn-history");
+  const cards = document.querySelectorAll(".booking-card");
+
+  // Tab filter
+  const showCategory = cat => {
+    cards.forEach(c => c.style.display = (c.dataset.category === cat) ? "block" : "none");
+  };
+  const setActive = tab => {
+    if (tab === "upcoming") {
+      btnUpcoming.classList.add("bg-[var(--yellow)]","text-[var(--indigo-dark)]");
+      btnHistory.classList.remove("bg-[var(--yellow)]","text-[var(--indigo-dark)]");
+    } else {
+      btnHistory.classList.add("bg-[var(--yellow)]","text-[var(--indigo-dark)]");
+      btnUpcoming.classList.remove("bg-[var(--yellow)]","text-[var(--indigo-dark)]");
+    }
+  };
+  btnUpcoming?.addEventListener("click",()=>{showCategory("upcoming");setActive("upcoming");});
+  btnHistory?.addEventListener("click",()=>{showCategory("history");setActive("history");});
+  showCategory("upcoming"); setActive("upcoming");
+
+  // Cancel
+  document.querySelectorAll(".cancel-btn").forEach(btn=>{
+    btn.addEventListener("click",()=>{
+      if(!confirm("Cancel this booking?"))return;
+      fetch(btn.dataset.cancelUrl,{method:"POST",headers:{"X-CSRFToken":"{{ csrf_token }}"}})
+      .then(r=>r.json()).then(d=>{if(d.ok)location.reload();else alert(d.error);});
+    });
+  });
+
+  // Reschedule toggle form
+  document.querySelectorAll(".res-btn").forEach(btn=>{
+    btn.addEventListener("click",()=>{
+      document.querySelector(`[data-res-form="${btn.dataset.resId}"]`).classList.toggle("hidden");
+    });
+  });
+  document.querySelectorAll(".cancel-res-btn").forEach(btn=>{
+    btn.addEventListener("click",()=>{
+      document.querySelector(`[data-res-form="${btn.dataset.resCancel}"]`).classList.add("hidden");
+    });
+  });
+  document.querySelectorAll(".save-res-btn").forEach(btn=>{
+    btn.addEventListener("click",()=>{
+      const f=document.querySelector(`[data-res-form="${btn.dataset.resSave}"]`);
+      const fd=new FormData(f);
+      fetch(btn.dataset.url,{method:"POST",headers:{"X-CSRFToken":"{{ csrf_token }}"},body:fd})
+      .then(r=>r.json()).then(d=>{if(d.ok){alert("Booking rescheduled!");location.reload();}else alert(d.error);});
+    });
+  });
+
+  // Confirm (coach)
+  document.querySelectorAll(".confirm-btn").forEach(btn=>{
+    btn.addEventListener("click",()=>{
+      fetch(`/booking/ajax_confirm_booking/${btn.dataset.confirmId}/`,{method:"POST",headers:{"X-CSRFToken":"{{ csrf_token }}"}})
+      .then(r=>r.json()).then(d=>{if(d.ok)location.reload();else alert(d.error);});
+    });
+  });
+
+  // Accept / Reject reschedule (coach)
+  document.querySelectorAll(".accept-res-btn, .reject-res-btn").forEach(btn=>{
+    btn.addEventListener("click",
