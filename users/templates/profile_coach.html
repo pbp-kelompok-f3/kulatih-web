@@ -6,5 +6,68 @@
 {% endblock meta %}
 
 {% block content %}
-    
+<section class="bg-[var(--indigo)] text-[var(--white)] px-8 md:px-20 py-12 font-bevietnam">
+  <div class="max-w-6xl mx-auto">
+    <div class="flex flex-col md:flex-row items-center gap-10">
+      <!-- Left: avatar -->
+      <div class="w-56 h-56 bg-[var(--indigo-dark)] rounded-2xl overflow-hidden shadow-lg flex-shrink-0 mx-auto md:mx-0">
+        {% if profile.profile_photo %}
+          <img id="coach-photo" src="{{ profile.profile_photo }}" alt="{{ profile.user.username }}" class="w-full h-full object-cover">
+        {% else %}
+          <img id="coach-photo" src="https://icon-library.com/images/default-profile-icon/default-profile-icon-24.jpg" alt="{{ profile.user.username }}" class="w-full h-full object-cover">
+        {% endif %}
+      </div>
+
+      <!-- Right: header -->
+      <div class="flex-1 text-center md:text-left">
+        <div class="text-lg font-bevietnam tracking-wider text-gray-300 mb-2">
+          Coach Profile
+        </div>
+        <h1 id="coach-fullname" class="text-5xl font-bevietnam font-bold leading-none mb-2">{{ profile.user.get_full_name }}</h1>
+        <div class="text-lg text-gray-400 mb-4">
+          @{{ profile.user.username }} <span class="text-white">· Coach since {{ profile.user.date_joined|date:"F Y" }}</span>
+        </div>
+
+        {% if user.is_authenticated and user == profile.user %}
+            <button id="edit-profile-btn" class="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-[var(--yellow)] text-[var(--indigo-dark)] font-medium shadow-md hover:opacity-90">
+                ✎ Edit Profile
+            </button>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- Description / info card -->
+    <div class="bg-[var(--indigo-light)] rounded-2xl p-8 text-left mt-12 shadow-lg">
+        <h2 class="text-2xl font-semibold font-bevietnam mb-2">Description</h2>
+        <p id="coach-description" class="text-[var(--white)] leading-relaxed mb-6">
+        {{ profile.description|default:"This coach has not added a description." }}
+        </p>
+        
+        <div class="flex gap-x-8 text-sm">
+            <!-- Column 1: Labels -->
+            <div class="text-gray-400 font-semibold space-y-2">
+                <div>Sport</div>
+                <div>Hourly Fee</div>
+                <div>City</div>
+                <div>Email</div>
+                <div>Phone</div> 
+            </div>
+
+            <!-- Column 2: Values -->
+            <div class="text-[rgba(245,245,245,.9)] space-y-2">
+                <div id="coach-sport">{{ profile.get_sport_display }}</div>
+                <div id="coach-fee">Rp {{ profile.hourly_fee }}</div>
+                <div id="coach-city">{{ profile.city|default:"Not specified" }}</div>
+                <div id="coach-email">{{ profile.user.email }}</div>
+                <div id="coach-phone">{{ profile.phone|default:"-" }}</div>
+            </div>
+        </div>
+    </div>
+  </div>
+</section>
+
+{% include "modal_coach_edit.html" %}
+
+{% include "booking/booking_list_content.html" %}
+
 {% endblock content %}

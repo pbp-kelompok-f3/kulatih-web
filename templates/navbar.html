@@ -65,7 +65,7 @@
 
     <div 
         id="mobile-menu" 
-        class="hidden md:hidden absolute top-full left-0 w-full bg-[#242244] border-t border-gray-700 
+        class="hidden md:hidden absolute z-50 top-full left-0 w-full bg-[#242244] border-t border-gray-700 
             overflow-hidden transition-all duration-700 ease-[cubic-bezier(0.77,0,0.175,1)] 
             max-h-0 shadow-[0_8px_20px_rgba(0,0,0,0.4)] transform-gpu"
     >
@@ -100,20 +100,11 @@
                         transition-all duration-500 ease-in-out transform hover:translate-x-1 hover:scale-[1.02]">
                     COMMUNITY
                 </a>
-
-                {% if user.profile.role == 'member' %}
-                    <a href="{% url 'tournaments:my_tournaments' %}" 
-                    class="block w-full px-4 py-2 rounded-md hover:text-yellow-400 hover:bg-[#191831] 
-                            transition-all duration-500 ease-in-out transform hover:translate-x-1 hover:scale-[1.02]">
-                        MY TOURNAMENT
-                    </a>
-                {% elif user.profile.role == 'coach' %}
-                    <a href="{% url 'tournaments:tournament_view' %}" 
-                    class="block w-full px-4 py-2 rounded-md hover:text-yellow-400 hover:bg-[#191831] 
-                            transition-all duration-500 ease-in-out transform hover:translate-x-1 hover:scale-[1.02]">
-                        TOURNAMENT
-                    </a>
-                {% endif %}
+                <a href="{% url 'tournaments:tournament_view' %}" 
+                class="block w-full px-4 py-2 rounded-md hover:text-yellow-400 hover:bg-[#191831] 
+                        transition-all duration-500 ease-in-out transform hover:translate-x-1 hover:scale-[1.02]">
+                    TOURNAMENT
+                </a>
 
                 <div class="border-t border-gray-700 my-2"></div>
 

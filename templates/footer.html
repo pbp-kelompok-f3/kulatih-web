@@ -2,22 +2,22 @@
   <div class="max-w-6xl mx-auto">
     <div class="grid grid-cols-1 md:grid-cols-5 gap-8">
       <div class="text-5xl text-center md:text-left">
-        <a href="{% url 'main:show_main' %}" class="text-white font-bebas">KU</a>
-        <a href="{% url 'main:show_main' %}" class="text-yellow-400 font-bebas">LATIH</a>
+        <a href="{% url 'main:show_main' %}" class="text-white font-bebas">KU</a><a href="{% url 'main:show_main' %}" class="text-yellow-400 font-bebas">LATIH</a>
       </div>
       <div class="text-center md:text-left">
         <h3 class="font-semibold mb-3">Discover</h3>
         <ul class="space-y-2 text-sm">
-          <li><a href="#" class="hover:text-yellow-400">Find a Coach</a></li>
-          <li><a href="#" class="hover:text-yellow-400">How It Works</a></li>
-          <li><a href="#" class="hover:text-yellow-400">Ask in Forum</a></li>
+          <li><a href="{% url 'users:coach_list' %}" class="hover:text-yellow-400">Find a Coach</a></li>
+          <li><a href="{% url 'main:show_main' %}" class="hover:text-yellow-400">How It Works</a></li>
+          <li><a href="{% url 'forum:post_list' %}" class="hover:text-yellow-400">Ask in Forum</a></li>
+          <li><a href="{% url 'community:home'}" class="hover:text-yellow-400">Join a Community</a></li>
         </ul>
       </div>
       <div class="border-t md:border-t-0 md:border-l border-gray-600 pt-4 md:pt-0 md:pl-6 text-center md:text-left">
         <h3 class="font-semibold mb-3">For Coaches</h3>
         <ul class="space-y-2 text-sm">
-          <li><a href="#" class="hover:text-yellow-400">Become a Coach</a></li>
-          <li><a href="#" class="hover:text-yellow-400">Coach Login</a></li>
+          <li><a href="{% url 'users:register_coach' %}" class="hover:text-yellow-400">Become a Coach</a></li>
+          <li><a href="{% url 'users:login' %}" class="hover:text-yellow-400">Login</a></li>
         </ul>
       </div>
       <div class="border-t md:border-t-0 md:border-l border-gray-600 pt-4 md:pt-0 md:pl-6 text-center md:text-left">

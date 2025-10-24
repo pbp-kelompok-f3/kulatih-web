@@ -2,51 +2,69 @@
 {% load static %}
 
 {% block content %}
-<div class="bg-[#0f0e2e] min-h-screen text-white px-6 py-10 flex justify-center items-center">
 
-  <div class="bg-transparent max-w-4xl w-full flex flex-col md:flex-row gap-8">
-    <div class="bg-[#1b1a41] rounded-2xl shadow-lg p-6 w-full md:w-1/2 flex flex-col items-center text-center">
-      <img src="{{ coach.profile_photo|default:'https://via.placeholder.com/200' }}" 
-           alt="{{ coach.user.username }}" 
-           class="w-40 h-40 object-cover rounded-xl mb-4 border-4 border-[#0f0e2e]">
+<div class="bg-[var(--indigo)] text-[var(--white)] font-bevietnam flex justify-center px-8 md:px-20 py-12">
 
-      <h2 class="text-2xl font-extrabold text-yellow-400 mb-4 uppercase tracking-wide">
-        {{ coach.user.get_full_name|default:coach.user.username }}
-      </h2>
+    <main class="flex flex-col lg:flex-row gap-8 w-full max-w-5xl">
+      
+        <div class="bg-[var(--indigo-light)] p-8 rounded-2xl shadow-lg w-full lg:w-2/5 flex flex-col items-center text-center">
+            
+            <div class="w-80 h-80 rounded-2xl overflow-hidden mb-5 bg-[var(--indigo-dark)]">
+                
+                {% if coach.profile_photo %}
+                    <img src="{{ coach.profile_photo }}" 
+                        alt="Profile picture of {{ coach.name }}" 
+                        class="w-full h-full object-cover">
+                {% else %}
+                    <img src="https://icon-library.com/images/default-profile-icon/default-profile-icon-24.jpg" alt="Default profile picture" class="w-full h-full object-cover">
+                {% endif %}
 
-      <div class="space-y-3 text-sm">
-        <div class="flex justify-between border-b border-gray-600 pb-1">
-          <span class="font-semibold text-gray-300">FEE</span>
-          <span class="font-bold">Rp{{ coach.hourly_fee}}</span>
+            </div>
+
+            <div class="space-y-2 px-2">
+                <h1 class="text-5xl font-bebas text-[var(--yellow)] leading-none tracking-wide">
+                    {{ coach.user.get_full_name }}
+                </h1>
+                <p class="text-lg text-[var(--white)]">
+                    <strong>{{ coach.get_sport_display }}</strong> - {{ coach.city }}
+                </p>
+            </div>
         </div>
-        <div class="flex justify-between border-b border-gray-600 pb-1">
-          <span class="font-semibold text-gray-300">CITY</span>
-          <span class="font-bold">{{ coach.city }}</span>
+
+        <div class="bg-[var(--indigo-light)] p-8 rounded-2xl shadow-lg w-full lg:w-3/5 flex flex-col">
+            
+            <h2 class="text-4xl font-bebas text-[var(--white)] mb-4 tracking-wider">
+                Description
+            </h2>
+            <p class="text-[var(--white)] text-xl opacity-80 leading-relaxed">
+                {{ coach.description|default:"This coach has not added a description." }}
+            </p>
+
+            <div class="flex-grow"></div>
+
+            <div class="space-y-3">
+                <dl class="flex items-center mb-2">
+                    <dt class="w-auto mr-4 text-xl text-[var(--white)] opacity-80 font-semibold text-lg">Fee</dt>
+                    <dd class="text-xl text-[var(--white)] font-medium text-lg"><strong class="text-2xl">IDR {{ coach.hourly_fee }}</strong> / Hour</dd>
+                </dl>
+            </div>
+
+            {% if user.is_authenticated and user.member %}
+                <div class="text-center mt-4">
+                  <a href="#" class="block w-full bg-[var(--yellow)] text-center text-[var(--indigo-dark)] font-bold text-3xl py-3 px-8 rounded-lg hover:opacity-90 transition-opacity font-bebas tracking-wider">
+                      BOOK COACH
+                  </a>
+            {% elif user.is_anonymous %}
+                <div class="text-center mt-4">
+                  <a href="{% url 'users:login' %}" class="block w-full bg-[var(--yellow)] text-center text-[var(--indigo-dark)] font-bold text-3xl py-3 px-8 rounded-lg hover:opacity-90 transition-opacity font-bebas tracking-wider">
+                      BOOK COACH
+                  </a>
+                </div>
+            {% endif%}
+
         </div>
-        <div class="flex justify-between">
-          <span class="font-semibold text-gray-300">SPORT</span>
-          <span class="font-bold">{{ coach.sport }}</span>
-        </div>
-      </div>
-    </div>
+    </main>
 
-    <!-- Right Card -->
-    <div class="bg-[#2b2964] rounded-2xl shadow-lg p-6 w-full md:w-1/2 flex flex-col justify-between">
-      <div>
-        <h3 class="text-2xl font-bold mb-4">DESCRIPTION</h3>
-        <p class="text-gray-200 text-sm leading-relaxed">
-          {{ coach.description|default:"Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam." }}
-        </p>
-      </div>
-
-      <div class="mt-6 flex justify-end">
-        <a href="#" 
-           class="bg-yellow-500 hover:bg-yellow-600 text-[#0f0e2e] font-bold px-6 py-2 rounded-lg transition">
-          BOOK
-        </a>
-      </div>
-    </div>
-
-  </div>
 </div>
-{% endblock %}
+
+{% endblock content %}

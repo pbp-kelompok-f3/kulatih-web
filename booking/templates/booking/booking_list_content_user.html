@@ -1,0 +1,96 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="min-h-screen bg-[var(--indigo)] px-6 py-10 text-[var(--white)]">
+  <div class="max-w-5xl mx-auto">
+    <h1 class="heading-font text-[var(--yellow)] text-5xl mb-8">MY BOOKINGS</h1>
+
+    <!-- Tabs -->
+    <div class="flex justify-center mb-10">
+      <div class="flex w-full max-w-4xl border border-[rgba(255,255,255,0.2)] rounded-xl p-2 gap-3">
+        <button id="btn-upcoming" class="flex-1 py-3 font-semibold text-sm rounded-md bg-[var(--yellow)] text-[var(--indigo-dark)]">Upcoming</button>
+        <button id="btn-history" class="flex-1 py-3 font-semibold text-sm rounded-md bg-transparent text-[var(--white)]">Booking History</button>
+      </div>
+    </div>
+
+    {% if bookings %}
+    <div id="bookings-container" class="grid grid-cols-1 md:grid-cols-2 gap-6">
+      {% for b in bookings %}
+      <article class="booking-card rounded-2xl bg-[var(--indigo-light)] border p-6 shadow-lg"
+        data-category="{% if b.status == 'cancelled' or b.status == 'completed' or b.date < today %}history{% else %}upcoming{% endif %}">
+        
+        <div class="flex items-start justify-between mb-3">
+          <div>
+            <i class="fa-regular fa-calendar text-[var(--yellow)] mr-2"></i>
+            {{ b.date|date:"l, j F Y" }} · {{ b.start_time|time:"H:i" }}–{{ b.end_time|time:"H:i" }}
+          </div>
+          <span class="px-3 py-[2px] rounded-md text-[10px] font-bold uppercase tracking-[1px]
+            {% if b.status == 'confirmed' %} bg-green-700 text-white
+            {% elif b.status == 'pending' %} bg-[var(--yellow)] text-[var(--indigo-dark)]
+            {% elif b.status == 'completed' %} bg-gray-600 text-white
+            {% elif b.status == 'cancelled' %} bg-gray-500 text-white {% endif %}">
+            {{ b.get_status_display }}
+          </span>
+        </div>
+
+        <!-- Coach Info -->
+        <div class="flex items-center gap-4 mb-4">
+          <img src="{% static 'images/default-coach.png' %}" alt="coach photo"
+               class="w-16 h-16 rounded-full border border-[rgba(255,255,255,0.3)]">
+          <div>
+            <p class="heading-font text-lg font-bold">
+              {% for c in b.coach.all %}{{ c.user.username }}{% endfor %}
+            </p>
+            <p class="text-sm text-gray-400">
+              {% for c in b.coach.all %}{{ c.sport }}{% endfor %}
+            </p>
+          </div>
+        </div>
+
+        <!-- Location -->
+        <div class="flex items-center gap-2 text-sm text-gray-300 mb-6">
+          <i class="fa-solid fa-location-dot text-[var(--yellow)]"></i>
+          <span>{{ b.location|default:"Location not set" }}</span>
+        </div>
+
+        <!-- Buttons -->
+        <div class="flex flex-wrap gap-2">
+          {% if b.status not in 'cancelled completed' %}
+            <button class="cancel-btn heading-font px-4 py-1.5 rounded-md bg-red-600 text-white text-sm"
+                    data-cancel-url="{% url 'booking:ajax_cancel' b.id %}">Cancel</button>
+            <button class="res-btn heading-font px-4 py-1.5 rounded-md bg-[var(--indigo-dark)] text-[var(--white)] text-sm"
+                    data-res-id="{{ b.id }}">Reschedule</button>
+          {% endif %}
+        </div>
+
+        <!-- Reschedule form -->
+        <form class="res-form hidden mt-3" data-res-form="{{ b.id }}">
+          {% csrf_token %}
+          <div class="grid grid-cols-3 gap-2">
+            <input type="date" name="new_date" class="rounded-md px-2 py-2 bg-[var(--indigo-dark)] text-[var(--white)]">
+            <input type="time" name="new_start_time" class="rounded-md px-2 py-2 bg-[var(--indigo-dark)] text-[var(--white)]">
+            <input type="time" name="new_end_time" class="rounded-md px-2 py-2 bg-[var(--indigo-dark)] text-[var(--white)]">
+          </div>
+          <div class="mt-2 flex gap-2">
+            <button type="button" class="save-res-btn px-3 py-1 bg-[var(--yellow)] text-[var(--indigo-dark)] rounded-md text-sm"
+                    data-res-save="{{ b.id }}" data-url="{% url 'booking:ajax_reschedule' b.id %}">Save</button>
+            <button type="button" class="cancel-res-btn px-3 py-1 bg-gray-500 rounded-md text-sm text-white"
+                    data-res-cancel="{{ b.id }}">Cancel</button>
+          </div>
+        </form>
+
+      </article>
+      {% endfor %}
+    </div>
+    {% else %}
+      <div class="text-center p-12 bg-[var(--indigo-light)] rounded-2xl">
+        <h2 class="heading-font text-2xl mb-2">NO BOOKINGS</h2>
+        <p class="opacity-60">You don’t have any bookings yet.</p>
+      </div>
+    {% endif %}
+  </div>
+</div>
+
+{% include 'booking/_booking_ajax_scripts.html' %}
+{% endblock content %}
