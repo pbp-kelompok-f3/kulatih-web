@@ -26,4 +26,5 @@ urlpatterns = [
     path('community/', include('community.urls')),
     path('booking/', include('booking.urls')),
     
+    
 ]
