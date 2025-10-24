@@ -12,32 +12,32 @@
 
   <!-- Form container -->
   <div class="w-full md:w-2/3 bg-[var(--indigo-light)] p-10 rounded-2xl shadow-lg">
-    <form method="post" class="flex flex-col gap-6">
+    <form method="POST" action="{% url 'community:create' %}" enctype="multipart/form-data" class="flex flex-col gap-6">
       {% csrf_token %}
       {{ form.non_field_errors }}
 
       <!-- Community Name -->
       <div>
         <label class="block mb-2 text-lg font-semibold text-[var(--white)] opacity-80">Community name?</label>
-        {{ form.name|add_class:"w-full rounded-full px-6 py-3 text-[var(--indigo-dark)] focus:outline-none" }}
+        {{ form.name }}
       </div>
 
       <!-- Short Description -->
       <div>
         <label class="block mb-2 text-lg font-semibold text-[var(--white)] opacity-80">Quick description</label>
-        {{ form.short_description|add_class:"w-full rounded-full px-6 py-3 text-[var(--indigo-dark)] focus:outline-none" }}
+        {{ form.short_description }}
       </div>
 
       <!-- Full Description -->
       <div>
         <label class="block mb-2 text-lg font-semibold text-[var(--white)] opacity-80">Tell us more about your community (deskripsi lengkap)</label>
-        {{ form.full_description|add_class:"w-full rounded-full px-6 py-3 text-[var(--indigo-dark)] focus:outline-none" }}
+        {{ form.full_description }}
       </div>
 
       <!-- Profile Picture -->
       <div>
         <label class="block mb-2 text-lg font-semibold text-[var(--white)] opacity-80">Profile Picture</label>
-        {{ form.profile_image_url|add_class:"w-full rounded-full px-6 py-3 text-[var(--indigo-dark)] focus:outline-none" }}
+        {{ form.profile_image_url }}
       </div>
 
       <!-- Submit button -->

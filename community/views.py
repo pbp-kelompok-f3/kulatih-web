@@ -5,11 +5,22 @@ from django.db.models import Q
 from django.shortcuts import get_object_or_404, redirect, render
 from .forms import CommunityCreateForm, MessageForm
 from .models import Community, Membership, Message
+from django.http import JsonResponse
+import json
 
 # COMMUNITY MAIN PAGE
 def community_home(request):
     q = request.GET.get('q', '').strip()
     communities = Community.objects.all()
+
+    if request.user.is_authenticated:
+        joined_ids = set(
+            Membership.objects.filter(user=request.user).values_list('community_id', flat=True)
+        )
+        communities = communities.exclude(id__in=joined_ids)  # 🔥 sembunyikan yang sudah dijoin
+    else:
+        joined_ids = set()
+
     if q:
         communities = communities.filter(
             Q(name__icontains=q) |
@@ -31,28 +42,32 @@ def community_home(request):
 
 
 # CREATE COMMUNITY (otomatis kalo create = admin)
-#@login_required
+@login_required
 def community_create(request):
     if request.method == 'POST':
         form = CommunityCreateForm(request.POST)
         if form.is_valid():
             community = form.save(user=request.user)
 
-            # buat membership admin
+            # Otomatis gabung sebagai admin
             Membership.objects.get_or_create(
-                community=community, user=request.user,
+                community=community,
+                user=request.user,
                 defaults={'role': 'admin'}
             )
-            messages.success(request, 'Community berhasil dibuat.')
-            return redirect('community:detail', slug=community.slug)
+
+            messages.success(request, f'Community "{community.name}" berhasil dibuat!')
+            return redirect('community:my_list')  # ke halaman My Community
     else:
         form = CommunityCreateForm()
+
     return render(request, 'community/create.html', {'form': form})
 
 
+
 # COMMUNITY DETAIL (info lengkap + tombol Join Us)
-def community_detail(request, slug):
-    c = get_object_or_404(Community, slug=slug)
+def community_detail(request, id):
+    c = get_object_or_404(Community, id=id)
     is_member = False
     if request.user.is_authenticated:
         is_member = Membership.objects.filter(user=request.user, community=c).exists()
@@ -63,10 +78,11 @@ def community_detail(request, slug):
     })
 
 
+
 # JOIN (tambah membership, otomatis hitung, add ke My Community List)
-#@login_required
-def join_community(request, slug):
-    c = get_object_or_404(Community, slug=slug)
+@login_required
+def join_community(request, id):
+    c = get_object_or_404(Community, id=id)
     mem, created = Membership.objects.get_or_create(community=c, user=request.user, defaults={'role': 'user'})
     if created:
         messages.success(request, f'Kamu bergabung di {c.name}.')
@@ -76,29 +92,28 @@ def join_community(request, slug):
 
 
 # MY COMMUNITY LIST (daftar komunitas yang di join)
-#@login_required
+@login_required
 def my_community_list(request):
     memberships = Membership.objects.filter(user=request.user).select_related('community').order_by('joined_at')
     return render(request, 'community/my_list.html', {'memberships': memberships})
 
 
 # LEAVE (hapus membership, balikin ke Community main)
-#@login_required
-def leave_community(request, slug):
-    c = get_object_or_404(Community, slug=slug)
+@login_required
+def leave_community(request, id):
+    c = get_object_or_404(Community, id=id)
     Membership.objects.filter(user=request.user, community=c).delete()
     messages.success(request, f'Kamu keluar dari {c.name}.')
     return redirect('community:home')
 
 
 # MY COMMUNITY GROUP (group chat)
-#@login_required
-def my_community_group(request, slug):
-    c = get_object_or_404(Community, slug=slug)
-    # hanya anggota yang boleh kirim/lihat chat
+@login_required
+def my_community_group(request, id):
+    c = get_object_or_404(Community, id=id)
     if not Membership.objects.filter(user=request.user, community=c).exists():
         messages.error(request, 'Kamu harus bergabung terlebih dahulu.')
-        return redirect('community:detail', slug=slug)
+        return redirect('community:detail', id=id)
 
     if request.method == 'POST':
         form = MessageForm(request.POST)
@@ -107,7 +122,8 @@ def my_community_group(request, slug):
             msg.community = c
             msg.sender = request.user
             msg.save()
-            return redirect('community:my_group', slug=slug)  # PRG pattern
+            return redirect('community:my_group', id=id)
+
     else:
         form = MessageForm()
 
@@ -117,3 +133,57 @@ def my_community_group(request, slug):
         'form': form,
         'messages': messages_qs,
     })
+
+
+from django.http import JsonResponse
+from django.contrib.auth.decorators import login_required
+from django.shortcuts import get_object_or_404
+from .models import Community, Message
+
+@login_required
+def send_message_ajax(request, id):
+    if request.method == 'POST':
+        import json
+        data = json.loads(request.body)
+        text = data.get('text', '').strip()
+        if not text:
+            return JsonResponse({'error': 'Empty message'}, status=400)
+        
+        community = get_object_or_404(Community, pk=id)
+        msg = Message.objects.create(community=community, sender=request.user, text=text)
+        
+        return JsonResponse({
+            'id': msg.id,
+            'text': msg.text,
+            'sender': msg.sender.username,
+            'community_id': community.id,  
+        })
+
+    return JsonResponse({'error': 'Invalid request'}, status=400)
+
+
+
+@login_required
+def edit_message(request, id, msg_id):
+    """Edit pesan"""
+    message = get_object_or_404(Message, id=msg_id, sender=request.user)
+    if request.method == 'POST':
+        form = MessageForm(request.POST, instance=message)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Pesan berhasil diperbarui.")
+            return redirect('community:my_group', id=id)
+    else:
+        form = MessageForm(instance=message)
+    return render(request, 'community/edit_message.html', {'form': form, 'community': message.community})
+
+
+@login_required
+def delete_message(request, id, msg_id):
+    """Hapus pesan via AJAX"""
+    if request.method == 'DELETE':
+        message = get_object_or_404(Message, id=msg_id, sender=request.user)
+        message.delete()
+        return JsonResponse({'success': True})
+    return JsonResponse({'error': 'Invalid request'}, status=400)
+

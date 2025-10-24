@@ -23,8 +23,13 @@ urlpatterns = [
     path('account/', include('users.urls')),
     path('forum/', include('forum.urls')),
     path('tournament/', include('tournaments.urls')),
-    path('community/', include('community.urls')),
     path('reviews/', include('reviews.urls')),
     path('community/', include('community.urls')),
     path('booking/', include('booking.urls')),
+<<<<<<< HEAD
+    
+    
+]
+=======
     ]
+>>>>>>> 45af3a2a68bf98e43b3086dd81e6ec50091016d1
