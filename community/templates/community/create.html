@@ -1,18 +1,55 @@
 {% extends "base.html" %}
-{% block title %}Create Community{% endblock %}
+{% load static %}
+{% block title %}Make Community{% endblock %}
 {% block content %}
 
-<h2>Make Community</h2>
-<form method="post">
-  {% csrf_token %}
-  <div class="card">
-    {{ form.non_field_errors }}
-    <label>Nama</label>{{ form.name }}<br><br>
-    <label>Deskripsi singkat</label>{{ form.short_description }}<br><br>
-    <label>Deskripsi lengkap</label>{{ form.full_description }}<br><br>
-    <label>Profile picture (URL)</label>{{ form.profile_image_url }}<br><br>
-    <button class="btn" type="submit">Create</button>
-    <a class="btn btn-outline" href="{% url 'community:home' %}">Cancel</a>
+<section class="min-h-screen bg-[var(--indigo)] text-[var(--white)] px-8 md:px-20 py-12 font-bevietnam flex flex-col items-center">
+
+  <!-- Header -->
+  <h1 class="text-center text-5xl md:text-6xl font-bebas tracking-wide mb-12">
+    MAKE YOUR OWN COMMUNITY
+  </h1>
+
+  <!-- Form container -->
+  <div class="w-full md:w-2/3 bg-[var(--indigo-light)] p-10 rounded-2xl shadow-lg">
+    <form method="post" class="flex flex-col gap-6">
+      {% csrf_token %}
+      {{ form.non_field_errors }}
+
+      <!-- Community Name -->
+      <div>
+        <label class="block mb-2 text-lg font-semibold text-[var(--white)] opacity-80">Community name?</label>
+        {{ form.name|add_class:"w-full rounded-full px-6 py-3 text-[var(--indigo-dark)] focus:outline-none" }}
+      </div>
+
+      <!-- Short Description -->
+      <div>
+        <label class="block mb-2 text-lg font-semibold text-[var(--white)] opacity-80">Quick description</label>
+        {{ form.short_description|add_class:"w-full rounded-full px-6 py-3 text-[var(--indigo-dark)] focus:outline-none" }}
+      </div>
+
+      <!-- Full Description -->
+      <div>
+        <label class="block mb-2 text-lg font-semibold text-[var(--white)] opacity-80">Tell us more about your community (deskripsi lengkap)</label>
+        {{ form.full_description|add_class:"w-full rounded-full px-6 py-3 text-[var(--indigo-dark)] focus:outline-none" }}
+      </div>
+
+      <!-- Profile Picture -->
+      <div>
+        <label class="block mb-2 text-lg font-semibold text-[var(--white)] opacity-80">Profile Picture</label>
+        {{ form.profile_image_url|add_class:"w-full rounded-full px-6 py-3 text-[var(--indigo-dark)] focus:outline-none" }}
+      </div>
+
+      <!-- Submit button -->
+      <div class="flex justify-center mt-8">
+        <button type="submit" 
+                class="bg-[var(--yellow)] text-[var(--indigo-dark)] font-bebas text-2xl px-10 py-4 rounded-2xl shadow-md hover:scale-105 transition-transform">
+          MAKE COMMUNITY
+        </button>
+      </div>
+    </form>
   </div>
-</form>
+
+</section>
+
 {% endblock %}

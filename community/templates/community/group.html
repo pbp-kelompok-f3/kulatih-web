@@ -1,25 +1,61 @@
 {% extends "base.html" %}
+{% load static %}
 {% block title %}{{ community.name }} Group{% endblock %}
 {% block content %}
 
-<a class="btn btn-outline" href="{% url 'community:my_list' %}">Back to My Community List</a>
-<h2 class="bold" style="margin-top:12px;">WELCOME TO {{ community.name|upper }}</h2>
+<section class="min-h-screen bg-[var(--indigo)] text-[var(--white)] px-8 md:px-20 py-12 font-bevietnam">
 
-<div class="chatbox">
-  {% for msg in messages %}
-    <div class="bubble {% if msg.sender_id == user.id %}me{% endif %}">
-      <div class="sender">{{ msg.sender.username }}</div>
-      <div>{{ msg.text }}</div>
-      <div class="small">{{ msg.created_at|date:"Y-m-d H:i" }}</div>
-    </div>
-  {% empty %}
-    <p class="small">Belum ada pesan.</p>
-  {% endfor %}
-</div>
+  <!-- Back button -->
+  <a href="{% url 'community:my_list' %}" 
+     class="text-[var(--yellow)] hover:underline mb-8 inline-block font-semibold">
+     ← Back to My Community List
+  </a>
 
-<form method="post" class="form-inline">
-  {% csrf_token %}
-  {{ form.text }}
-  <button class="btn" type="submit">Send</button>
-</form>
+  <!-- Header -->
+  <div class="bg-[var(--yellow)] text-[var(--indigo-dark)] py-6 px-8 rounded-2xl text-center shadow-md mb-10">
+    <h1 class="text-4xl md:text-5xl font-bebas tracking-wide">{{ community.name|upper }}</h1>
+    <p class="mt-2 text-[var(--indigo-dark)] font-bevietnam text-sm md:text-base">
+      Start chatting with others to get more information about this community bla bla
+    </p>
+  </div>
+
+  <!-- Chat box -->
+  <div class="bg-[var(--indigo-light)] p-8 rounded-2xl shadow-lg mb-10 min-h-[400px] flex flex-col gap-6 overflow-y-auto">
+
+    {% for msg in messages %}
+      {% if msg.sender_id == user.id %}
+        <!-- Pesan sendiri -->
+        <div class="flex flex-col items-end">
+          <div class="text-xs text-gray-400 mb-1">diri sendiri</div>
+          <div class="bg-[var(--yellow)] text-[var(--indigo-dark)] px-5 py-3 rounded-2xl max-w-[70%] text-right font-medium">
+            {{ msg.text }}
+          </div>
+        </div>
+      {% else %}
+        <!-- Pesan orang lain -->
+        <div class="flex flex-col items-start">
+          <div class="text-xs text-gray-400 mb-1">{{ msg.sender.username }}</div>
+          <div class="bg-[var(--white)] text-[var(--indigo-dark)] px-5 py-3 rounded-2xl max-w-[70%] font-medium">
+            {{ msg.text }}
+          </div>
+        </div>
+      {% endif %}
+    {% empty %}
+      <p class="text-center text-gray-400 italic">Belum ada pesan.</p>
+    {% endfor %}
+
+  </div>
+
+  <!-- Input form -->
+  <form method="post" class="flex items-center justify-center gap-4">
+    {% csrf_token %}
+    {{ form.text }}
+    <button type="submit" 
+            class="bg-[var(--yellow)] text-[var(--indigo-dark)] font-bebas text-xl px-8 py-3 rounded-2xl shadow-md hover:scale-105 transition-transform">
+      SEND
+    </button>
+  </form>
+
+</section>
+
 {% endblock %}
