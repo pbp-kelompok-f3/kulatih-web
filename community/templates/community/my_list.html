@@ -1,26 +1,73 @@
 {% extends "base.html" %}
+{% load static %}
 {% block title %}My Community{% endblock %}
 {% block content %}
 
-<h2>My Community</h2>
+<section class="min-h-screen bg-[var(--indigo)] text-[var(--white)] px-8 md:px-20 py-12 font-bevietnam">
 
-{% for m in memberships %}
-  <div class="card row">
-    <div class="circle">
-      {% if m.community.profile_image_url %}<img src="{{ m.community.profile_image_url }}" alt="pfp">{% endif %}
-    </div>
-    <div style="flex:1;">
-      <div class="bold">{{ m.community.name }}</div>
-      <div class="small">{{ m.community.short_description }}</div>
-    </div>
-    <div>
-      <a class="btn btn-outline" href="{% url 'community:my_group' m.community.slug %}">Open</a>
-      <a class="btn" href="{% url 'community:leave' m.community.slug %}">Leave Community</a>
-    </div>
+  <!-- Header -->
+  <div class="bg-[var(--yellow)] text-[var(--indigo-dark)] py-6 px-8 rounded-2xl text-center shadow-md mb-12">
+    <h1 class="text-5xl font-bebas tracking-wide">MY COMMUNITY</h1>
   </div>
-{% empty %}
-  <p>Kamu belum join komunitas apapun.</p>
-{% endfor %}
 
-<a class="btn btn-outline" href="{% url 'community:home' %}">Back to Community</a>
+  <!-- Daftar Komunitas -->
+  <div class="flex flex-col gap-6">
+    {% for m in memberships %}
+      <div class="flex items-center bg-[var(--indigo-light)] rounded-2xl shadow-md px-6 py-5 gap-6 hover:scale-[1.01] transition-transform">
+
+        <!-- Foto Profil -->
+        <div class="w-20 h-20 rounded-full bg-[var(--indigo)] flex items-center justify-center overflow-hidden">
+          {% if m.community.profile_image_url %}
+            <img src="{{ m.community.profile_image_url }}" alt="{{ m.community.name }}" class="w-full h-full object-cover">
+          {% else %}
+            <span class="text-[var(--yellow)] font-bebas text-3xl">C</span>
+          {% endif %}
+        </div>
+
+        <!-- Info Komunitas -->
+      <div class="flex-1">
+        <h2 class="text-xl font-bebas tracking-wide">{{ m.community.name|upper }}</h2>
+        <p class="text-sm text-[var(--white)] opacity-80 leading-relaxed">
+          {{ m.community.short_description }}
+        </p>
+
+        <!-- Tombol View Detail di bawah deskripsi -->
+        <div class="mt-3">
+          <a href="{% url 'community:detail' m.community.id %}" 
+            class="text-[var(--yellow)] font-bebas text-lg hover:underline transition-colors">
+            VIEW DETAIL
+          </a>
+        </div>
+      </div>
+
+      <!-- Tombol Go to Group & Leave -->
+      <div class="flex flex-col items-end gap-2">
+        <a href="{% url 'community:my_group' m.community.id %}" 
+          class="bg-[var(--yellow)] text-[var(--indigo-dark)] font-bebas text-lg px-6 py-2 rounded-xl shadow hover:scale-105 transition">
+          GO TO GROUP
+        </a>
+        <a href="{% url 'community:leave' m.community.id %}" 
+          class="text-[var(--white)] font-bebas text-lg hover:text-[var(--yellow)] transition-colors">
+          LEAVE
+        </a>
+      </div>
+
+
+
+      </div>
+    {% empty %}
+      <p class="text-center text-gray-400 italic mt-10">You haven’t joined any communities yet.</p>
+    {% endfor %}
+  </div>
+
+  <!-- Tombol Kembali -->
+  <div class="flex justify-center mt-12">
+    <a href="{% url 'community:home' %}" 
+       class="bg-[var(--yellow)] text-[var(--indigo-dark)] font-bebas text-2xl px-10 py-4 rounded-2xl shadow-md hover:scale-105 transition-transform">
+      BACK TO COMMUNITY
+    </a>
+  </div>
+
+</section>
+
 {% endblock %}

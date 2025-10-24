@@ -1,10 +1,10 @@
 {% load static %}
 
-<footer class="bg-[#0b0b23] text-gray-200 py-10 border-t border-gray-700">
+<footer class="bg-[#0b0b23] text-gray-200 py-10 border-t border-gray-700 px-16">
   <div class="max-w-6xl mx-auto px-6">
     <div class="grid grid-cols-1 md:grid-cols-5 gap-8">
-      <div>
-        <img src="{% static 'images/logo.png' %}" alt="KuLatih Logo" class="h-8 mb-4">
+      <div class="text-5xl">
+        <a href="{% url 'main:show_main' %}" class="text-white font-bebas">KU</a><a href="{% url 'main:show_main' %}" class="text-yellow-400 font-bebas">LATIH</a>
       </div>
 
       <div>

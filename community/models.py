@@ -7,10 +7,9 @@ User = settings.AUTH_USER_MODEL
 
 class Community(models.Model):
     name = models.CharField(max_length=120, unique=True)
-    slug = models.SlugField(max_length=140, unique=True)
     short_description = models.CharField(max_length=200)
     full_description = models.TextField()
-    profile_image_url = models.URLField(blank=True)  # gambar via link
+    profile_image_url = models.URLField(blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     created_by = models.ForeignKey(User, on_delete=models.CASCADE, related_name='communities_created')
 
@@ -43,6 +42,7 @@ class Message(models.Model):
     sender = models.ForeignKey(User, on_delete=models.CASCADE, related_name='community_messages')
     text = models.TextField()
     created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
         ordering = ['created_at']  # chat naik berurutan

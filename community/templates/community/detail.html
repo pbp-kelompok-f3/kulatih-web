@@ -1,29 +1,65 @@
 {% extends "base.html" %}
-{% block title %}{{ community.name }}{% endblock %}
+{% load static %}
+{% block title %}Community Detail{% endblock %}
 {% block content %}
 
-<div class="row">
-  <div class="circle" style="width:120px;height:120px;">
-    {% if community.profile_image_url %}<img src="{{ community.profile_image_url }}" alt="pfp" style="width:120px;height:120px;object-fit:cover;border-radius:50%">{% endif %}
+<section class="min-h-screen bg-[var(--indigo)] text-[var(--white)] px-8 md:px-20 py-12 font-bevietnam flex flex-col items-center">
+
+  <!-- Container utama -->
+  <div class="w-full flex flex-col md:flex-row justify-center items-start gap-12">
+
+    <!-- Bagian kiri: gambar profil & jumlah anggota -->
+    <div class="flex flex-col items-center gap-6">
+      <div class="w-56 h-56 bg-[var(--indigo-dark)] rounded-full flex items-center justify-center overflow-hidden shadow-lg">
+        {% if community.profile_image_url %}
+          <img src="{{ community.profile_image_url }}" alt="{{ community.name }}" class="w-full h-full object-cover">
+        {% else %}
+          <span class="text-[var(--yellow)] text-5xl font-bebas">?</span>
+        {% endif %}
+      </div>
+
+      <div class="bg-[var(--indigo-light)] text-[var(--yellow)] px-8 py-3 rounded-full font-bebas tracking-wide text-lg shadow-md text-center">
+        JUMLAH ANGGOTA COMMUNITY: {{ community.members_count }}
+      </div>
+    </div>
+
+    <!-- Bagian kanan: info detail -->
+    <div class="flex-1 bg-[var(--indigo-light)] p-8 rounded-2xl shadow-lg">
+      <h1 class="text-3xl font-bebas mb-2">{{ community.name|upper }}</h1>
+      <p class="text-[var(--white)] opacity-80">{{ community.full_description }}</p>
+    </div>
+
   </div>
-  <div class="card" style="flex:1;">
-    <div class="bold" style="font-size:20px">{{ community.name }}</div>
-    <p>{{ community.full_description }}</p>
-  </div>
+
+<!-- Tombol Join -->
+<div class="mt-16">
+  {% if user.is_authenticated %}
+    {% if not is_member %}
+    <!-- Belum join -->
+    <a href="{% url 'community:join' community.id %}"
+      class="px-10 py-4 bg-[var(--yellow)] text-[var(--indigo-dark)] font-bebas text-2xl rounded-2xl shadow-md hover:scale-105 transition-transform">
+      JOIN US NOW
+    </a>
+  {% else %}
+    <!-- Sudah join -->
+    <a href="{% url 'community:my_group' community.id %}"
+      class="px-10 py-4 bg-[var(--yellow)] text-[var(--indigo-dark)] font-bebas text-2xl rounded-2xl shadow-md hover:scale-105 transition-transform">
+      VIEW GROUP
+    </a>
+  {% endif %}
+
+  {% else %}
+    <a href="{% url 'community:join' community.id %}"
+       class="px-10 py-4 bg-[var(--yellow)] text-[var(--indigo-dark)] font-bebas text-2xl rounded-2xl shadow-md hover:scale-105 transition-transform">
+      JOIN US NOW
+    </a>
+  {% endif %}
 </div>
-<div class="row" style="margin:8px 0 16px;">
-  <div class="card">Jumlah anggota community: <b>{{ members_count }}</b></div>
-  <div class="right">
-    {% if user.is_authenticated %}
-      {% if is_member %}
-        <a class="btn btn-outline" href="{% url 'community:my_list' %}">Go to My Community</a>
-      {% else %}
-        <a class="btn" href="{% url 'community:join' community.slug %}">Join Us</a>
-      {% endif %}
-    {% else %}
-      <a class="btn" href="/accounts/login/">Login to join</a>
-    {% endif %}
+
+  
+
   </div>
-</div>
-<a class="btn btn-outline" href="{% url 'community:home' %}">Back to Community</a>
+
+</section>
+
 {% endblock %}
