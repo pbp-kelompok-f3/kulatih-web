@@ -28,7 +28,7 @@ def tournament_view(request):
                 'tipe': t.tipeTournaments,
                 'tanggal': t.tanggalTournaments.strftime('%b %d, %Y'),
                 'lokasi': t.lokasiTournaments,
-                'poster': t.posterTournaments or '/static/images/empty.png',  # 🟢 FIXED
+                'poster': t.posterTournaments or '/static/images/empty.png',
                 'deskripsi': t.deskripsiTournaments,
                 'pembuat': pembuat_username,
             })
@@ -58,7 +58,7 @@ def my_tournaments_ajax(request):
                 'id': str(t.idTournaments),
                 'nama': t.namaTournaments,
                 'tipe': t.tipeTournaments,
-                'tanggal': t.tanggalTournaments.strftime('%Y-%m-%d'),
+                'tanggal': t.tanggalTournaments.strftime('%b %d, %Y'),
                 'lokasi': t.lokasiTournaments,
                 'poster': t.posterTournaments if hasattr(t, 'posterTournaments') else '',
                 'pembuat': t.pembuatTournaments.user.username,
