@@ -7,7 +7,7 @@
     <div class="hidden md:flex absolute left-1/2 transform -translate-x-1/2">
         <div class="flex items-center gap-x-8 text-white tracking-wide text-2xl z-10">
             <a href="{% url 'users:coach_list' %}" class="hover:text-yellow-400">COACH</a>
-            <a href="#" class="hover:text-yellow-400">FORUM</a>
+            <a href="{% url 'forum:post_list' %}" class="hover:text-yellow-400">FORUM</a>
             <a href="{% url 'community:home' %}" class="hover:text-yellow-400">COMMUNITY</a>
             <a href="{% url 'tournaments:tournament_view' %}" class="hover:text-yellow-400">TOURNAMENTS</a>
         </div>
@@ -90,7 +90,7 @@
                         transition-all duration-500 ease-in-out transform hover:translate-x-1 hover:scale-[1.02]">
                     COACH
                 </a>
-                <a href="#" 
+                <a href="{% url 'forum:post_list' %}" 
                 class="block w-full px-4 py-2 rounded-md hover:text-yellow-400 hover:bg-[#191831] 
                         transition-all duration-500 ease-in-out transform hover:translate-x-1 hover:scale-[1.02]">
                     FORUM
@@ -145,7 +145,7 @@
                         transition-all duration-500 ease-in-out transform hover:translate-x-1 hover:scale-[1.02]">
                     COACH
                 </a>
-                <a href="#" 
+                <a href="{% url 'forum:post_list' %}" 
                 class="block w-full px-4 py-2 rounded-md hover:text-yellow-400 hover:bg-[#191831] 
                         transition-all duration-500 ease-in-out transform hover:translate-x-1 hover:scale-[1.02]">
                     FORUM
