@@ -13,12 +13,14 @@ class CommunityCreateForm(forms.ModelForm):
                 'class': 'w-full rounded-full px-6 py-3 text-black focus:outline-none'
             }),
             'full_description': forms.Textarea(attrs={
-                'class': 'w-full rounded-2xl px-6 py-3 text-black focus:outline-none'
+                'class': 'w-full rounded-2xl px-6 py-3 text-black focus:outline-none resize-none'
             }),
             'profile_image_url': forms.URLInput(attrs={
-                'class': 'w-full rounded-full px-6 py-3 text-black focus:outline-none'
+                'class': 'w-full rounded-full px-6 py-3 text-black focus:outline-none',
+                'placeholder': 'Masukkan URL gambar (contoh: https://...)'
             }),
         }
+
 
     def clean_name(self):
         name = self.cleaned_data['name'].strip()
