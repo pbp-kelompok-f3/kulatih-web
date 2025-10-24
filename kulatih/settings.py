@@ -46,6 +46,7 @@ INSTALLED_APPS = [
     'forum',
     'users',
     'tournaments',
+    'community',
     'booking',
 ]
 

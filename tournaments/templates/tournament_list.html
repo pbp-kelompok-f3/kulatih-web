@@ -1,137 +1,195 @@
 {% extends 'base.html' %}
 {% load static %}
 
+{% block meta %}
+<title>Find Your Tournament</title>
+{% endblock meta %}
+
 {% block content %}
-<div class="bg-[#0f0e2e] min-h-screen text-white px-6 py-10">
 
-    <h1 class="font-family text-center text-4xl font-extrabold mb-10 tracking-wide">FIND YOUR TOURNAMENT</h1>
+<style>
+.bg-tournament {
+  position: relative;
+  background-image: url("{% static 'image/bg-tournament.svg' %}");
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  height: 300px;
+  border-radius: 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
 
-    <div class="flex justify-center gap-4 mb-8">
-        
-        {% if request.user.is_authenticated %}
-        <button id="btn-my" class="px-6 py-2 rounded-xl bg-yellow-500 text-black font-semibold hover:scale-105 transition-all">
-            My Tournament
-        </button>
-        <button id="btn-all" class="px-6 py-2 rounded-xl bg-gray-700 font-semibold hover:scale-105 transition-all">
-            All Tournament
-        </button>
-        {% if user.is_authenticated and user.coach %}
-        <a href="{% url 'tournaments:create_tournament' %}"
-        class="px-6 py-2 rounded-xl bg-green-600 text-white font-semibold hover:scale-105 transition-all inline-block text-center">
-        + Create Tournament
-        </a>
-        {% endif %}
-        {% endif %}
+.bg-tournament::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 50, 0.4);
+  z-index: 0;
+}
+
+.bg-tournament h1 {
+  position: relative;
+  z-index: 1;
+  color: #fff;
+  font-weight: 900;
+  letter-spacing: 0.05em;
+  text-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
+}
 
 
+
+
+</style>
+
+<div class="bg-[#0b0b23] min-h-screen text-white pt-20 pb-10">
+  <div class="max-w-7xl mx-auto px-6">
+    <div class="text-center">
+    <div class="bg-tournament">
+      <h1 class="text-4xl md:text-6xl font-extrabold tracking-wide mb-4">
+        FIND YOUR PERFECT TOURNAMENT
+      </h1>
     </div>
-
-
-    <div class="flex justify-center items-center gap-3 mb-10">
-        <input
-            type="text"
-            id="search-bar"
-            placeholder="Search Tournament or Location"
-            class="w-1/2 px-5 py-3 rounded-xl bg-gray-800 text-white -.-gray-400 focus:outline-none focus:ring-2 focus:ring-yellow-400"
-        />
-        <button id="filter-btn" class="bg-yellow-500 p-3 rounded-lg">
-            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-black" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M3 4a1 1 0 0 1 1-1h16a1 1 0 0 1 .8 1.6l-6.6 8.8V19l-4 2v-7.6L3.2 5.6A1 1 0 0 1 3 4Z" />
-            </svg>
+      <div class="flex justify-center gap-3 mt-16 mb=10 translate-y-10">
+        <button id="allBtn" class="px-5 py-2 bg-gray-700 rounded-full font-semibold hover:bg-yellow-400 hover:text-black transition">
+          All Tournaments
         </button>
-    </div>
 
-    <div id="tournament-container" class="grid sm:grid-cols-2 lg:grid-cols-3 gap-8 justify-center"></div>
+        {% if user.is_authenticated %}
+          <button id="myBtn" class="px-5 py-2 bg-gray-700 rounded-full font-semibold hover:bg-yellow-400 hover:text-black transition">
+            My Tournaments
+          </button>
+        {% endif %}
+
+        {% if is_coach %}
+          <a href="{% url 'tournaments:create_tournament' %}"
+             class="px-5 py-2 bg-gray-700 rounded-full font-semibold hover:bg-yellow-400 hover:text-black transition">
+             Create Tournament
+          </a>
+        {% endif %}
+      </div>
+    </div>
+    <div class="relative mb-10 mt-16 flex justify-center">
+      <input id="searchInput" type="text" placeholder="Search Tournament or Location"
+        class="w-full md:w-2/3 bg-[#1b1b3a] border border-gray-700 rounded-xl py-3 px-4 pl-12 text-gray-300 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-yellow-400" />
+      <svg xmlns="http://www.w3.org/2000/svg"
+        class="w-5 h-5 absolute left-[calc(50%-33%)] top-1/2 -translate-y-1/2 text-gray-400"
+        fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+          d="M21 21l-4.35-4.35M17 10a7 7 0 11-14 0 7 7 0 0114 0z" />
+      </svg>
+    </div>
+    <div id="tournamentGrid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+    </div>
+    <div id="emptyState" class="hidden text-center mt-10 text-gray-400">
+      <p>No tournaments found.</p>
+    </div>
+  </div>
 </div>
 
-
 <script>
-document.addEventListener("DOMContentLoaded", () => {
-    const container = document.getElementById("tournament-container");
-    const btnAll = document.getElementById("btn-all");
-    const btnMy = document.getElementById("btn-my");
+document.addEventListener("DOMContentLoaded", function() {
+  const grid = document.getElementById("tournamentGrid");
+  const searchInput = document.getElementById("searchInput");
+  const emptyState = document.getElementById("emptyState");
+  const allBtn = document.getElementById("allBtn");
+  const myBtn = document.getElementById("myBtn");
 
-    function renderEmptyState(title, message) {
-        container.innerHTML = `
-            <div class="flex flex-col items-center justify-center text-center col-span-full py-20 animate-fadeIn">
-                <img src="{% static 'images/empty.png' %}" alt="Empty" 
-                    class="w-64 h-64 object-contain mb-6 opacity-80">
-                <h2 class="text-2xl font-semibold text-gray-300">${title}</h2>
-                <p class="text-gray-500 mt-2">${message}</p>
+  let tournaments = [];
+  async function loadTournaments() {
+    try {
+      const response = await fetch(window.location.href, {
+        headers: { "X-Requested-With": "XMLHttpRequest" }
+      });
+      const data = await response.json();
+      tournaments = data.tournaments || [];
+      renderTournaments(tournaments);
+    } catch (err) {
+      console.error("Error loading tournaments:", err);
+    }
+  }
+  function renderTournaments(list) {
+    grid.innerHTML = "";
+
+    if (!list || list.length === 0) {
+      emptyState.classList.remove("hidden");
+      return;
+    }
+
+    emptyState.classList.add("hidden");
+
+    list.forEach(t => {
+      const poster = t.poster ? t.poster : "{% static 'images/empty.png' %}";
+      const card = document.createElement("div");
+      card.className = "bg-[#1b1b3a] rounded-2xl overflow-hidden shadow-lg hover:scale-105 transition transform duration-300";
+      card.innerHTML = `
+        <div class="relative bg-[#1e1b3a]/50 rounded-3xl overflow-hidden shadow-lg hover:shadow-2xl hover:scale-105 transition-all duration-300 flex flex-col md:flex-row">
+        
+        <!-- Poster -->
+        <div class="md:w-1/2 relative">
+            <img src="${poster}" alt="${t.nama}" class="w-full h-56 md:h-full object-cover">
+            <div class="absolute top-0 left-0 w-full h-full bg-gradient-to-tr from-transparent via-[#1e1b3a]/30 to-[#1e1b3a]/80 clip-path-polygon(0_0,100%_0,100%_70%,0_100%)"></div>
+            <span class="absolute top-3 left-3 bg-yellow-400 text-black px-3 py-1 font-bold rounded-full shadow-md text-sm">${t.tipe}</span>
+        </div>
+
+        <!-- Info -->
+        <div class="md:w-1/2 p-6 flex flex-col justify-between">
+            <h3 class="text-2xl font-bold text-white mb-2 tracking-tight hover:text-yellow-400 transition-colors">${t.nama}</h3>
+            <div class="flex flex-col gap-2 text-gray-300 text-sm mb-4">
+            <div class="flex items-center gap-2"><span>🏟</span> ${t.lokasi}</div>
+            <div class="flex items-center gap-2"><span>📅</span> ${t.tanggal}</div>
+            <div class="flex items-center gap-2"><span>👤</span> By ${t.pembuat}</div>
             </div>
-        `;
+            <a href="/tournament/${t.id}/" 
+            class="relative block w-full text-center bg-yellow-400 text-black font-bold py-2 rounded-xl overflow-hidden transition-all duration-300 hover:bg-yellow-500">
+            <span class="absolute inset-0 bg-gradient-to-r from-yellow-400 via-yellow-200 to-yellow-400 opacity-20 blur-lg animate-pulse"></span>
+            <span class="relative z-10">View Details</span>
+            </a>
+        </div>
+        </div>
+
+      `;
+      grid.appendChild(card);
+    });
+  }
+  searchInput.addEventListener("input", () => {
+    const query = searchInput.value.toLowerCase();
+    const filtered = tournaments.filter(t =>
+      t.nama.toLowerCase().includes(query) ||
+      t.lokasi.toLowerCase().includes(query) ||
+      t.tipe.toLowerCase().includes(query)
+    );
+    renderTournaments(filtered);
+  });
+  allBtn.addEventListener("click", () => {
+    allBtn.classList.add("bg-yellow-400", "text-black");
+    myBtn?.classList.remove("bg-yellow-400", "text-black");
+    renderTournaments(tournaments);
+  });
+  myBtn?.addEventListener("click", async () => {
+    allBtn.classList.remove("bg-yellow-400", "text-black");
+    myBtn.classList.add("bg-yellow-400", "text-black");
+
+    try {
+      const res = await fetch("/tournament/my/", {
+        headers: { "X-Requested-With": "XMLHttpRequest" }
+      });
+      const data = await res.json();
+
+      if (res.ok) {
+        renderTournaments(data.tournaments || []);
+      } else {
+        alert(data.error || "Gagal memuat turnamenmu.");
+      }
+    } catch (err) {
+      console.error("Error loading my tournaments:", err);
+      alert("Gagal mengambil data turnamen kamu.");
     }
-
-    function loadTournaments(filter = "") {
-        fetch("{% url 'tournaments:tournament_view' %}", {
-            headers: { "X-Requested-With": "XMLHttpRequest" }
-        })
-        .then(res => res.json())
-        .then(data => {
-            let tournaments = data.tournaments || [];
-
-            if (filter) {
-                tournaments = tournaments.filter(t =>
-                    t.nama.toLowerCase().includes(filter.toLowerCase()) ||
-                    t.lokasi.toLowerCase().includes(filter.toLowerCase())
-                );
-            }
-
-            if (tournaments.length === 0) {
-                renderEmptyState("No tournaments found.", "Coba buat atau cari tournament baru.");
-                return;
-            }
-
-            container.innerHTML = tournaments.map(t => `
-                <div onclick="window.location.href='/tournament/${t.id}/'"
-                    class="bg-[#1c1b42] rounded-2xl p-5 shadow-lg hover:scale-105 transition-transform cursor-pointer animate-fadeIn">
-                    <img src="${t.poster}" alt="${t.nama}" class="rounded-xl w-full h-48 object-cover mb-4">
-                    <h3 class="text-lg font-semibold mb-1">${t.nama}</h3>
-                    <p class="text-sm text-gray-400 mb-1">${t.tipe} • ${t.lokasi}</p>
-                    <p class="text-sm text-yellow-400">${t.tanggal}</p>
-                    <p class="text-xs mt-2 text-gray-400">By ${t.pembuat}</p>
-                </div>
-            `).join("");
-        })
-        .catch(err => {
-            console.error(err);
-            renderEmptyState("Gagal memuat tournament", "Silakan refresh halaman atau coba lagi nanti.");
-        });
-    }
-
-    function loadMyTournaments() {
-        fetch("{% url 'tournaments:tournament_view' %}", {
-            headers: { "X-Requested-With": "XMLHttpRequest" }
-        })
-        .then(res => res.json())
-        .then(data => {
-            const myName = "{{ request.user.username }}";
-            const myTournaments = data.tournaments.filter(t => t.pembuat === myName);
-
-            if (myTournaments.length === 0) {
-                renderEmptyState(
-                    "Anda belum membuat tournament anda.",
-                    "Klik tombol “Create Tournament” untuk membuatnya."
-                );
-                return;
-            }
-
-            container.innerHTML = myTournaments.map(t => `
-                <div onclick="window.location.href='/tournament/${t.id}/'"
-                    class="bg-[#1c1b42] rounded-2xl p-5 shadow-lg hover:scale-105 transition-transform cursor-pointer animate-fadeIn">
-                    <img src="${t.poster}" alt="${t.nama}" class="rounded-xl w-full h-48 object-cover mb-4">
-                    <h3 class="text-lg font-semibold mb-1">${t.nama}</h3>
-                    <p class="text-sm text-gray-400 mb-1">${t.tipe} • ${t.lokasi}</p>
-                    <p class="text-sm text-yellow-400">${t.tanggal}</p>
-                    <p class="text-xs mt-2 text-gray-400">By ${t.pembuat}</p>
-                </div>
-            `).join("");
-        });
-    }
-    btnMy.addEventListener("click", loadMyTournaments);
-    btnAll.addEventListener("click", loadTournaments);
-    loadMyTournaments();
+  });
+  loadTournaments();
 });
-
 </script>
-{% endblock %}
+
+{% endblock content %}

@@ -1,13 +1,11 @@
-{% load static %}
-
-<footer class="bg-[#0b0b23] text-gray-200 py-10 border-t border-gray-700 px-16">
-  <div class="max-w-6xl mx-auto px-6">
+<footer class="bg-[var(--indigo-dark)] text-gray-200 py-10 border-t border-gray-800 px-6 sm:px-10 lg:px-16">
+  <div class="max-w-6xl mx-auto">
     <div class="grid grid-cols-1 md:grid-cols-5 gap-8">
-      <div class="text-5xl">
-        <a href="{% url 'main:show_main' %}" class="text-white font-bebas">KU</a><a href="{% url 'main:show_main' %}" class="text-yellow-400 font-bebas">LATIH</a>
+      <div class="text-5xl text-center md:text-left">
+        <a href="{% url 'main:show_main' %}" class="text-white font-bebas">KU</a>
+        <a href="{% url 'main:show_main' %}" class="text-yellow-400 font-bebas">LATIH</a>
       </div>
-
-      <div>
+      <div class="text-center md:text-left">
         <h3 class="font-semibold mb-3">Discover</h3>
         <ul class="space-y-2 text-sm">
           <li><a href="#" class="hover:text-yellow-400">Find a Coach</a></li>
@@ -15,34 +13,36 @@
           <li><a href="#" class="hover:text-yellow-400">Ask in Forum</a></li>
         </ul>
       </div>
-      <div class="border-l border-gray-600 pl-6">
+      <div class="border-t md:border-t-0 md:border-l border-gray-600 pt-4 md:pt-0 md:pl-6 text-center md:text-left">
         <h3 class="font-semibold mb-3">For Coaches</h3>
         <ul class="space-y-2 text-sm">
           <li><a href="#" class="hover:text-yellow-400">Become a Coach</a></li>
           <li><a href="#" class="hover:text-yellow-400">Coach Login</a></li>
         </ul>
       </div>
-      <div class="border-l border-gray-600 pl-6">
+      <div class="border-t md:border-t-0 md:border-l border-gray-600 pt-4 md:pt-0 md:pl-6 text-center md:text-left">
         <h3 class="font-semibold mb-3">Developer</h3>
         <ul class="space-y-2 text-sm">
           <li><a href="#" class="hover:text-yellow-400">About Us</a></li>
           <li><a href="#" class="hover:text-yellow-400">Contact Us</a></li>
         </ul>
       </div>
-      <div class="border-l border-gray-600 pl-6">
+      <div class="border-t md:border-t-0 md:border-l border-gray-600 pt-4 md:pt-0 md:pl-6 text-center md:text-left">
         <h3 class="font-semibold mb-3">Our Instagram</h3>
         <ul class="space-y-2 text-sm">
           <li><a href="https://instagram.com/albertwirayuda" class="hover:text-yellow-400">@albertwirayuda</a></li>
           <li><a href="https://instagram.com/slmaan.f" class="hover:text-yellow-400">@slmaan.f</a></li>
-          <li><a href="#" class="hover:text-yellow-400">@</a></li>
-          <li><a href="#" class="hover:text-yellow-400">@</a></li>
-          <li><a href="#" class="hover:text-yellow-400">@</a></li>
+          <li><a href="https://instagram.com/aliartanti" class="hover:text-yellow-400">@aliartanti</a></li>
+          <li><a href="https://instagram.com/khalsharose" class="hover:text-yellow-400">@khalsharose</a></li>
+          <li><a href="https://instagram.com/izzati.mhr" class="hover:text-yellow-400">@izzati.mhr</a></li>
+          <li><a href="https://instagram.com/airinkhrn" class="hover:text-yellow-400">@airinkhrn</a></li>
         </ul>
       </div>
+
     </div>
-    <div class="mt-10 border-t border-gray-700 pt-4 flex flex-col md:flex-row justify-between items-center text-sm text-gray-400">
+    <div class="mt-10 border-t border-gray-700 pt-4 flex flex-col md:flex-row justify-between items-center text-sm text-gray-400 space-y-2 md:space-y-0">
       <p>© 2025 KuLatih. All Rights Reserved.</p>
-      <div class="space-x-6 mt-2 md:mt-0">
+      <div class="flex flex-col md:flex-row space-y-1 md:space-y-0 md:space-x-6">
         <a href="#" class="hover:text-yellow-400">Privacy Policy</a>
         <a href="#" class="hover:text-yellow-400">Terms of Service</a>
       </div>

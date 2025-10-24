@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}Community Detail{% endblock %}
+{% block content %}
+
+<section class="min-h-screen bg-[var(--indigo)] text-[var(--white)] px-8 md:px-20 py-12 font-bevietnam flex flex-col items-center">
+
+  <!-- Container utama -->
+  <div class="w-full flex flex-col md:flex-row justify-center md:items-start items-center gap-12">
+
+    <!-- Bagian kiri: gambar profil & jumlah anggota -->
+    <div class="flex flex-col items-center gap-6">
+      <div class="w-56 h-56 bg-[var(--indigo-dark)] rounded-full flex items-center justify-center overflow-hidden shadow-lg">
+        {% if community.profile_image_url %}
+          <img src="{{ community.profile_image_url }}" alt="Community Picture"
+          class="w-24 h-24 rounded-full object-cover border-2 border-yellow-400">
+
+        {% else %}
+          <span class="text-[var(--yellow)] text-5xl font-bebas">?</span>
+        {% endif %}
+      </div>
+
+      <div class="bg-[var(--indigo-light)] text-[var(--yellow)] px-8 py-3 rounded-full font-bebas tracking-wide text-lg shadow-md text-center">
+        JUMLAH ANGGOTA COMMUNITY: {{ community.members_count }}
+      </div>
+    </div>
+
+    <!-- Bagian kanan: info detail -->
+    <div class="flex-1 bg-[var(--indigo-light)] p-8 rounded-2xl shadow-lg max-w-3xl overflow-hidden">
+      <h1 class="text-3xl font-bebas mb-2">{{ community.name|upper }}</h1>
+      <p class="text-[var(--white)] opacity-80 break-words whitespace-pre-line leading-relaxed text-justify">
+        {{ community.full_description }}
+      </p>
+    </div>
+
+
+  </div>
+
+<!-- Tombol Join -->
+<div class="mt-16">
+  {% if user.is_authenticated %}
+    {% if not is_member %}
+    <!-- Belum join -->
+    <a href="{% url 'community:join' community.id %}"
+      class="px-10 py-4 bg-[var(--yellow)] text-[var(--indigo-dark)] font-bebas text-2xl rounded-2xl shadow-md hover:scale-105 transition-transform">
+      JOIN US NOW
+    </a>
+  {% else %}
+    <!-- Sudah join -->
+    <a href="{% url 'community:my_group' community.id %}"
+      class="px-10 py-4 bg-[var(--yellow)] text-[var(--indigo-dark)] font-bebas text-2xl rounded-2xl shadow-md hover:scale-105 transition-transform">
+      VIEW GROUP
+    </a>
+  {% endif %}
+
+  {% else %}
+    <a href="{% url 'community:join' community.id %}"
+       class="px-10 py-4 bg-[var(--yellow)] text-[var(--indigo-dark)] font-bebas text-2xl rounded-2xl shadow-md hover:scale-105 transition-transform">
+      JOIN US NOW
+    </a>
+  {% endif %}
+</div>
+
+  
+
+  </div>
+
+</section>
+
+{% endblock %}
