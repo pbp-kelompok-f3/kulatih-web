@@ -7,9 +7,16 @@ User = settings.AUTH_USER_MODEL
 
 class Community(models.Model):
     name = models.CharField(max_length=120, unique=True)
+<<<<<<< HEAD
     short_description = models.CharField(max_length=200)
     full_description = models.TextField()
     profile_image_url = models.URLField(blank=True, null=True)
+=======
+    slug = models.SlugField(max_length=140, unique=True)
+    short_description = models.CharField(max_length=200)
+    full_description = models.TextField()
+    profile_image_url = models.URLField(blank=True)  # gambar via link
+>>>>>>> forum-modul-izzati
     created_at = models.DateTimeField(auto_now_add=True)
     created_by = models.ForeignKey(User, on_delete=models.CASCADE, related_name='communities_created')
 
@@ -42,7 +49,10 @@ class Message(models.Model):
     sender = models.ForeignKey(User, on_delete=models.CASCADE, related_name='community_messages')
     text = models.TextField()
     created_at = models.DateTimeField(auto_now_add=True)
+<<<<<<< HEAD
     updated_at = models.DateTimeField(auto_now=True)
+=======
+>>>>>>> forum-modul-izzati
 
     class Meta:
         ordering = ['created_at']  # chat naik berurutan

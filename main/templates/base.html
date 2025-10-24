@@ -1,0 +1,57 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>{% block title %}KuLatih{% endblock %}</title>
+
+        <!-- Tailwind CSS CDN -->
+        <script src="https://cdn.tailwindcss.com"></script>
+        <style>
+        body {
+            font-family: 'Bebas Neue', sans-serif;
+        }
+        </style>
+    </head>
+
+    <body class="bg-[#111024] text-[#F5F5F5] min-h-screen flex flex-col">
+
+        <!-- Navbar -->
+        <nav class="bg-[#191831] shadow-md">
+        <div class="max-w-6xl mx-auto px-6 py-4 flex justify-between items-center">
+            <!-- Left (Logo) -->
+            <div class="flex items-center space-x-3">
+            <img src="{% static 'img/logo.png' %}" alt="KuLatih Logo" class="w-8 h-8">
+            <h1 class="text-[#D3B53E] font-bold text-xl">KuLatih</h1>
+            </div>
+
+            <!-- Right (Auth Links) -->
+            <div class="space-x-6 text-[#F5F5F5]">
+            {% if user.is_authenticated %}
+                <span class="opacity-80">Hi, <span class="font-semibold">{{ user.username }}</span></span>
+                <a href="#" class="bg-[#D3B53E] text-[#111024] px-4 py-2 rounded-md font-semibold hover:brightness-110 transition">
+                Logout
+                </a>
+            {% else %}
+                <a href="#" class="bg-[#D3B53E] text-[#111024] px-4 py-2 rounded-md font-semibold hover:brightness-110 transition">
+                Login
+                </a>
+            {% endif %}
+            </div>
+        </div>
+        </nav>
+
+        <!-- Main Content -->
+        <main class="flex-1 py-8">
+        {% block content %}
+        {% endblock %}
+        </main>
+
+        <!-- Footer -->
+        <footer class="bg-[#191831] text-center py-4 text-sm text-gray-400">
+        © 2025 KuLatih. All rights reserved.
+        </footer>
+
+    </body>
+</html>
