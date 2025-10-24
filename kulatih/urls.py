@@ -24,6 +24,5 @@ urlpatterns = [
     path('forum/', include('forum.urls')),
     path('tournament/', include('tournaments.urls')),
     path('community/', include('community.urls')),
-    path('community/', include('community.urls')),
     path('booking/', include('booking.urls')),
     ]
