@@ -17,16 +17,30 @@ class CommunityCreateForm(forms.ModelForm):
             }),
             'profile_image_url': forms.URLInput(attrs={
                 'class': 'w-full rounded-full px-6 py-3 text-black focus:outline-none',
-                'placeholder': 'Masukkan URL gambar (contoh: https://...)'
+                'placeholder': 'URL HTTP/S'
             }),
         }
-
 
     def clean_name(self):
         name = self.cleaned_data['name'].strip()
         if not name:
             raise forms.ValidationError("Nama tidak boleh kosong.")
         return name
+    
+    def clean_profile_image_url(self):
+        url = self.cleaned_data.get('profile_image_url', '').strip()
+        
+        # Jika kosong, boleh
+        if not url:
+            return url
+        
+        # Validasi: harus dimulai dengan http://, https://, atau data:image/
+        if not (url.startswith('http://') or url.startswith('https://') or url.startswith('data:image/')):
+            raise forms.ValidationError(
+                "URL harus dimulai dengan http://, https://, atau data:image/ untuk base64"
+            )
+        
+        return url
 
     def save(self, commit=True, user=None):
         obj = super().save(commit=False)
