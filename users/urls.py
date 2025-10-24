@@ -15,4 +15,11 @@ urlpatterns = [
     # Profile
     path('profile/', show_profile, name='show_profile'),
     path('profile/edit/', edit_profile, name='edit_profile'),
+
+    # Coach
+    path('coaches/', coach_list, name='coach_list'),
+    path('coach/<uuid:coach_id>/', coach_detail, name='coach_detail'),
+
+    # Member
+    path('member/<uuid:id>', member_details, name='member_details')
 ]

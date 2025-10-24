@@ -1,10 +1,12 @@
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.db import transaction
 from django.contrib import messages
 from django.contrib.auth import login, authenticate, logout
 from django.contrib.auth.forms import AuthenticationForm
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
+from .models import Member, Coach
+
 
 from .forms import (
     MemberRegistrationForm,
@@ -125,7 +127,7 @@ def show_profile(request):
     }
     return render(request, template, context)
 
-@login_required(login_url='/login')
+login_required(login_url='/login')
 @transaction.atomic
 def edit_profile(request):
 
@@ -139,18 +141,54 @@ def edit_profile(request):
         # No profile to edit
         return redirect('main:show_main')
 
-    if request.method == 'POST' and user_form.is_valid() and profile_form.is_valid():
-        # We pass 'instance' to pre-fill the forms with existing data
+    if request.method == 'POST':
+        # Create forms with submitted data
         user_form = UserEditForm(request.POST, instance=request.user)
-        profile_form = ProfileEditForm(request.POST, instance=profile_instance)
+        profile_form = ProfileEditForm(request.POST, request.FILES, instance=profile_instance)
         
-        user_form.save()
-        profile_form.save()
-        return redirect('users:show_profile')
+        if user_form.is_valid() and profile_form.is_valid():
+            user_form.save()
+            profile_form.save()
+            messages.success(request, 'Your profile has been updated successfully!')
+            return redirect('users:show_profile')
+    else:
+        # For a GET request, create the initial forms with existing data
+        user_form = UserEditForm(instance=request.user)
+        profile_form = ProfileEditForm(instance=profile_instance)
 
     context = {
         'user_form': user_form,
         'profile_form': profile_form
     }
     return render(request, 'edit_profile.html', context)
+
+# COACH LIST 
+
+# COACH LIST 
+
+
+# MEMBER
+
+def member_details(request, id):
+    member = get_object_or_404(Member, pk=id)
+
+    context = {
+        'member': member
+    }
+
+    return render(request, "member_details.html", context)
+
+def coach_detail(request, coach_id):
+    coach = get_object_or_404(Coach, id=coach_id)
+    context = {
+        'coach': coach
+    }
+    return render(request, 'coach_detail.html', context)
+
+def coach_list(request):
+    coaches = Coach.objects.all()
+    context = {
+        'coaches': coaches
+    }
+    return render(request, 'coach_list.html', context)
     

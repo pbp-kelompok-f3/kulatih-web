@@ -6,11 +6,14 @@ from .models import Tournament
 from users.models import Coach, Member
 from .forms import TournamentForm
 import json
+from django.shortcuts import render, redirect
+from django.contrib.auth.decorators import login_required
 
 
 def tournament_view(request):
     tournaments = Tournament.objects.all()
     is_coach = hasattr(request.user, 'coach')
+
     if request.headers.get('x-requested-with') == 'XMLHttpRequest':
         data = []
         for t in tournaments:
@@ -25,7 +28,7 @@ def tournament_view(request):
                 'tipe': t.tipeTournaments,
                 'tanggal': t.tanggalTournaments.strftime('%Y-%m-%d'),
                 'lokasi': t.lokasiTournaments,
-                'poster': t.posterTournaments,
+                'poster': t.posterTournaments.url if t.posterTournaments else '/static/images/empty.png',
                 'deskripsi': t.deskripsiTournaments,
                 'pembuat': pembuat_username,
             })
@@ -35,6 +38,7 @@ def tournament_view(request):
         'tournaments': tournaments,
         'is_coach': is_coach
     })
+
 
 
 def tournament_show(request, tournament_id):
@@ -63,29 +67,24 @@ def tournament_show(request, tournament_id):
 
 
 @csrf_exempt
+@login_required
 def create_tournament(request):
-    if request.method != "POST":
-        return JsonResponse({'error': 'Invalid request method'}, status=405)
+    is_coach = hasattr(request.user, 'coach')
 
-    if not hasattr(request.user, 'coach'):
-        return JsonResponse({'error': 'Hanya coach yang bisa membuat tournament'}, status=403)
+    if not is_coach:
+        return render(request, 'tournament_create.html', {'is_coach': False})
 
-    try:
-        data = json.loads(request.body)
-    except json.JSONDecodeError:
-        return JsonResponse({'error': 'Invalid JSON body'}, status=400)
-
-    form = TournamentForm(data)
-    if form.is_valid():
-        tournament = form.save(commit=False)
-        tournament.pembuatTournaments = request.user.coach
-        tournament.save()
-        return JsonResponse({
-            'message': 'Tournament berhasil dibuat!',
-            'id': str(tournament.idTournaments)
-        })
+    if request.method == 'POST':
+        form = TournamentForm(request.POST, request.FILES)
+        if form.is_valid():
+            tournament = form.save(commit=False)
+            tournament.pembuatTournaments = request.user.coach
+            tournament.save()
+            return redirect('tournaments:tournament_view')
     else:
-        return JsonResponse({'error': form.errors}, status=400)
+        form = TournamentForm()
+
+    return render(request, 'tournament_create.html', {'form': form, 'is_coach': True})
 
 
 @csrf_exempt
