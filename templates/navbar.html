@@ -1,4 +1,4 @@
-<nav class="flex items-center justify-between w-full h-20 px-4 sm:px-10 lg:px-20 bg-gradient-to-b from-[#151530] to-[#0b0b23] border-b border-gray-800 font-bebas relative md:sticky md:top-0 md:z-50 shadow-[0_4px_12px_rgba(0,0,0,0.6),inset_0_1px_0_rgba(255,255,255,0.1)] transition-all duration-300">
+<nav class="flex items-center justify-between w-full h-20 px-4 sm:px-10 lg:px-20 bg-gradient-to-b from-[var(--indigo-light)] to-[var(--indigo-dark)] border-b border-gray-800 font-bebas relative md:sticky md:top-0 md:z-50 shadow-lg transition-all duration-300">
     <div class="flex items-center">
         <h1 class="text-4xl">
             <a href="{% url 'main:show_main' %}" class="text-white">KU</a><a href="{% url 'main:show_main' %}" class="text-yellow-400">LATIH</a>
@@ -6,7 +6,7 @@
     </div>
     <div class="hidden md:flex absolute left-1/2 transform -translate-x-1/2">
         <div class="flex items-center gap-x-8 text-white tracking-wide text-2xl z-10">
-            <a href="{% url 'users:coach_list' %}" class="hover:text-yellow-400">COACH</a>
+            <a href="{% url 'users:coach_list' %}" class="hover:text-[var(--yellow)]">COACH</a>
             <a href="#" class="hover:text-yellow-400">FORUM</a>
             <a href="#" class="hover:text-yellow-400">COMMUNITY</a>
             <a href="{% url 'tournaments:tournament_view' %}" class="hover:text-yellow-400">TOURNAMENTS</a>
@@ -17,32 +17,30 @@
             <div class="relative">
                 <button 
                     id="profile-button" 
-                    class="hidden md:block w-12 h-12 rounded-full overflow-hidden  focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:ring-offset-2 focus:ring-offset-gray-800"
+                    class="hidden md:block w-12 h-12 rounded-full overflow-hidden  focus:outline-none focus:ring-2 focus:ring-[var(--yellow)] focus:ring-offset-2 focus:ring-offset-gray-800"
                 >
                     {% if user.member.profile_photo %}
-                        <img src="{{ user.member.profile_photo }}" alt="Profile" class="w-full h-full object-cover">
+                        <img id="profile-photo" src="{{ user.member.profile_photo }}" alt="Profile" class="w-full h-full object-cover">
                     {% elif user.coach.profile_photo %}
-                        <img src="{{ user.coach.profile_photo }}" alt="Profile" class="w-full h-full object-cover">
+                        <img id="profile-photo" src="{{ user.coach.profile_photo }}" alt="Profile" class="w-full h-full object-cover">
                     {% else %}
-                      <div class="w-full h-full text-xl rounded-full bg-gray-500 flex items-center justify-center text-white font-bebas">
-                          {{ user.username|first|upper }}
-                      </div>
+                        <img id="profile-photo" src="https://icon-library.com/images/default-profile-icon/default-profile-icon-24.jpg" alt="Profile" class="w-full h-full object-cover">
                     {% endif %}
                 </button>
-                <div 
-                id="profile-menu"
-                class="absolute right-0 z-10 mt-2 w-48 bg-[#242244] rounded-lg shadow-lg 
-                        py-1 font-bevietnam border border-gray-700 
-                        overflow-hidden max-h-0 opacity-0 scale-95 
-                        transition-all duration-500 ease-[cubic-bezier(0.77,0,0.175,1)] 
-                        origin-top hidden"
-                >
+                  <div 
+                  id="profile-menu"
+                  class="absolute right-0 z-10 mt-3 w-48 bg-[#242244] rounded-lg shadow-lg 
+                          py-1 font-bevietnam border border-gray-700 
+                          overflow-hidden max-h-0 opacity-0 scale-95 
+                          transition-all duration-500 ease-[cubic-bezier(0.77,0,0.175,1)] 
+                          origin-top hidden"
+                  >
                 <div class="px-4 py-2 text-sm text-white border-b border-gray-700">
                     <strong id="profile-fullname" class="block truncate">{{ user.first_name }} {{ user.last_name }}</strong>
                     @{{ user.username }}
                 </div>
                 <a href="{% url 'users:show_profile' %}" class="block px-4 py-2 text-sm text-white hover:bg-[#2e2b5a] transition-colors duration-200">My Profile</a>
-                <a href="#" class="block px-4 py-2 text-sm text-white hover:bg-[#2e2b5a] transition-colors duration-200">Edit Profile</a>
+                <a href="{% url 'users:show_profile' %}?action=edit" class="block px-4 py-2 text-sm text-white hover:bg-[#2e2b5a] transition-colors duration-200">Edit Profile</a>
                 <a href="#" class="block px-4 py-2 text-sm text-white hover:bg-[#2e2b5a] border-b border-gray-700 transition-colors duration-200">My Bookings</a>
                 <form method="post" action="{% url 'users:logout' %}">
                     {% csrf_token %}
@@ -54,7 +52,7 @@
             </div>
         {% else %}
             <div class="hidden md:block space-x-3">
-                <a href="{% url 'users:login' %}" class="bg-yellow-500 px-4 py-1 border-black rounded-lg text-black transition font-bevietnam font-bold">Log In</a>
+                <a href="{% url 'users:login' %}" class="bg-[var(--yellow)] px-4 py-2 border-black rounded-lg text-black transition font-bevietnam font-medium">Log In</a>
             </div>
         {% endif %}
 
@@ -79,7 +77,7 @@
                         transition-all duration-500 ease-in-out transform hover:translate-x-1 hover:scale-[1.02]">
                     My Profile
                 </a>
-                <a href="#" 
+                <a href="{% url 'users:show_profile' %}?action=edit" 
                 class="block w-full px-4 py-2 rounded-md hover:text-yellow-400 hover:bg-[#191831] 
                         transition-all duration-500 ease-in-out transform hover:translate-x-1 hover:scale-[1.02]">
                     Edit Profile

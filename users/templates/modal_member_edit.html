@@ -103,12 +103,22 @@ document.addEventListener('DOMContentLoaded', () => {
                     document.getElementById('member-city').textContent = data.profile.city || 'Not specified';
                     document.getElementById('member-phone').textContent = data.profile.phone || '-';
                     document.getElementById('member-description').textContent = data.profile.description || 'This member has not added a description.';
+
                      // Update the image source if a URL is provided
                     if (data.profile.profile_photo) {
                         document.getElementById('member-photo').src = data.profile.profile_photo;
                     } else {
                         document.getElementById('member-photo').src = "https://icon-library.com/images/default-profile-icon/default-profile-icon-24.jpg";
                     }
+
+                    // Update Navbar
+                    const navbarProfilePhoto = document.getElementById('profile-photo');
+                    if (data.profile.profile_photo) {
+                        navbarProfilePhoto.src = data.profile.profile_photo;
+                    } else {
+                        navbarProfilePhoto.src = "https://icon-library.com/images/default-profile-icon/default-profile-icon-24.jpg";
+                    }
+                    document.getElementById('profile-fullname').textContent = data.profile.first_name + ' ' + data.profile.last_name;
 
                     closeModal();
                     // Optional: Add a toast message for success
