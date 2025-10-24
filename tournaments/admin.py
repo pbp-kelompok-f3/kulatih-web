@@ -1,3 +1,49 @@
 from django.contrib import admin
+from .models import Tournament
 
-# Register your models here.
+@admin.register(Tournament)
+class TournamentAdmin(admin.ModelAdmin):
+    list_display = (
+        'namaTournaments',
+        'tipeTournaments',
+        'tanggalTournaments',
+        'lokasiTournaments',
+        'pembuatTournaments',
+        'flagTournaments'
+    )
+    search_fields = (
+        'namaTournaments',
+        'tipeTournaments',
+        'lokasiTournaments',
+        'pembuatTournaments__user__username'
+    )
+    list_filter = (
+        'tipeTournaments',
+        'tanggalTournaments',
+        'flagTournaments'
+    )
+    ordering = ('-tanggalTournaments',)
+
+    # ❌ Semua field read-only
+    readonly_fields = (
+        'namaTournaments',
+        'tipeTournaments',
+        'tanggalTournaments',
+        'lokasiTournaments',
+        'deskripsiTournaments',
+        'posterTournaments',
+        'pembuatTournaments',
+        'pesertaTournaments',
+        'flagTournaments',
+        'idTournaments',
+    )
+
+    # ❌ Nonaktifkan tombol tambah, hapus, edit
+    def has_add_permission(self, request):
+        return False
+
+    def has_change_permission(self, request, obj=None):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        return False
