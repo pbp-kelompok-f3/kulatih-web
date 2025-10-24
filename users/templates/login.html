@@ -1,56 +1,66 @@
-{% extends "base.html" %}
+{% load static %}
 
-{% block meta %}<title>Login - KuLatih</title>{% endblock meta %}
-
-{% block content %}
-<div class="max-w-4xl mx-auto my-5 px-4 sm:px-6">
-        
-    <!-- Navigation Bar -->
-    <nav class="flex justify-between items-center bg-white p-4 sm:p-6 rounded-t-lg shadow-md border-b border-gray-200">
-        <a href="{% url 'main:show_main' %}" class="text-2xl font-bold text-gray-800">KuLatih</a>
-        <div class="flex items-center">
-            {% if user.is_authenticated %}
-                <span class="font-medium mr-4 text-gray-700">Hi, <a href="{% url 'users:show_profile' %}" class="text-blue-600 hover:underline">{{ user.username }}</a>!</span>
-                <a href="{% url 'users:logout' %}" class="ml-4 px-3 py-2 rounded-md text-sm font-medium text-white shadow-sm transition bg-red-600 hover:bg-red-700">Logout</a>
-            {% else %}
-                <a href="{% url 'users:login' %}" class="ml-4 px-3 py-2 rounded-md text-sm font-medium text-white shadow-sm transition bg-blue-600 hover:bg-blue-700">Login</a>
-                <a href="{% url 'users:register_member' %}" class="ml-4 px-3 py-2 rounded-md text-sm font-medium text-white shadow-sm transition bg-green-600 hover:bg-green-700">Register (Member)</a>
-                <a href="{% url 'users:register_coach' %}" class="ml-4 px-3 py-2 rounded-md text-sm font-medium text-white shadow-sm transition bg-green-600 hover:bg-green-700">Register (Coach)</a>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KuLatih - Login</title>
+    <link rel="stylesheet" href="{% static 'css/global.css' %}">
+    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="min-h-screen flex items-center justify-center bg-gradient-to-br from-[var(--indigo-dark)] via-[var(--indigo)] to-[var(--indigo-light)] text-black">
+    <div class="w-full max-w-md bg-white/5 backdrop-blur-md p-8 rounded-2xl shadow-[0_0_30px_rgba(55,80,214,0.15)] border border-white/10">
+        <div class="text-center mb-6">
+            <a href="{% url 'main:show_main' %}" class="text-5xl font-bebas text-white">KU</a><a href="{% url 'main:show_main' %}" class="text-5xl font-bebas text-[#F4D03F]">LATIH</a>
+            <p class="text-gray-400 text-sm mt-2">Login to your account</p>
+        </div>
+        <form method="POST" action="{% url 'users:login' %}" class="space-y-4">
+            {% csrf_token %}
+            
+            {% if form.non_field_errors %}
+                <div class="p-3 bg-red-500/10 text-red-300 rounded-md">
+                    {% for error in form.non_field_errors %}<p>{{ error }}</p>{% endfor %}
+                </div>
             {% endif %}
+            
+            <div>
+                <label for="{{ form.username.id_for_label }}" class="block mb-1 text-sm text-gray-300">Username</label>
+                <input type="text" name="{{ form.username.name }}" id="{{ form.username.id_for_label }}" 
+                    class="w-full px-4 py-2 rounded-md bg-[var(--indigo-light)]/80 border border-white/10 
+                            text-black placeholder-gray-400 
+                            focus:ring-2 focus:ring-[#3750D6] focus:outline-none" 
+                    placeholder="Enter your username">
+            </div>
+
+            <div>
+                <label for="{{ form.password.id_for_label }}" class="block mb-1 text-sm text-gray-300">Password</label>
+                <input type="password" name="{{ form.password.name }}" id="{{ form.password.id_for_label }}" 
+                    class="w-full px-4 py-2 rounded-md bg-[var(--indigo-light)]/80 border border-white/10 
+                            text-black placeholder-gray-400 
+                            focus:ring-2 focus:ring-[#3750D6] focus:outline-none" 
+                    placeholder="Enter your password">
+            </div>
+            <button type="submit" 
+                class="w-full mt-4 py-2 bg-yellow-500 text-black hover:scale-105 rounded-md font-semibold transition-all duration-300 shadow-lg">
+                Login
+            </button>
+        </form>
+        <div class="mt-8 text-center space-y-3">
+            <p class="text-gray-400 text-sm">Don’t have an account?</p>
+            <div class="flex flex-col sm:flex-row gap-3 justify-center">
+                <a href="{% url 'users:register_coach' %}" 
+                   class="font-bold sm:w-auto px-5 py-2 bg-white/40 hover:bg-yellow-500 hover:text-black rounded-md font-medium transition-all duration-300">
+                    Register as Coach
+                </a>
+                <a href="{% url 'users:register_member' %}" 
+                   class="font-bold sm:w-auto px-5 py-2 bg-white/40 hover:bg-yellow-500 hover:text-black rounded-md font-medium transition-all duration-300">
+                    Register as Member
+                </a>
+            </div>
         </div>
-    </nav>
+    </div>
 
-    <!-- Main Login Form -->
-    <main class="bg-white p-6 sm:p-8 rounded-b-lg shadow-md">
-        <div class="max-w-md mx-auto">
-            <h2 class="text-2xl font-semibold text-center text-gray-800 mb-6">Login to Your Account</h2>
-
-            <form method="POST" action="{% url 'users:login' %}" novalidate>
-                {% csrf_token %}
-
-                {% if form.non_field_errors %}
-                    <div class="mb-4 p-3 bg-red-100 text-red-700 rounded-md">
-                        {% for error in form.non_field_errors %}<p>{{ error }}</p>{% endfor %}
-                    </div>
-                {% endif %}
-                
-                <div class="mb-4">
-                    <label for="{{ form.username.id_for_label }}" class="block mb-1 text-sm font-medium text-gray-700">Username</label>
-                    <input type="text" name="{{ form.username.name }}" id="{{ form.username.id_for_label }}" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
-                    {% if form.username.errors %}<div class="text-red-600 text-sm mt-1">{{ form.username.errors }}</div>{% endif %}
-                </div>
-                
-                <div class="mb-4">
-                    <label for="{{ form.password.id_for_label }}" class="block mb-1 text-sm font-medium text-gray-700">Password</label>
-                    <input type="password" name="{{ form.password.name }}" id="{{ form.password.id_for_label }}" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
-                    {% if form.password.errors %}<div class="text-red-600 text-sm mt-1">{{ form.password.errors }}</div>{% endif %}
-                </div>
-                
-                <button type="submit" class="w-full mt-6 px-4 py-2 bg-blue-600 text-white font-medium rounded-md shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 cursor-pointer transition">
-                    Login
-                </button>
-            </form>
-        </div>
-    </main>
-</div>
-{% endblock content %}
+</body>
+</html>

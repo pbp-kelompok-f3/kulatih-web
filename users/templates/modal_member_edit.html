@@ -133,4 +133,118 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 });
+</script><div id="edit-profile-modal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black bg-opacity-60 font-bevietnam overflow-y-auto py-10">
+  <div class="bg-[var(--indigo)] text-white w-full max-w-lg px-8 pt-6 pb-8 rounded-2xl shadow-lg m-4">
+    <div class="flex justify-between items-center mb-6">
+      <h2 class="text-2xl font-bebas">Edit Your Profile</h2>
+      <button id="close-modal-btn" class="text-4xl hover:text-yellow-400">&times;</button>
+    </div>
+
+    <form id="edit-profile-form" method="POST" action="{% url 'users:edit_profile' %}">
+      {% csrf_token %}
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
+        
+        <!-- User Fields -->
+        <div class="md:col-span-1"><label class="block mb-1 text-sm">First Name</label>{{ user_form.first_name }}</div>
+        <div class="md:col-span-1"><label class="block mb-1 text-sm">Last Name</label>{{ user_form.last_name }}</div>
+        <div class="md:col-span-2"><label class="block mb-1 text-sm">Email</label>{{ user_form.email }}</div>
+
+        <!-- Profile Fields -->
+        <div class="md:col-span-2"><label class="block mb-1 text-sm">Profile Photo URL</label>{{ profile_form.profile_photo }}</div>
+        <div class="md:col-span-2"><label class="block mb-1 text-sm">City</label>{{ profile_form.city }}</div>
+        <div class="md:col-span-2"><label class="block mb-1 text-sm">Phone</label>{{ profile_form.phone }}</div>
+        <div class="md:col-span-2"><label class="block mb-1 text-sm">Description</label>{{ profile_form.description }}</div>
+      </div>
+
+      <div class="flex justify-end mt-8 gap-4">
+        <button type="button" id="cancel-modal-btn" class="px-6 py-2 rounded-lg bg-gray-600 hover:bg-gray-700">Cancel</button>
+        <button type="submit" class="px-6 py-2 rounded-lg bg-yellow-500 text-black font-semibold hover:bg-yellow-400">Save Changes</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const modal = document.getElementById('edit-profile-modal');
+    const openBtn = document.getElementById('edit-profile-btn');
+    const closeBtn = document.getElementById('close-modal-btn');
+    const cancelBtn = document.getElementById('cancel-modal-btn');
+    const form = document.getElementById('edit-profile-form');
+
+    function openModal() { modal.classList.remove('hidden'); modal.classList.add('flex'); }
+    function closeModal() { 
+        modal.classList.add('hidden'); 
+        modal.classList.remove('flex'); 
+        // Clean up the URL by removing the query parameter
+        const url = new URL(window.location);
+        url.searchParams.delete('action');
+        window.history.replaceState({}, '', url);
+    }
+    
+    // Check for the 'action=edit' query parameter on page load
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('action') === 'edit') {
+        openModal();
+    }  
+
+    if (openBtn) openBtn.addEventListener('click', openModal);
+    if (closeBtn) closeBtn.addEventListener('click', closeModal);
+    if (cancelBtn) cancelBtn.addEventListener('click', closeModal);
+
+    if (form) {
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const formData = new FormData(form);
+            const url = form.action;
+
+            try {
+                const response = await fetch(url, {
+                    method: 'POST',
+                    body: formData,
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'X-CSRFToken': formData.get('csrfmiddlewaretoken')
+                    }
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    // Update profile page with new data
+                    document.getElementById('member-fullname').textContent = data.user.first_name + ' ' + data.user.last_name;
+                    document.getElementById('member-email').textContent = data.user.email;
+                    document.getElementById('member-city').textContent = data.profile.city || 'Not specified';
+                    document.getElementById('member-phone').textContent = data.profile.phone || '-';
+                    document.getElementById('member-description').textContent = data.profile.description || 'This member has not added a description.';
+
+                     // Update the image source if a URL is provided
+                    if (data.profile.profile_photo) {
+                        document.getElementById('member-photo').src = data.profile.profile_photo;
+                    } else {
+                        document.getElementById('member-photo').src = "https://icon-library.com/images/default-profile-icon/default-profile-icon-24.jpg";
+                    }
+
+                    // Update Navbar
+                    const navbarProfilePhoto = document.getElementById('profile-photo');
+                    if (data.profile.profile_photo) {
+                        navbarProfilePhoto.src = data.profile.profile_photo;
+                    } else {
+                        navbarProfilePhoto.src = "https://icon-library.com/images/default-profile-icon/default-profile-icon-24.jpg";
+                    }
+                    document.getElementById('profile-fullname').textContent = data.profile.first_name + ' ' + data.profile.last_name;
+
+                    closeModal();
+                    // Optional: Add a toast message for success
+                } else {
+                    // Handle errors (e.g., display them in the modal)
+                    alert('Error: ' + JSON.stringify(data.errors));
+                }
+            } catch (error) {
+                console.error('An error occurred:', error);
+                alert('An unexpected error occurred. Please try again.');
+            }
+        });
+    }
+});
 </script>

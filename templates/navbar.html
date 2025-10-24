@@ -7,7 +7,7 @@
     <div class="hidden md:flex absolute left-1/2 transform -translate-x-1/2">
         <div class="flex items-center gap-x-8 text-white tracking-wide text-2xl z-10">
             <a href="{% url 'users:coach_list' %}" class="hover:text-yellow-400">COACH</a>
-            <a href="#" class="hover:text-yellow-400">FORUM</a>
+            <a href="{% url 'forum:post_list' %}" class="hover:text-yellow-400">FORUM</a>
             <a href="{% url 'community:home' %}" class="hover:text-yellow-400">COMMUNITY</a>
             <a href="{% url 'tournaments:tournament_view' %}" class="hover:text-yellow-400">TOURNAMENTS</a>
         </div>
@@ -65,7 +65,7 @@
 
     <div 
         id="mobile-menu" 
-        class="hidden md:hidden absolute top-full left-0 w-full bg-[#242244] border-t border-gray-700 
+        class="hidden md:hidden absolute z-50 top-full left-0 w-full bg-[#242244] border-t border-gray-700 
             overflow-hidden transition-all duration-700 ease-[cubic-bezier(0.77,0,0.175,1)] 
             max-h-0 shadow-[0_8px_20px_rgba(0,0,0,0.4)] transform-gpu"
     >
@@ -90,7 +90,7 @@
                         transition-all duration-500 ease-in-out transform hover:translate-x-1 hover:scale-[1.02]">
                     COACH
                 </a>
-                <a href="#" 
+                <a href="{% url 'forum:post_list' %}" 
                 class="block w-full px-4 py-2 rounded-md hover:text-yellow-400 hover:bg-[#191831] 
                         transition-all duration-500 ease-in-out transform hover:translate-x-1 hover:scale-[1.02]">
                     FORUM
@@ -100,20 +100,11 @@
                         transition-all duration-500 ease-in-out transform hover:translate-x-1 hover:scale-[1.02]">
                     COMMUNITY
                 </a>
-
-                {% if user.profile.role == 'member' %}
-                    <a href="{% url 'tournaments:my_tournaments' %}" 
-                    class="block w-full px-4 py-2 rounded-md hover:text-yellow-400 hover:bg-[#191831] 
-                            transition-all duration-500 ease-in-out transform hover:translate-x-1 hover:scale-[1.02]">
-                        MY TOURNAMENT
-                    </a>
-                {% elif user.profile.role == 'coach' %}
-                    <a href="{% url 'tournaments:tournament_view' %}" 
-                    class="block w-full px-4 py-2 rounded-md hover:text-yellow-400 hover:bg-[#191831] 
-                            transition-all duration-500 ease-in-out transform hover:translate-x-1 hover:scale-[1.02]">
-                        TOURNAMENT
-                    </a>
-                {% endif %}
+                <a href="{% url 'tournaments:tournament_view' %}" 
+                class="block w-full px-4 py-2 rounded-md hover:text-yellow-400 hover:bg-[#191831] 
+                        transition-all duration-500 ease-in-out transform hover:translate-x-1 hover:scale-[1.02]">
+                    TOURNAMENT
+                </a>
 
                 <div class="border-t border-gray-700 my-2"></div>
 
@@ -145,7 +136,7 @@
                         transition-all duration-500 ease-in-out transform hover:translate-x-1 hover:scale-[1.02]">
                     COACH
                 </a>
-                <a href="#" 
+                <a href="{% url 'forum:post_list' %}" 
                 class="block w-full px-4 py-2 rounded-md hover:text-yellow-400 hover:bg-[#191831] 
                         transition-all duration-500 ease-in-out transform hover:translate-x-1 hover:scale-[1.02]">
                     FORUM
@@ -225,3 +216,5 @@ if (profileBtn && profileMenu) {
 }
 
 </script>
+
+

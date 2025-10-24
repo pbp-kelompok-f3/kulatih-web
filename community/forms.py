@@ -13,10 +13,11 @@ class CommunityCreateForm(forms.ModelForm):
                 'class': 'w-full rounded-full px-6 py-3 text-black focus:outline-none'
             }),
             'full_description': forms.Textarea(attrs={
-                'class': 'w-full rounded-2xl px-6 py-3 text-black focus:outline-none'
+                'class': 'w-full rounded-2xl px-6 py-3 text-black focus:outline-none resize-none'
             }),
             'profile_image_url': forms.URLInput(attrs={
-                'class': 'w-full rounded-full px-6 py-3 text-black focus:outline-none'
+                'class': 'w-full rounded-full px-6 py-3 text-black focus:outline-none',
+                'placeholder': 'URL HTTP/S'
             }),
         }
 
@@ -25,6 +26,21 @@ class CommunityCreateForm(forms.ModelForm):
         if not name:
             raise forms.ValidationError("Nama tidak boleh kosong.")
         return name
+    
+    def clean_profile_image_url(self):
+        url = self.cleaned_data.get('profile_image_url', '').strip()
+        
+        # Jika kosong, boleh
+        if not url:
+            return url
+        
+        # Validasi: harus dimulai dengan http://, https://, atau data:image/
+        if not (url.startswith('http://') or url.startswith('https://') or url.startswith('data:image/')):
+            raise forms.ValidationError(
+                "URL harus dimulai dengan http://, https://, atau data:image/ untuk base64"
+            )
+        
+        return url
 
     def save(self, commit=True, user=None):
         obj = super().save(commit=False)

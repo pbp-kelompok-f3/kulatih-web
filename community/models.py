@@ -1,7 +1,5 @@
 from django.db import models
-
 from django.conf import settings
-from django.db import models
 
 User = settings.AUTH_USER_MODEL
 
@@ -9,7 +7,9 @@ class Community(models.Model):
     name = models.CharField(max_length=120, unique=True)
     short_description = models.CharField(max_length=200)
     full_description = models.TextField()
-    profile_image_url = models.URLField(blank=True, null=True)
+    
+    profile_image_url = models.URLField(max_length=1000, blank=True, null=True)
+    
     created_at = models.DateTimeField(auto_now_add=True)
     created_by = models.ForeignKey(User, on_delete=models.CASCADE, related_name='communities_created')
 
@@ -31,7 +31,7 @@ class Membership(models.Model):
     joined_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
-        unique_together = ('community', 'user')  # satu user satu membership per community
+        unique_together = ('community', 'user')
 
     def __str__(self):
         return f'{self.user} in {self.community} ({self.role})'
@@ -45,8 +45,7 @@ class Message(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
-        ordering = ['created_at']  # chat naik berurutan
+        ordering = ['created_at']
 
     def __str__(self):
         return f'{self.sender} @ {self.community}: {self.text[:30]}'
-

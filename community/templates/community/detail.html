@@ -6,13 +6,14 @@
 <section class="min-h-screen bg-[var(--indigo)] text-[var(--white)] px-8 md:px-20 py-12 font-bevietnam flex flex-col items-center">
 
   <!-- Container utama -->
-  <div class="w-full flex flex-col md:flex-row justify-center items-start gap-12">
+  <div class="w-full flex flex-col md:flex-row justify-center md:items-start items-center gap-12">
 
     <!-- Bagian kiri: gambar profil & jumlah anggota -->
     <div class="flex flex-col items-center gap-6">
       <div class="w-56 h-56 bg-[var(--indigo-dark)] rounded-full flex items-center justify-center overflow-hidden shadow-lg">
         {% if community.profile_image_url %}
-          <img src="{{ community.profile_image_url }}" alt="{{ community.name }}" class="w-full h-full object-cover">
+          <img src="{{ community.profile_image_url }}" alt="Community Picture"
+              class="w-full h-full object-cover rounded-full border-4 border-[var(--yellow)] shadow-md">
         {% else %}
           <span class="text-[var(--yellow)] text-5xl font-bebas">?</span>
         {% endif %}
@@ -24,10 +25,13 @@
     </div>
 
     <!-- Bagian kanan: info detail -->
-    <div class="flex-1 bg-[var(--indigo-light)] p-8 rounded-2xl shadow-lg">
+    <div class="flex-1 bg-[var(--indigo-light)] p-8 rounded-2xl shadow-lg max-w-3xl overflow-hidden">
       <h1 class="text-3xl font-bebas mb-2">{{ community.name|upper }}</h1>
-      <p class="text-[var(--white)] opacity-80">{{ community.full_description }}</p>
+      <p class="text-[var(--white)] opacity-80 break-words whitespace-pre-line leading-relaxed text-justify">
+        {{ community.full_description }}
+      </p>
     </div>
+
 
   </div>
 

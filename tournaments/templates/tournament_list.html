@@ -5,15 +5,60 @@
 <title>Find Your Tournament</title>
 {% endblock meta %}
 
+{% block meta %}
+<title>Find Your Tournament</title>
+{% endblock meta %}
+
 {% block content %}
-<div class="bg-[#0b0b23] min-h-screen text-white pt-20 pb-10">
+
+<style>
+.bg-tournament {
+  position: relative;
+  background-image: url("{% static 'image/bg-tournament.svg' %}");
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  height: 300px;
+  border-radius: 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  z-index: 0;
+}
+
+.bg-tournament::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 50, 0.4);
+  z-index: 0;
+}
+
+.bg-tournament h1 {
+  position: relative;
+  z-index: 1;
+  color: #fff;
+  font-weight: 900;
+  letter-spacing: 0.05em;
+  text-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
+}
+
+
+
+
+</style>
+
+<div class="bg-[#191831] min-h-screen text-white pt-20 pb-10">
   <div class="max-w-7xl mx-auto px-6">
-    <div class="text-center mb-10">
-      <h1 class="text-4xl md:text-5xl font-extrabold tracking-wide mb-4">
+    <div class="text-center">
+    <div class="bg-tournament">
+      <h1 class="text-4xl md:text-6xl font-extrabold tracking-wide mb-4">
         FIND YOUR PERFECT TOURNAMENT
       </h1>
-      <div class="flex justify-center gap-3 mt-4">
-        <button id="allBtn" class="px-5 py-2 bg-yellow-400 text-black rounded-full font-bold transition">
+    </div>
+      <div class="flex justify-center gap-3 mt-16 mb=10 translate-y-10">
+        <button id="allBtn" class="px-5 py-2 bg-gray-700 rounded-full font-semibold hover:bg-yellow-400 hover:text-black transition">
           All Tournaments
         </button>
 
@@ -25,17 +70,17 @@
 
         {% if is_coach %}
           <a href="{% url 'tournaments:create_tournament' %}"
-             class="ml-4 px-5 py-2 bg-green-500 rounded-full font-semibold hover:bg-green-600 transition">
-            + Create Tournament
+             class="px-5 py-2 bg-gray-700 rounded-full font-semibold hover:bg-yellow-400 hover:text-black transition">
+             Create Tournament
           </a>
         {% endif %}
       </div>
     </div>
-    <div class="relative mb-10 flex justify-center">
+    <div class="relative mb-10 mt-16 flex justify-center">
       <input id="searchInput" type="text" placeholder="Search Tournament or Location"
         class="w-full md:w-2/3 bg-[#1b1b3a] border border-gray-700 rounded-xl py-3 px-4 pl-12 text-gray-300 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-yellow-400" />
       <svg xmlns="http://www.w3.org/2000/svg"
-        class="w-5 h-5 absolute left-[calc(50%-33%)] top-1/2 -translate-y-1/2 text-gray-400"
+        class="hidden md:block w-5 h-5 absolute left-[calc(50%-33%)] top-1/2 -translate-y-1/2 text-gray-400"
         fill="none" viewBox="0 0 24 24" stroke="currentColor">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
           d="M21 21l-4.35-4.35M17 10a7 7 0 11-14 0 7 7 0 0114 0z" />
@@ -47,7 +92,7 @@
       <p>No tournaments found.</p>
     </div>
 
-  </div>
+    <div id="tournament-container" class="grid sm:grid-cols-2 lg:grid-cols-3 gap-8 justify-center"></div>
 </div>
 
 <script>
@@ -86,17 +131,32 @@ document.addEventListener("DOMContentLoaded", function() {
       const card = document.createElement("div");
       card.className = "bg-[#1b1b3a] rounded-2xl overflow-hidden shadow-lg hover:scale-105 transition transform duration-300";
       card.innerHTML = `
-        <img src="${poster}" alt="${t.nama}" class="w-full h-52 object-cover">
-        <div class="p-4">
-          <h3 class="text-lg font-bold mb-1">${t.nama}</h3>
-          <p class="text-sm text-gray-400 mb-1">${t.tipe} • ${t.lokasi}</p>
-          <p class="text-sm text-gray-400 mb-2">📅 ${t.tanggal}</p>
-          <p class="text-yellow-400 font-semibold mb-3">By ${t.pembuat}</p>
-          <a href="/tournament/${t.id}/"
-             class="inline-block mt-2 px-4 py-2 bg-yellow-400 text-black font-semibold rounded-lg hover:bg-yellow-500 transition">
-            View Details
-          </a>
+        <div class="relative bg-[#111024]/50 rounded-3xl overflow-hidden shadow-[0_0_25px_#facc15]/30 hover:shadow-[0_0_35px_#facc15]/60 hover:scale-105 transition-all duration-300 flex flex-col md:flex-row">
+
+        
+        <!-- Poster -->
+        <div class="md:w-1/2 relative">
+            <img src="${poster}" alt="${t.nama}" class="w-full h-56 md:h-full object-cover">
+            <div class="absolute top-0 left-0 w-full h-full bg-gradient-to-tr from-transparent via-[#1e1b3a]/30 to-[#1e1b3a]/80 clip-path-polygon(0_0,100%_0,100%_70%,0_100%)"></div>
+            <span class="absolute top-3 left-3 bg-yellow-400 text-black px-3 py-1 font-bold rounded-full shadow-md text-sm">${t.tipe}</span>
         </div>
+
+        <!-- Info -->
+        <div class="md:w-1/2 p-6 flex flex-col justify-between">
+            <h3 class="text-2xl font-bold text-white mb-2 tracking-tight hover:text-yellow-400 transition-colors">${t.nama}</h3>
+            <div class="flex flex-col gap-2 text-gray-300 text-sm mb-4">
+            <div class="flex items-center gap-2"><span>🏟</span> ${t.lokasi}</div>
+            <div class="flex items-center gap-2"><span>📅</span> ${t.tanggal}</div>
+            <div class="flex items-center gap-2"><span>👤</span> By ${t.pembuat}</div>
+            </div>
+            <a href="/tournament/${t.id}/" 
+            class="relative block w-full text-center bg-yellow-400 text-black font-bold py-2 rounded-xl overflow-hidden transition-all duration-300 hover:bg-yellow-500">
+            <span class="absolute inset-0 bg-gradient-to-r from-yellow-400 via-yellow-200 to-yellow-400 opacity-20 blur-lg animate-pulse"></span>
+            <span class="relative z-10">View Details</span>
+            </a>
+        </div>
+        </div>
+
       `;
       grid.appendChild(card);
     });
