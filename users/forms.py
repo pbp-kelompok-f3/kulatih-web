@@ -74,15 +74,62 @@ class UserEditForm(forms.ModelForm):
     class Meta:
         model = User
         fields = ['first_name', 'last_name', 'email']
+        widgets = {
+            'first_name': forms.TextInput(attrs={
+                'class': 'w-full p-2 rounded-md bg-[var(--indigo-light)] border border-gray-600 focus:outline-none focus:ring-2 focus:ring-yellow-500'
+            }),
+            'last_name': forms.TextInput(attrs={
+                'class': 'w-full p-2 rounded-md bg-[var(--indigo-light)] border border-gray-600 focus:outline-none focus:ring-2 focus:ring-yellow-500'
+            }),
+            'email': forms.EmailInput(attrs={
+                'class': 'w-full p-2 rounded-md bg-[var(--indigo-light)] border border-gray-600 focus:outline-none focus:ring-2 focus:ring-yellow-500'
+            }),
+        }
 
 # Form to edit the Member's profile fields
 class MemberEditForm(forms.ModelForm):
     class Meta:
         model = Member
-        fields = ['profile_photo', 'city', 'phone']
+        fields = ['profile_photo', 'city', 'phone', 'description']
+        widgets = {
+            'profile_photo': forms.URLInput(attrs={
+                'class': 'w-full p-2 rounded-md bg-[var(--indigo-light)] border border-gray-600 focus:outline-none focus:ring-2 focus:ring-yellow-500'
+            }),
+            'city': forms.TextInput(attrs={
+                'class': 'w-full p-2 rounded-md bg-[var(--indigo-light)] border border-gray-600 focus:outline-none focus:ring-2 focus:ring-yellow-500'
+            }),
+            'phone': forms.TextInput(attrs={
+                'class': 'w-full p-2 rounded-md bg-[var(--indigo-light)] border border-gray-600 focus:outline-none focus:ring-2 focus:ring-yellow-500'
+            }),
+            'description': forms.Textarea(attrs={
+                'class': 'w-full p-2 rounded-md bg-[var(--indigo-light)] border border-gray-600 focus:outline-none focus:ring-2 focus:ring-yellow-500',
+                'rows': 4
+            }),
+        }
 
 # Form to edit the Coach's profile fields
 class CoachEditForm(forms.ModelForm):
     class Meta:
         model = Coach
-        fields = ['profile_photo', 'city', 'phone', 'sport', 'hourly_fee']
+        fields = ['profile_photo', 'city', 'phone', 'sport', 'hourly_fee', 'description']
+        widgets = {
+            'profile_photo': forms.URLInput(attrs={
+                'class': 'w-full p-2 rounded-md bg-[var(--indigo-light)] border border-gray-600 focus:outline-none focus:ring-2 focus:ring-yellow-500'
+            }),
+            'city': forms.TextInput(attrs={
+                'class': 'w-full p-2 rounded-md bg-[var(--indigo-light)] border border-gray-600 focus:outline-none focus:ring-2 focus:ring-yellow-500'
+            }),
+            'phone': forms.TextInput(attrs={
+                'class': 'w-full p-2 rounded-md bg-[var(--indigo-light)] border border-gray-600 focus:outline-none focus:ring-2 focus:ring-yellow-500'
+            }),
+            'sport': forms.Select(attrs={
+                'class': 'w-full p-2 rounded-md bg-[var(--indigo-light)] border border-gray-600 focus:outline-none focus:ring-2 focus:ring-yellow-500'
+            }),
+            'hourly_fee': forms.NumberInput(attrs={
+                'class': 'w-full p-2 rounded-md bg-[var(--indigo-light)] border border-gray-600 focus:outline-none focus:ring-2 focus:ring-yellow-500'
+            }),
+            'description': forms.Textarea(attrs={
+                'class': 'w-full p-2 rounded-md bg-[var(--indigo-light)] border border-gray-600 focus:outline-none focus:ring-2 focus:ring-yellow-500',
+                'rows': 4
+            }),
+        }
