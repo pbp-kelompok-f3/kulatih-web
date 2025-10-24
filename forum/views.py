@@ -1,63 +1,141 @@
-from django.shortcuts import render
-
-# Create your views here.
 from django.shortcuts import render, redirect, get_object_or_404
-from django.contrib.auth.decorators import login_required, user_passes_test
-from django.utils import timezone
+from django.contrib.auth.decorators import login_required
+from django.views.decorators.http import require_POST
 from django.contrib import messages
-from .models import ForumPost
+from django.http import JsonResponse
+from django.db.models import Sum
+from django.utils import timezone
 
-def is_admin(user):
-    return user.is_staff or user.is_superuser
+from .models import ForumPost, Vote
 
-# USER VIEWS
+
+# ---------- Helpers ----------
+def _is_ajax(request):
+    # Semua fetch() di template sudah mengirim header ini
+    return request.headers.get("X-Requested-With") == "XMLHttpRequest"
+
+
+def _vote_payload(post, user):
+    """Hitung score & vote user saat ini untuk response AJAX."""
+    score = post.votes.aggregate(total=Sum("value"))["total"] or 0
+    user_vote = 0
+    if user.is_authenticated:
+        user_vote = post.votes.filter(user=user).values_list("value", flat=True).first() or 0
+    return {"ok": True, "score": score, "user_vote": user_vote}
+
+
+# ---------- Views ----------
 def post_list(request):
-    """Menampilkan semua posting forum"""
-    posts = ForumPost.objects.select_related('author').order_by('-created_at')
-    return render(request, 'forum/post_list.html', {'posts': posts})
+    posts = (
+        ForumPost.objects
+        .select_related("author")
+        .prefetch_related("votes")
+        .order_by("-created_at")
+    )
+
+    # Sematkan nilai vote user + waktu lokal (WIB) ke tiap objek untuk template
+    for p in posts:
+        if request.user.is_authenticated:
+            v = p.votes.filter(user=request.user).values_list("value", flat=True).first()
+            p.user_vote_value = v or 0
+        else:
+            p.user_vote_value = 0
+
+        # Jika TIME_ZONE sudah Asia/Jakarta, cukup timezone.localtime(p.created_at)
+        try:
+            p.local_created = timezone.localtime(p.created_at)
+        except Exception:
+            # Fallback manual ke UTC+7 jika settings belum Asia/Jakarta
+            p.local_created = timezone.localtime(p.created_at, timezone.get_fixed_timezone(7 * 60))
+
+    return render(request, "forum/post_list.html", {"posts": posts})
+
 
 @login_required
+@require_POST
 def create_post(request):
-    """Menambahkan posting baru"""
-    if request.method == 'POST':
-        content = request.POST.get('content')
-        image = request.FILES.get('image')
+    content = (request.POST.get("content") or "").strip()
+    if not content:
+        messages.error(request, "Content is required.")
+    else:
+        ForumPost.objects.create(author=request.user, content=content)
+        messages.success(request, "Post created.")
+    return redirect("forum:post_list")
 
-        if not content:
-            messages.error(request, "Isi postingan tidak boleh kosong.")
-            return redirect('forum:create_post')
-
-        ForumPost.objects.create(
-            author=request.user,
-            content=content,
-            image=image,
-            created_at=timezone.now()
-        )
-        messages.success(request, "Postingan berhasil dibuat!")
-        return redirect('forum:post_list')
-
-    return render(request, 'forum/create_post.html')
 
 @login_required
-def like_post(request, post_id):
-    """Menambah like pada posting"""
+@require_POST
+def upvote(request, post_id):
     post = get_object_or_404(ForumPost, id=post_id)
-    post.like_post()
-    messages.success(request, f"Kamu menyukai postingan {post.author.username}.")
-    return redirect('forum:post_list')
 
-# ADMIN VIEWS
-@user_passes_test(is_admin)
-def admin_dashboard(request):
-    """Halaman admin custom untuk melihat dan kelola semua posting"""
-    posts = ForumPost.objects.select_related('author').order_by('-created_at')
-    return render(request, 'forum/admin_dashboard.html', {'posts': posts})
+    vote, created = Vote.objects.get_or_create(
+        post=post, user=request.user, defaults={"value": Vote.UP}
+    )
+    if not created:
+        if vote.value == Vote.UP:
+            # klik lagi: batalkan
+            vote.delete()
+        else:
+            vote.value = Vote.UP
+            vote.save(update_fields=["value"])
+
+    if _is_ajax(request):
+        return JsonResponse(_vote_payload(post, request.user))
+    return redirect("forum:post_list")
 
 
-@user_passes_test(is_admin)
+@login_required
+@require_POST
+def downvote(request, post_id):
+    post = get_object_or_404(ForumPost, id=post_id)
+
+    vote, created = Vote.objects.get_or_create(
+        post=post, user=request.user, defaults={"value": Vote.DOWN}
+    )
+    if not created:
+        if vote.value == Vote.DOWN:
+            # klik lagi: batalkan
+            vote.delete()
+        else:
+            vote.value = Vote.DOWN
+            vote.save(update_fields=["value"])
+
+    if _is_ajax(request):
+        return JsonResponse(_vote_payload(post, request.user))
+    return redirect("forum:post_list")
+
+
+@login_required
+@require_POST
 def delete_post(request, post_id):
-    """Hapus posting dari dashboard admin custom"""
     post = get_object_or_404(ForumPost, id=post_id)
+
+    if not (request.user.is_staff or request.user == post.author):
+        if _is_ajax(request):
+            return JsonResponse({"ok": False, "error": "forbidden"}, status=403)
+        messages.error(request, "You are not allowed to delete this post.")
+        return redirect("forum:post_list")
+
     post.delete()
-    messages.success(request, "Postingan berhasil dihapus.")
-    return redirect('forum:admin_dashboard')
+
+    if _is_ajax(request):
+        return JsonResponse({"ok": True, "post_id": post_id})
+
+    messages.success(request, "Post deleted.")
+    return redirect("forum:post_list")
+
+@login_required
+@require_POST
+def edit_post(request, post_id):
+    post = get_object_or_404(ForumPost, id=post_id)
+    # hanya author atau admin
+    if not (request.user.is_staff or request.user == post.author):
+        return JsonResponse({"ok": False, "error": "forbidden"}, status=403)
+
+    content = (request.POST.get("content") or "").strip()
+    if not content:
+        return JsonResponse({"ok": False, "error": "empty content"}, status=400)
+
+    post.content = content
+    post.save(update_fields=["content"])
+    return JsonResponse({"ok": True, "content": post.content})
