@@ -5,21 +5,55 @@ from datetime import datetime, timedelta
 from django.http import JsonResponse
 from django.views.decorators.http import require_POST
 from django.contrib.auth.decorators import login_required
+from django.db import models
+
 
 from .models import Booking
 from users.models import Coach, Member
 
 
+# Auto complete booking yang udah lewat
+def auto_complete_bookings():
+    """
+    Update otomatis semua booking yang sudah lewat jadi 'completed',
+    berlaku untuk member & coach, tanpa perlu cron job.
+    """
+    now = timezone.localtime()
+    today = now.date()
+    current_time = now.time()
+
+    # Booking yang statusnya masih aktif
+    active_bookings = Booking.objects.filter(
+        status__in=["pending", "confirmed", "rescheduled"]
+    )
+
+    # Booking yang tanggalnya sudah lewat atau waktu berakhirnya sudah lewat
+    expired_bookings = active_bookings.filter(
+        models.Q(date__lt=today) |
+        models.Q(date=today, end_time__lt=current_time)
+    )
+
+    count = 0
+    for booking in expired_bookings:
+        booking.status = "completed"
+        booking.save(update_fields=["status"])
+        count += 1
+
+    if count > 0:
+        print(f"[AutoComplete] {count} booking(s) marked as completed.")
+
+
 # 🟢 LIST BOOKINGS
 @login_required(login_url='/account/login/')
 def booking_list(request):
-    today = timezone.localdate()
+    # Auto update setiap kali halaman dibuka
+    auto_complete_bookings()
 
+    today = timezone.localdate()
     is_coach = hasattr(request.user, "coach")
     is_member = hasattr(request.user, "member")
 
     bookings = Booking.objects.none()
-    # Filter sesuai role
     if is_coach:
         bookings = Booking.objects.filter(coach=request.user.coach).order_by('-date', '-start_time')
     elif is_member:
@@ -32,7 +66,6 @@ def booking_list(request):
         "is_member": is_member,
     }
     return render(request, "booking/booking_list.html", context)
-
 
 # 🟢 CREATE BOOKING
 @login_required(login_url='/account/login/')
