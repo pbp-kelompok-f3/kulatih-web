@@ -30,8 +30,14 @@ class Booking(models.Model):
         ordering = ['-date', '-start_time', '-created_at']
 
     def __str__(self):
-        coach_name = self.coach.user.get_full_name() if self.coach else "No Coach"
-        member_name = self.member.user.get_full_name() if self.member else "No Member"
+        coach_name = (
+            self.coach.user.get_full_name() or self.coach.user.username
+            if self.coach else "No Coach"
+        )
+        member_name = (
+            self.member.user.get_full_name() or self.member.user.username
+            if self.member else "No Member"
+        )
         return f"{member_name} with {coach_name} on {self.date} {self.start_time}-{self.end_time}"
 
     # ---------- UTIL: Deteksi Overlap ----------
