@@ -4,32 +4,26 @@ from django.contrib import messages
 from datetime import datetime, timedelta
 from django.http import JsonResponse
 from django.views.decorators.http import require_POST
+from django.contrib.auth.decorators import login_required
 
 from .models import Booking
 from users.models import Coach, Member
 
 
 # 🟢 LIST BOOKINGS
+@login_required(login_url='/account/login/')
 def booking_list(request):
     today = timezone.localdate()
-
-    if not request.user.is_authenticated:
-        messages.error(request, "Please log in first.")
-        return redirect("/accounts/login/")
 
     is_coach = hasattr(request.user, "coach")
     is_member = hasattr(request.user, "member")
 
+    bookings = Booking.objects.none()
     # Filter sesuai role
     if is_coach:
-        bookings = Booking.objects.filter(coach__in=[request.user.coach]).order_by('-date', '-start_time')
-        template = "booking/booking_list_content_coach.html"
+        bookings = Booking.objects.filter(coach=request.user.coach).order_by('-date', '-start_time')
     elif is_member:
-        bookings = Booking.objects.filter(member__in=[request.user.member]).order_by('-date', '-start_time')
-        template = "booking/booking_list_content_user.html"
-    else:
-        bookings = Booking.objects.none()
-        template = "booking/booking_list_content_user.html"
+        bookings = Booking.objects.filter(member=request.user.member).order_by('-date', '-start_time')
 
     context = {
         "bookings": bookings,
@@ -37,115 +31,121 @@ def booking_list(request):
         "is_coach": is_coach,
         "is_member": is_member,
     }
-    return render(request, template, context)
+    return render(request, "booking/booking_list.html", context)
 
 
 # 🟢 CREATE BOOKING
-def create_booking(request):
-    is_member = hasattr(request.user, "member")
+@login_required(login_url='/account/login/')
+def create_booking(request, coach_id):
+    # 🚫 Jika user adalah coach, langsung tolak
+    if hasattr(request.user, "coach"):
+        messages.error(request, "Coaches cannot create bookings.")
+        return redirect("booking:list")
+
+    # 🚫 Jika user bukan member juga, tolak
+    if not hasattr(request.user, "member"):
+        messages.error(request, "Only members can create bookings.")
+        return redirect("users:coach_list")
+
+    # ✅ Kalau lolos dua kondisi di atas, berarti dia member → boleh booking
+    coach = get_object_or_404(Coach, id=coach_id)
+    member = request.user.member
 
     if request.method == "POST":
-        name = request.POST.get("name")
         location = request.POST.get("location")
         datetime_str = request.POST.get("date")
 
-        # Validasi field
-        if not (name and location and datetime_str):
+        if not (location and datetime_str):
             messages.error(request, "Please fill all fields.")
-            return redirect("booking:create")
+            return render(request, "booking/create_booking.html", {'coach': coach})
 
         try:
-            dt = datetime.strptime(datetime_str, "%Y-%m-%dT%H:%M")
+            dt = timezone.make_aware(datetime.strptime(datetime_str, "%Y-%m-%dT%H:%M"))
             date = dt.date()
             start_time = dt.time()
-            end_time = (dt + timedelta(hours=1)).time()  # durasi 1 jam
+            end_time = (dt + timedelta(hours=1)).time()
         except ValueError:
             messages.error(request, "Invalid date/time format.")
-            return redirect("booking:create")
+            return render(request, "booking/create_booking.html", {'coach': coach})
 
-        if date < timezone.localdate():
-            messages.error(request, "Date cannot be in the past.")
-            return redirect("booking:create")
+        if dt < timezone.now():
+            messages.error(request, "Booking date and time cannot be in the past.")
+            return render(request, "booking/create_booking.html", {'coach': coach})
 
-        if not is_member:
-            messages.error(request, "You must log in as a member to make a booking.")
-            return redirect("booking:list")
-
-        # Ambil member login
-        member = request.user.member
-        if name.strip() and name != member.name:
-            member.name = name
-            member.save()
-
-        # Ambil coach default (sementara)
-        coach = Coach.objects.first()
-        if not coach:
-            messages.error(request, "No coach available yet.")
-            return redirect("booking:list")
+        # Cek konflik waktu
+        if Booking.is_conflict(coach, date, start_time, end_time):
+            messages.error(request, f"Coach {coach.user.get_full_name()} is unavailable at the selected time.")
+            return render(request, "booking/create_booking.html", {'coach': coach})
 
         # Simpan booking
-        booking = Booking.objects.create(
+        Booking.objects.create(
+            member=member,
+            coach=coach,
             date=date,
             start_time=start_time,
             end_time=end_time,
             location=location,
             status="pending",
         )
-        booking.member.add(member)
-        booking.coach.add(coach)
-        booking.save()
 
-        messages.success(request, f"Booking created successfully with coach {coach.name}!")
+        messages.success(request, f"Booking created successfully with coach {coach.user.get_full_name()}!")
         return redirect("booking:list")
 
-    return render(request, "booking/create_booking.html")
+    context = {'coach': coach}
+    return render(request, "booking/create_booking.html", context)
+
 
 
 # 🟢 EDIT BOOKING
+@login_required(login_url='/account/login/')
 def edit_booking(request, booking_id):
     booking = get_object_or_404(Booking, id=booking_id)
 
+    # Ensure only the member who made the booking can edit
+    if request.user.member != booking.member:
+        messages.error(request, "You are not authorized to edit this booking.")
+        return redirect('booking:list')
+
     if request.method == 'POST':
-        coach_ids = request.POST.getlist('coaches') or request.POST.getlist('coach')
-        member_ids = request.POST.getlist('members') or request.POST.getlist('member')
-        date_str = request.POST.get('date')
-        start_str = request.POST.get('start_time')
-        end_str = request.POST.get('end_time')
-        status = request.POST.get('status') or booking.status
+        location = request.POST.get("location")
+        datetime_str = request.POST.get("date")
+        status = request.POST.get('status', booking.status)
+
+        if not (location and datetime_str):
+            messages.error(request, "Please fill all fields.")
+            return render(request, "booking/edit_booking.html", {'booking': booking})
 
         try:
-            date = datetime.strptime(date_str, '%Y-%m-%d').date()
-            start_time = datetime.strptime(start_str, '%H:%M').time()
-            end_time = datetime.strptime(end_str, '%H:%M').time()
+            dt = timezone.make_aware(datetime.strptime(datetime_str, "%Y-%m-%dT%H:%M"))
+            date = dt.date()
+            start_time = dt.time()
+            end_time = (dt + timedelta(hours=1)).time()
         except (TypeError, ValueError):
-            messages.error(request, "Format tanggal/jam tidak valid.")
-            return redirect('booking:list')
+            messages.error(request, "Invalid date/time format.")
+            return render(request, 'booking/edit_booking.html', {'booking': booking})
 
         if start_time >= end_time:
-            messages.error(request, "Jam mulai harus lebih kecil dari jam selesai.")
-            return redirect('booking:list')
+            messages.error(request, "Start time must be before end time.")
+            return render(request, 'booking/edit_booking.html', {'booking': booking})
 
-        coaches = list(Coach.objects.filter(id__in=coach_ids))
-        for c in coaches:
-            if Booking.is_conflict(c, date, start_time, end_time, exclude_booking_id=booking.id):
-                messages.error(request, f"Jadwal bentrok dengan coach {c.user.username}.")
-                return redirect('booking:list')
+        # Check for conflicts with the same coach
+        if Booking.is_conflict(booking.coach, date, start_time, end_time, exclude_booking_id=booking.id):
+            messages.error(request, f"Schedule conflicts with coach {booking.coach.user.get_full_name()}.")
+            return render(request, 'booking/edit_booking.html', {'booking': booking})
 
-        booking.coach.set(coaches)
-        booking.member.set(Member.objects.filter(id__in=member_ids))
+        # Update booking fields
+        booking.location = location
         booking.date = date
         booking.start_time = start_time
         booking.end_time = end_time
         booking.status = status
         booking.save()
 
-        messages.success(request, "Booking berhasil diubah!")
+        messages.success(request, "Booking updated successfully!")
         return redirect('booking:list')
 
     context = {
         'booking': booking,
-        'coaches': Coach.objects.all(),
-        'members': Member.objects.all(),
     }
     return render(request, 'booking/edit_booking.html', context)
 

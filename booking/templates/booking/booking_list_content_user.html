@@ -1,220 +1,105 @@
-{% extends 'base.html' %}
 {% load static %}
 
-{% block content %}
-<div class="min-h-screen bg-[var(--indigo)] px-6 py-10 text-[var(--white)]">
-  <div class="max-w-5xl mx-auto">
-    <h1 class="heading-font text-[var(--yellow)] text-5xl mb-8">MY BOOKINGS</h1>
+<div class="min-h-screen bg-[var(--indigo)] px-6 py-10 text-[var(--white)] flex justify-center">
+  <div class="w-full max-w-6xl bg-[var(--indigo-dark)] rounded-2xl shadow-[0_8px_30px_rgba(0,0,0,0.4)] border border-[rgba(255,255,255,0.1)] p-10">
+
+    <!-- Title -->
+    <div class="text-left mb-10">
+      <h1 class="heading-font text-[var(--yellow)] text-5xl mb-3">MY BOOKINGS</h1>
+      <div class="h-[2px] w-24 bg-[var(--yellow)]"></div>
+    </div>
 
     <!-- Tabs -->
-    <div class="flex justify-center mb-10">
-      <div class="flex w-full max-w-4xl border border-[rgba(255,255,255,0.2)] rounded-xl p-2 gap-3">
-        <button id="btn-upcoming" class="flex-1 py-3 font-semibold text-sm rounded-md bg-[var(--yellow)] text-[var(--indigo-dark)]">Upcoming</button>
-        <button id="btn-history" class="flex-1 py-3 font-semibold text-sm rounded-md bg-transparent text-[var(--white)]">Booking History</button>
+    <div class="flex justify-center mb-12">
+      <div
+        class="w-full max-w-4xl p-2 rounded-2xl border-2 border-[rgba(255,255,255,0.25)] bg-[rgba(255,255,255,0.05)] backdrop-blur-sm shadow-[inset_0_0_10px_rgba(255,255,255,0.08)] flex gap-3">
+        <button id="btn-upcoming"
+          class="flex-1 py-3 font-semibold text-sm rounded-lg transition-all duration-200 
+                bg-[var(--yellow)] text-[var(--indigo-dark)] shadow-inner 
+                border border-[rgba(255,255,255,0.25)] hover:border-[rgba(255,255,255,0.35)]">
+          Upcoming
+        </button>
+        <button id="btn-history"
+          class="flex-1 py-3 font-semibold text-sm rounded-lg transition-all duration-200 
+                bg-transparent text-[var(--white)] border border-[rgba(255,255,255,0.25)] hover:border-[rgba(255,255,255,0.35)]">
+          History
+        </button>
       </div>
     </div>
 
+    <!-- Booking Cards -->
     {% if bookings %}
-    <div id="bookings-container" class="grid grid-cols-1 md:grid-cols-2 gap-6">
+    <div id="bookings-container" class="grid grid-cols-1 md:grid-cols-2 gap-8">
       {% for b in bookings %}
-      <article class="booking-card rounded-2xl bg-[var(--indigo-light)] border p-6 shadow-lg"
+      <article class="booking-card flex flex-col justify-between rounded-2xl bg-[var(--indigo-light)] border border-[rgba(255,255,255,0.1)] p-6 shadow-[0_6px_20px_rgba(0,0,0,0.3)] min-h-[260px]"
         data-category="{% if b.status == 'cancelled' or b.status == 'completed' or b.date < today %}history{% else %}upcoming{% endif %}">
-        
-        <div class="flex items-start justify-between mb-3">
-          <div>
-            <i class="fa-regular fa-calendar text-[var(--yellow)] mr-2"></i>
-            {{ b.date|date:"l, j F Y" }} · {{ b.start_time|time:"H:i" }}–{{ b.end_time|time:"H:i" }}
-          </div>
-          <span class="px-3 py-[2px] rounded-md text-[10px] font-bold uppercase tracking-[1px]
-            {% if b.status == 'confirmed' %} bg-green-700 text-white
-            {% elif b.status == 'pending' %} bg-[var(--yellow)] text-[var(--indigo-dark)]
-            {% elif b.status == 'completed' %} bg-gray-600 text-white
-            {% elif b.status == 'cancelled' %} bg-gray-500 text-white {% endif %}">
-            {{ b.get_status_display }}
-          </span>
-        </div>
 
-        <!-- Coach Info -->
-        <div class="flex items-center gap-4 mb-4">
-          <img src="{% static 'images/default-coach.png' %}" alt="coach photo"
-               class="w-16 h-16 rounded-full border border-[rgba(255,255,255,0.3)]">
-          <div>
-            <p class="heading-font text-lg font-bold">
-              {% for c in b.coach.all %}{{ c.user.username }}{% endfor %}
-            </p>
-            <p class="text-sm text-gray-400">
-              {% for c in b.coach.all %}{{ c.sport }}{% endfor %}
-            </p>
-          </div>
-        </div>
-
-        <!-- Location -->
-        <div class="flex items-center gap-2 text-sm text-gray-300 mb-6">
-          <i class="fa-solid fa-location-dot text-[var(--yellow)]"></i>
-          <span>{{ b.location|default:"Location not set" }}</span>
-        </div>
-
-        <!-- Buttons -->
-        <div class="flex flex-wrap gap-2">
-          {% if b.status not in 'cancelled completed' %}
-            <button class="cancel-btn heading-font px-4 py-1.5 rounded-md bg-red-600 text-white text-sm"
-                    data-cancel-url="{% url 'booking:ajax_cancel' b.id %}">Cancel</button>
-            <button class="res-btn heading-font px-4 py-1.5 rounded-md bg-[var(--indigo-dark)] text-[var(--white)] text-sm"
-                    data-res-id="{{ b.id }}">Reschedule</button>
-          {% elif b.status == 'completed' %}
-            {# >>> Leave Review trigger — sesuai flow sebelumnya #}
-            {% if b.coach.first %}
-            <a href="#"
-               class="heading-font px-4 py-1.5 rounded-md bg-[var(--yellow)] text-[var(--indigo-dark)] text-sm cursor-pointer"
-               data-review-open="{{ b.coach.first.id }}">
-              Leave Review
-            </a>
-            {% endif %}
-          {% endif %}
-        </div>
-
-        <!-- Reschedule form -->
-        <form class="res-form hidden mt-3" data-res-form="{{ b.id }}">
-          {% csrf_token %}
-          <div class="grid grid-cols-3 gap-2">
-            <input type="date" name="new_date" class="rounded-md px-2 py-2 bg-[var(--indigo-dark)] text-[var(--white)]">
-            <input type="time" name="new_start_time" class="rounded-md px-2 py-2 bg-[var(--indigo-dark)] text-[var(--white)]">
-            <input type="time" name="new_end_time" class="rounded-md px-2 py-2 bg-[var(--indigo-dark)] text-[var(--white)]">
-          </div>
-          <div class="mt-2 flex gap-2">
-            <button type="button" class="save-res-btn px-3 py-1 bg-[var(--yellow)] text-[var(--indigo-dark)] rounded-md text-sm"
-                    data-res-save="{{ b.id }}" data-url="{% url 'booking:ajax_reschedule' b.id %}">Save</button>
-            <button type="button" class="cancel-res-btn px-3 py-1 bg-gray-500 rounded-md text-sm text-white"
-                    data-res-cancel="{{ b.id }}">Cancel</button>
-          </div>
-        </form>
-
-        {# ==================== REVIEW MODAL + SCRIPT (per coach) ==================== #}
-        {% if b.coach.first %}
-          {% with coach_id=b.coach.first.id coach_username=b.coach.first.user.username %}
-            <!-- Modal -->
-            <div id="rfm-{{ coach_id }}" class="fixed inset-0 hidden items-center justify-center z-[100]"
-                 style="background:rgba(0,0,0,.6);">
-              <div class="w-[92vw] max-w-[680px] rounded-2xl border p-6"
-                   style="background:var(--indigo); border-color:#2e2b55; color:var(--white);">
-                <div class="mb-4">
-                  <div class="heading-font text-[22px] md:text-[26px]">RATE YOUR COACH</div>
-                  <div class="font-bevietnam opacity-75 text-sm">
-                    Your honest feedback is valuable to us {{ coach_username|default:"" }}.
-                  </div>
-                </div>
-
-                <div class="mb-3">
-                  <div class="font-bevietnam text-sm opacity-80 mb-1">YOUR RATING</div>
-                  <div class="flex gap-2 text-3xl select-none">
-                    {% for n in "12345" %}
-                      <button type="button" class="rfm-star-{{ coach_id }} cursor-pointer"
-                              aria-label="{{ forloop.counter }} star"
-                              data-val="{{ forloop.counter }}" style="color:#3c395f;">★</button>
-                    {% endfor %}
-                  </div>
-                </div>
-
-                <div class="mb-5">
-                  <div class="font-bevietnam text-sm opacity-80 mb-1">FEEDBACK (optional)</div>
-                  <textarea id="rfm-comment-{{ coach_id }}" rows="6"
-                            class="w-full rounded-lg p-3 outline-none"
-                            style="background:var(--indigo-light); color:var(--white); border:1px solid #2e2b55;"
-                            placeholder="Share your experience…"></textarea>
-                </div>
-
-                <div class="flex justify-end gap-3">
-                  <button type="button" data-review-cancel="{{ coach_id }}"
-                          class="px-4 py-2 rounded-lg font-bevietnam text-sm"
-                          style="background:#be3a3a; color:#fff;">CANCEL</button>
-                  <button type="button" data-review-submit="{{ coach_id }}"
-                          class="px-5 py-2 rounded-lg font-bevietnam text-sm"
-                          style="background:var(--yellow); color:#1a1834;">SUBMIT</button>
-                </div>
-              </div>
+        <!-- Header -->
+        <div>
+          <div class="flex justify-between items-start mb-3">
+            <div>
+              <p class="heading-font text-lg font-semibold tracking-wide">
+                <i class="fa-regular fa-calendar text-[var(--yellow)] mr-2"></i>
+                {{ b.date|date:"l, j F Y" }}
+              </p>
+              <p class="text-sm text-[rgba(255,255,255,0.8)] mt-1">
+                {{ b.start_time|time:"H:i" }}–{{ b.end_time|time:"H:i" }} WIB
+              </p>
             </div>
+            <span class="px-3 py-[2px] rounded-md text-[10px] font-bold uppercase tracking-[1px]
+              {% if b.status == 'confirmed' %} bg-green-700 text-white
+              {% elif b.status == 'pending' %} bg-[var(--yellow)] text-[var(--indigo-dark)]
+              {% elif b.status == 'rescheduled' %} bg-purple-700 text-white
+              {% elif b.status == 'cancelled' %} bg-gray-500 text-white
+              {% elif b.status == 'completed' %} bg-blue-700 text-white
+              {% endif %}">
+              {{ b.get_status_display }}
+            </span>
+          </div>
 
-            <!-- Script modal (isolated per coach_id) -->
-            <script>
-            (function(){
-              const coachId   = "{{ coach_id }}";
-              const modal     = document.getElementById("rfm-" + coachId);
-              const commentEl = document.getElementById("rfm-comment-" + coachId);
-              const stars     = modal.querySelectorAll(".rfm-star-{{ coach_id }}");
-              const CREATE_URL = "{% url 'reviews:create_review_json' '00000000-0000-0000-0000-000000000000' %}"
-                                 .replace('00000000-0000-0000-0000-000000000000', coachId);
-              let rating = 0;
+          <!-- Coach Info -->
+          <div class="flex items-center gap-4 mb-4">
+            <img src="{{ b.coach.user.profile.avatar.url|default:'/static/images/default-user.png' }}" 
+                 alt="coach photo"
+                 class="w-16 h-16 rounded-full border border-[rgba(255,255,255,0.3)] object-cover">
+            <div>
+              <p class="text-xs opacity-60">COACH</p>
+              <p class="heading-font text-lg font-bold text-[var(--white)]">
+                {{ b.coach.user.get_full_name|default:b.coach.user.username }}
+              </p>
+            </div>
+          </div>
 
-              function getCookie(name){
-                const m = document.cookie.match('(^|;)\\s*'+name+'\\s*=\\s*([^;]+)'); return m ? m.pop() : '';
-              }
-              function paint(n){ stars.forEach((s,i)=>{ s.style.color = (i<n) ? "var(--yellow)" : "#3c395f"; }); }
+          <!-- Location -->
+          <div class="flex items-center gap-2 text-sm text-[rgba(255,255,255,0.8)] mb-4">
+            <i class="fa-solid fa-location-dot text-[var(--yellow)]"></i>
+            <span>{{ b.location|default:"Location not set" }}</span>
+          </div>
+        </div>
 
-              stars.forEach(btn=>{
-                btn.addEventListener('mouseenter', ()=>paint(+btn.dataset.val));
-                btn.addEventListener('mouseleave', ()=>paint(rating));
-                btn.addEventListener('click',     ()=>{ rating = +btn.dataset.val; paint(rating); });
-              });
-
-              function openModal(triggerBtn){
-                rating = 0; paint(0); commentEl.value = "";
-                modal.classList.remove("hidden"); modal.classList.add("flex");
-                modal._triggerBtn = triggerBtn || null;
-              }
-              function closeModal(){ modal.classList.add("hidden"); modal.classList.remove("flex"); }
-
-              // trigger: tombol Leave Review yg match coachId
-              document.addEventListener("click", function(e){
-                const btn = e.target.closest('[data-review-open="{{ coach_id }}"]');
-                if (btn){ e.preventDefault(); openModal(btn); }
-              });
-
-              modal.querySelector('[data-review-cancel="{{ coach_id }}"]').onclick = closeModal;
-
-              modal.querySelector('[data-review-submit="{{ coach_id }}"]').onclick = async function(){
-                if (!rating){ alert("Please select a rating (1–5)."); return; }
-                const payload = { rating: rating, comment: commentEl.value || "" };
-
-                const res = await fetch(CREATE_URL, {
-                  method: "POST",
-                  headers: { "Content-Type":"application/json", "X-CSRFToken": getCookie("csrftoken") },
-                  body: JSON.stringify(payload),
-                });
-                const data = await res.json().catch(()=> ({}));
-                if (!res.ok){ alert(data.error || "Failed to submit review."); return; }
-
-                // ubah tombol jadi "View your review"
-                const t = modal._triggerBtn;
-                if (t){
-                  const detailUrl = "{% url 'reviews:review_detail_page' 0 %}".replace('/0/', '/' + data.id + '/');
-                  t.textContent = "View your review";
-                  t.setAttribute("href", detailUrl);
-                  t.setAttribute("data-review-open", ""); // matikan open modal
-                  t.onclick = null;
-                }
-                closeModal();
-              };
-
-              modal.addEventListener("click", (e)=>{ if (e.target === modal) closeModal(); });
-            })();
-            </script>
-          {% endwith %}
+        <!-- Action Buttons -->
+        {% if b.status == 'pending' or b.status == 'confirmed' or b.status == 'rescheduled' %}
+        <div class="flex flex-wrap gap-2 mt-auto pt-3 border-t border-[rgba(255,255,255,0.1)]">
+          <a href="{% url 'booking:edit' b.id %}" 
+             class="heading-font px-4 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-md text-sm transition-all">Edit</a>
+          <a href="#" 
+             class="ajax-cancel-btn heading-font px-4 py-1.5 bg-gray-600 hover:bg-gray-700 text-white rounded-md text-sm transition-all"
+             data-url="{% url 'booking:ajax_cancel' b.id %}">Cancel</a>
+        </div>
         {% endif %}
-        {# ==================== END REVIEW MODAL ==================== #}
-
       </article>
       {% endfor %}
     </div>
     {% else %}
-      <div class="text-center p-12 bg-[var(--indigo-light)] rounded-2xl">
-        <h2 class="heading-font text-2xl mb-2">NO BOOKINGS</h2>
-        <p class="opacity-60">You don’t have any bookings yet.</p>
+      <div class="text-center p-16 bg-[var(--indigo-light)] rounded-2xl shadow-[0_8px_24px_rgba(0,0,0,0.3)]">
+        <h2 class="heading-font text-2xl mb-2">NO BOOKINGS YET</h2>
+        <p class="opacity-60">You haven't booked any coaches.</p>
+        <a href="{% url 'users:coach_list' %}" 
+           class="mt-6 inline-block px-6 py-2 bg-[var(--yellow)] text-[var(--indigo-dark)] font-semibold rounded-md hover:bg-yellow-400 transition-all">Find a Coach</a>
       </div>
     {% endif %}
   </div>
 </div>
-
-{# skrip booking-mu tetap #}
 {% include 'booking/_booking_ajax_scripts.html' %}
 
 {# Auto-switch ke "View your review" saat halaman dibuka (tetap seperti flow sebelumnya) #}

@@ -40,7 +40,7 @@ def tournament_view(request):
     })
 
 
-@login_required
+@login_required(login_url=reverse_lazy('users:login'))
 def my_tournaments_ajax(request):
     if request.headers.get('x-requested-with') == 'XMLHttpRequest':
         user = request.user
@@ -67,7 +67,6 @@ def my_tournaments_ajax(request):
         return JsonResponse({'tournaments': data})
 
     return JsonResponse({'error': 'Invalid request'}, status=400)
-
 
 @login_required(login_url=reverse_lazy('users:login'))
 def tournament_show(request, tournament_id):
@@ -101,6 +100,7 @@ def tournament_show(request, tournament_id):
     })
 
 
+
 @csrf_exempt
 @login_required(login_url=reverse_lazy('users:login'))
 def create_tournament(request):
@@ -123,6 +123,7 @@ def create_tournament(request):
 
 
 @csrf_exempt
+
 @login_required(login_url=reverse_lazy('users:login'))
 def delete_tournament(request, tournament_id):
     if request.method not in ["POST", "DELETE"]:
@@ -134,12 +135,10 @@ def delete_tournament(request, tournament_id):
         return JsonResponse({'error': 'Kamu tidak berhak menghapus tournament ini'}, status=403)
 
     tournament.delete()
-
     if request.headers.get('x-requested-with') == 'XMLHttpRequest':
         return JsonResponse({'message': 'Tournament berhasil dihapus!'})
 
     return redirect('tournaments:tournament_view')
-
 
 @csrf_exempt
 @login_required(login_url=reverse_lazy('users:login'))
@@ -166,7 +165,7 @@ def assign_tournament(request, tournament_id):
     return JsonResponse({'message': f'{member.user.username} berhasil daftar ke {tournament.namaTournaments}!'}, status=200)
 
 
-@login_required
+@login_required(login_url=reverse_lazy('users:login'))
 @csrf_exempt
 def edit_tournament_ajax(request, tournament_id):
     tournament = get_object_or_404(Tournament, idTournaments=tournament_id)

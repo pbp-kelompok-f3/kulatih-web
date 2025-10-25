@@ -1,63 +1,76 @@
 <script>
-document.addEventListener("DOMContentLoaded", function () {
-  const btnUpcoming = document.getElementById("btn-upcoming");
-  const btnHistory = document.getElementById("btn-history");
-  const cards = document.querySelectorAll(".booking-card");
+document.addEventListener('DOMContentLoaded', function() {
+    const btnUpcoming = document.getElementById('btn-upcoming');
+    const btnHistory = document.getElementById('btn-history');
+    const bookingCards = document.querySelectorAll('.booking-card');
 
-  // Tab filter
-  const showCategory = cat => {
-    cards.forEach(c => c.style.display = (c.dataset.category === cat) ? "block" : "none");
-  };
-  const setActive = tab => {
-    if (tab === "upcoming") {
-      btnUpcoming.classList.add("bg-[var(--yellow)]","text-[var(--indigo-dark)]");
-      btnHistory.classList.remove("bg-[var(--yellow)]","text-[var(--indigo-dark)]");
-    } else {
-      btnHistory.classList.add("bg-[var(--yellow)]","text-[var(--indigo-dark)]");
-      btnUpcoming.classList.remove("bg-[var(--yellow)]","text-[var(--indigo-dark)]");
+    function filterBookings(category) {
+        bookingCards.forEach(card => {
+            if (card.dataset.category === category) {
+                card.style.display = 'block';
+            } else {
+                card.style.display = 'none';
+            }
+        });
     }
-  };
-  btnUpcoming?.addEventListener("click",()=>{showCategory("upcoming");setActive("upcoming");});
-  btnHistory?.addEventListener("click",()=>{showCategory("history");setActive("history");});
-  showCategory("upcoming"); setActive("upcoming");
 
-  // Cancel
-  document.querySelectorAll(".cancel-btn").forEach(btn=>{
-    btn.addEventListener("click",()=>{
-      if(!confirm("Cancel this booking?"))return;
-      fetch(btn.dataset.cancelUrl,{method:"POST",headers:{"X-CSRFToken":"{{ csrf_token }}"}})
-      .then(r=>r.json()).then(d=>{if(d.ok)location.reload();else alert(d.error);});
-    });
-  });
+    if (btnUpcoming && btnHistory) {
+        btnUpcoming.addEventListener('click', () => {
+            filterBookings('upcoming');
+            btnUpcoming.classList.add('bg-[var(--yellow)]', 'text-[var(--indigo-dark)]');
+            btnUpcoming.classList.remove('bg-transparent', 'text-[var(--white)]');
+            btnHistory.classList.add('bg-transparent', 'text-[var(--white)]');
+            btnHistory.classList.remove('bg-[var(--yellow)]', 'text-[var(--indigo-dark)]');
+        });
 
-  // Reschedule toggle form
-  document.querySelectorAll(".res-btn").forEach(btn=>{
-    btn.addEventListener("click",()=>{
-      document.querySelector(`[data-res-form="${btn.dataset.resId}"]`).classList.toggle("hidden");
-    });
-  });
-  document.querySelectorAll(".cancel-res-btn").forEach(btn=>{
-    btn.addEventListener("click",()=>{
-      document.querySelector(`[data-res-form="${btn.dataset.resCancel}"]`).classList.add("hidden");
-    });
-  });
-  document.querySelectorAll(".save-res-btn").forEach(btn=>{
-    btn.addEventListener("click",()=>{
-      const f=document.querySelector(`[data-res-form="${btn.dataset.resSave}"]`);
-      const fd=new FormData(f);
-      fetch(btn.dataset.url,{method:"POST",headers:{"X-CSRFToken":"{{ csrf_token }}"},body:fd})
-      .then(r=>r.json()).then(d=>{if(d.ok){alert("Booking rescheduled!");location.reload();}else alert(d.error);});
-    });
-  });
+        btnHistory.addEventListener('click', () => {
+            filterBookings('history');
+            btnHistory.classList.add('bg-[var(--yellow)]', 'text-[var(--indigo-dark)]');
+            btnHistory.classList.remove('bg-transparent', 'text-[var(--white)]');
+            btnUpcoming.classList.add('bg-transparent', 'text-[var(--white)]');
+            btnUpcoming.classList.remove('bg-[var(--yellow)]', 'text-[var(--indigo-dark)]');
+        });
 
-  // Confirm (coach)
-  document.querySelectorAll(".confirm-btn").forEach(btn=>{
-    btn.addEventListener("click",()=>{
-      fetch(`/booking/ajax_confirm_booking/${btn.dataset.confirmId}/`,{method:"POST",headers:{"X-CSRFToken":"{{ csrf_token }}"}})
-      .then(r=>r.json()).then(d=>{if(d.ok)location.reload();else alert(d.error);});
-    });
-  });
+        // Initial filter
+        filterBookings('upcoming');
+    }
 
-  // Accept / Reject reschedule (coach)
-  document.querySelectorAll(".accept-res-btn, .reject-res-btn").forEach(btn=>{
-    btn.addEventListener("click",
+    // --- AJAX Actions ---
+    document.body.addEventListener('click', function(event) {
+        const handleAjaxClick = (event, selector, confirmationMessage) => {
+            const target = event.target.closest(selector);
+            if (!target) return;
+
+            event.preventDefault();
+
+            if (confirm(confirmationMessage)) {
+                const url = target.dataset.url;
+                fetch(url, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': '{{ csrf_token }}',
+                        'Content-Type': 'application/json'
+                    },
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.ok) {
+                        window.location.reload();
+                    } else {
+                        alert('Error: ' + (data.error || 'An unknown error occurred.'));
+                    }
+                })
+                .catch(err => {
+                    console.error('Fetch error:', err);
+                    alert('A network error occurred. Please try again.');
+                });
+            }
+        };
+
+        handleAjaxClick(event, '.ajax-cancel-btn', 'Are you sure you want to cancel this booking?');
+        handleAjaxClick(event, '.ajax-confirm-btn', 'Are you sure you want to confirm this booking?');
+        handleAjaxClick(event, '.ajax-accept-res-btn', 'Are you sure you want to accept this reschedule request?');
+        handleAjaxClick(event, '.ajax-reject-res-btn', 'Are you sure you want to reject this reschedule request?');
+    });
+});
+</script>
