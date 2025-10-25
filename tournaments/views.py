@@ -11,7 +11,7 @@ from django.contrib.auth.decorators import login_required
 from django.urls import reverse_lazy
 
 def tournament_view(request):
-    tournaments = Tournament.objects.all()
+    tournaments = Tournament.objects.filter(flagTournaments=True)
     is_coach = hasattr(request.user, 'coach')
 
     if request.headers.get('x-requested-with') == 'XMLHttpRequest':
@@ -28,7 +28,7 @@ def tournament_view(request):
                 'tipe': t.tipeTournaments,
                 'tanggal': t.tanggalTournaments.strftime('%b %d, %Y'),
                 'lokasi': t.lokasiTournaments,
-                'poster': t.posterTournaments or '/static/images/empty.png',  # 🟢 FIXED
+                'poster': t.posterTournaments or '/static/images/empty.png',
                 'deskripsi': t.deskripsiTournaments,
                 'pembuat': pembuat_username,
             })
@@ -46,9 +46,15 @@ def my_tournaments_ajax(request):
         user = request.user
 
         if hasattr(user, 'coach'):
-            tournaments = Tournament.objects.filter(pembuatTournaments=user.coach)
+            tournaments = Tournament.objects.filter(
+                pembuatTournaments=user.coach,
+                flagTournaments=True
+            )
         elif hasattr(user, 'member'):
-            tournaments = Tournament.objects.filter(pesertaTournaments=user.member)
+            tournaments = Tournament.objects.filter(
+                pesertaTournaments=user.member,
+                flagTournaments=True
+            )
         else:
             tournaments = Tournament.objects.none()
 
@@ -58,7 +64,7 @@ def my_tournaments_ajax(request):
                 'id': str(t.idTournaments),
                 'nama': t.namaTournaments,
                 'tipe': t.tipeTournaments,
-                'tanggal': t.tanggalTournaments.strftime('%Y-%m-%d'),
+                'tanggal': t.tanggalTournaments.strftime('%b %d, %Y'),
                 'lokasi': t.lokasiTournaments,
                 'poster': t.posterTournaments if hasattr(t, 'posterTournaments') else '',
                 'pembuat': t.pembuatTournaments.user.username,
@@ -67,6 +73,7 @@ def my_tournaments_ajax(request):
         return JsonResponse({'tournaments': data})
 
     return JsonResponse({'error': 'Invalid request'}, status=400)
+
 
 @login_required(login_url=reverse_lazy('users:login'))
 def tournament_show(request, tournament_id):

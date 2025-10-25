@@ -22,7 +22,6 @@
   overflow: hidden;
   z-index: 0;
 }
-
 .bg-tournament::after {
   content: "";
   position: absolute;
@@ -30,7 +29,6 @@
   background: rgba(0, 0, 50, 0.4);
   z-index: 0;
 }
-
 .bg-tournament h1 {
   position: relative;
   z-index: 1;
@@ -39,40 +37,33 @@
   letter-spacing: 0.05em;
   text-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
 }
-
-
-
-
 </style>
 
 <div class="bg-[#191831] min-h-screen text-white pt-20 pb-10">
   <div class="max-w-7xl mx-auto px-6">
     <div class="text-center">
-    <div class="bg-tournament">
-      <h1 class="text-4xl md:text-6xl font-extrabold tracking-wide mb-4">
-        FIND YOUR PERFECT TOURNAMENT
-      </h1>
-    </div>
-      <div class="flex justify-center gap-3 mt-16 mb=10 translate-y-10">
+      <div data-aos="fade-up" class="bg-tournament">
+        <h1 class="text-4xl md:text-6xl font-extrabold tracking-wide mb-4">
+          FIND YOUR PERFECT TOURNAMENT
+        </h1>
+      </div>
+      <div data-aos="fade-up" class="flex justify-center gap-3 mt-16 mb=10 translate-y-10">
         <button id="allBtn" class="px-5 py-2 bg-gray-700 rounded-full font-semibold hover:bg-yellow-400 hover:text-black transition">
           All Tournaments
         </button>
-
         {% if user.is_authenticated %}
-          <button id="myBtn" class="px-5 py-2 bg-gray-700 rounded-full font-semibold hover:bg-yellow-400 hover:text-black transition">
-            My Tournaments
-          </button>
+        <button id="myBtn" class="px-5 py-2 bg-gray-700 rounded-full font-semibold hover:bg-yellow-400 hover:text-black transition">
+          My Tournaments
+        </button>
         {% endif %}
-
         {% if is_coach %}
-          <a href="{% url 'tournaments:create_tournament' %}"
-             class="px-5 py-2 bg-gray-700 rounded-full font-semibold hover:bg-yellow-400 hover:text-black transition">
-             Create Tournament
-          </a>
+        <a href="{% url 'tournaments:create_tournament' %}" class="px-5 py-2 bg-gray-700 rounded-full font-semibold hover:bg-yellow-400 hover:text-black transition">
+          Create Tournament
+        </a>
         {% endif %}
       </div>
     </div>
-    <div class="relative mb-10 mt-16 flex justify-center">
+    <div data-aos="fade-up" class="relative mb-10 mt-16 flex justify-center">
       <input id="searchInput" type="text" placeholder="Search Tournament or Location"
         class="w-full md:w-2/3 bg-[#1b1b3a] border border-gray-700 rounded-xl py-3 px-4 pl-12 text-gray-300 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-yellow-400" />
       <svg xmlns="http://www.w3.org/2000/svg"
@@ -82,11 +73,11 @@
           d="M21 21l-4.35-4.35M17 10a7 7 0 11-14 0 7 7 0 0114 0z" />
       </svg>
     </div>
-    <div id="tournamentGrid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
-    </div>
+    <div id="tournamentGrid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6"></div>
     <div id="emptyState" class="hidden text-center mt-10 text-gray-400">
       <p>No tournaments found.</p>
     </div>
+    <div id="pagination" class="flex justify-center mt-10"></div>
   </div>
 </div>
 
@@ -97,13 +88,14 @@ document.addEventListener("DOMContentLoaded", function() {
   const emptyState = document.getElementById("emptyState");
   const allBtn = document.getElementById("allBtn");
   const myBtn = document.getElementById("myBtn");
-
+  const pagination = document.getElementById("pagination");
   let tournaments = [];
+  let currentPage = 1;
+  const itemsPerPage = 9;
+
   async function loadTournaments() {
     try {
-      const response = await fetch(window.location.href, {
-        headers: { "X-Requested-With": "XMLHttpRequest" }
-      });
+      const response = await fetch(window.location.href, { headers: { "X-Requested-With": "XMLHttpRequest" } });
       const data = await response.json();
       tournaments = data.tournaments || [];
       renderTournaments(tournaments);
@@ -111,52 +103,126 @@ document.addEventListener("DOMContentLoaded", function() {
       console.error("Error loading tournaments:", err);
     }
   }
+
   function renderTournaments(list) {
     grid.innerHTML = "";
-
-    if (!list || list.length === 0) {
+    const start = (currentPage - 1) * itemsPerPage;
+    const end = start + itemsPerPage;
+    const pageItems = list.slice(start, end);
+    if (!pageItems || pageItems.length === 0) {
       emptyState.classList.remove("hidden");
+      pagination.innerHTML = "";
       return;
     }
-
     emptyState.classList.add("hidden");
-
-    list.forEach(t => {
+    pageItems.forEach(t => {
       const poster = t.poster ? t.poster : "{% static 'images/empty.png' %}";
       const card = document.createElement("div");
       card.className = "bg-[#1b1b3a] rounded-2xl overflow-hidden shadow-lg hover:scale-105 transition transform duration-300";
       card.innerHTML = `
-        <div class="relative bg-[#111024]/50 rounded-3xl overflow-hidden shadow-[0_0_25px_#facc15]/30 hover:shadow-[0_0_35px_#facc15]/60 hover:scale-105 transition-all duration-300 flex flex-col md:flex-row">
-
-        
-        <!-- Poster -->
-        <div class="md:w-1/2 relative">
+        <div data-aos="fade-up" class="relative bg-[#111024]/50 rounded-3xl overflow-hidden shadow-[0_0_25px_#facc15]/30 hover:shadow-[0_0_35px_#facc15]/60 hover:scale-105 transition-all duration-300 flex flex-col md:flex-row">
+        <div data-aos="fade-up" class="md:w-1/2 relative">
             <img src="${poster}" alt="${t.nama}" class="w-full h-56 md:h-full object-cover">
             <div class="absolute top-0 left-0 w-full h-full bg-gradient-to-tr from-transparent via-[#1e1b3a]/30 to-[#1e1b3a]/80 clip-path-polygon(0_0,100%_0,100%_70%,0_100%)"></div>
             <span class="absolute top-3 left-3 bg-yellow-400 text-black px-3 py-1 font-bold rounded-full shadow-md text-sm">${t.tipe}</span>
         </div>
-
-        <!-- Info -->
         <div class="md:w-1/2 p-6 flex flex-col justify-between">
             <h3 class="text-2xl font-bold text-white mb-2 tracking-tight hover:text-yellow-400 transition-colors">${t.nama}</h3>
             <div class="flex flex-col gap-2 text-gray-300 text-sm mb-4">
-            <div class="flex items-center gap-2"><span>🏟</span> ${t.lokasi}</div>
-            <div class="flex items-center gap-2"><span>📅</span> ${t.tanggal}</div>
-            <div class="flex items-center gap-2"><span>👤</span> By ${t.pembuat}</div>
+              <div class="flex items-center gap-2"><span>🏟</span> ${t.lokasi}</div>
+              <div class="flex items-center gap-2"><span>📅</span> ${t.tanggal}</div>
+              <div class="flex items-center gap-2"><span>👤</span> By ${t.pembuat}</div>
             </div>
-            <a href="/tournament/${t.id}/" 
-            class="relative block w-full text-center bg-yellow-400 text-black font-bold py-2 rounded-xl overflow-hidden transition-all duration-300 hover:bg-yellow-500">
-            <span class="absolute inset-0 bg-gradient-to-r from-yellow-400 via-yellow-200 to-yellow-400 opacity-20 blur-lg animate-pulse"></span>
-            <span class="relative z-10">View Details</span>
+            <a href="/tournament/${t.id}/" class="relative block w-full text-center bg-yellow-400 text-black font-bold py-2 rounded-xl overflow-hidden transition-all duration-300 hover:bg-yellow-500">
+              <span class="absolute inset-0 bg-gradient-to-r from-yellow-400 via-yellow-200 to-yellow-400 opacity-20 blur-lg animate-pulse"></span>
+              <span class="relative z-10">View Details</span>
             </a>
         </div>
         </div>
-
       `;
       grid.appendChild(card);
     });
+    renderPagination(list.length);
   }
+
+  function renderPagination(totalItems) {
+    const totalPages = Math.ceil(totalItems / itemsPerPage);
+    pagination.innerHTML = "";
+    if (totalPages <= 1) return;
+
+    const maxVisible = 5;
+    const prevBtn = document.createElement("button");
+    prevBtn.textContent = "<";
+    prevBtn.className = `mx-1 px-3 py-1 rounded-full ${currentPage === 1 ? "bg-gray-600 text-gray-400 cursor-not-allowed" : "bg-gray-700 text-white hover:bg-gray-600"}`;
+    prevBtn.disabled = currentPage === 1;
+    prevBtn.addEventListener("click", () => {
+      if (currentPage > 1) {
+        currentPage--;
+        renderTournaments(tournaments);
+      }
+    });
+    pagination.appendChild(prevBtn);
+
+    let startPage = Math.max(1, currentPage - 2);
+    let endPage = Math.min(totalPages, currentPage + 2);
+
+    if (currentPage <= 3) {
+      endPage = Math.min(totalPages, maxVisible);
+    } else if (currentPage >= totalPages - 2) {
+      startPage = Math.max(1, totalPages - maxVisible + 1);
+    }
+
+    if (startPage > 1) {
+      addPageButton(1);
+      if (startPage > 2) addEllipsis();
+    }
+
+    for (let i = startPage; i <= endPage; i++) {
+      addPageButton(i);
+    }
+
+    if (endPage < totalPages) {
+      if (endPage < totalPages - 1) addEllipsis();
+      addPageButton(totalPages);
+    }
+
+    const nextBtn = document.createElement("button");
+    nextBtn.textContent = ">";
+    nextBtn.className = `mx-1 px-3 py-1 rounded-full ${currentPage === totalPages ? "bg-gray-600 text-gray-400 cursor-not-allowed" : "bg-gray-700 text-white hover:bg-gray-600"}`;
+    nextBtn.disabled = currentPage === totalPages;
+    nextBtn.addEventListener("click", () => {
+      if (currentPage < totalPages) {
+        currentPage++;
+        renderTournaments(tournaments);
+      }
+    });
+    pagination.appendChild(nextBtn);
+
+    function addPageButton(pageNum) {
+      const btn = document.createElement("button");
+      btn.textContent = pageNum;
+      btn.className = `mx-1 px-3 py-1 rounded-full ${
+        pageNum === currentPage
+          ? "bg-yellow-400 text-black font-bold"
+          : "bg-gray-700 text-white hover:bg-gray-600"
+      }`;
+      btn.addEventListener("click", () => {
+        currentPage = pageNum;
+        renderTournaments(tournaments);
+      });
+      pagination.appendChild(btn);
+    }
+
+    function addEllipsis() {
+      const span = document.createElement("span");
+      span.textContent = "...";
+      span.className = "mx-2 text-gray-400";
+      pagination.appendChild(span);
+    }
+  }
+
   searchInput.addEventListener("input", () => {
+    currentPage = 1;
     const query = searchInput.value.toLowerCase();
     const filtered = tournaments.filter(t =>
       t.nama.toLowerCase().includes(query) ||
@@ -165,22 +231,22 @@ document.addEventListener("DOMContentLoaded", function() {
     );
     renderTournaments(filtered);
   });
+
   allBtn.addEventListener("click", () => {
     allBtn.classList.add("bg-yellow-400", "text-black");
     myBtn?.classList.remove("bg-yellow-400", "text-black");
+    currentPage = 1;
     renderTournaments(tournaments);
   });
+
   myBtn?.addEventListener("click", async () => {
     allBtn.classList.remove("bg-yellow-400", "text-black");
     myBtn.classList.add("bg-yellow-400", "text-black");
-
     try {
-      const res = await fetch("/tournament/my/", {
-        headers: { "X-Requested-With": "XMLHttpRequest" }
-      });
+      const res = await fetch("/tournament/my/", { headers: { "X-Requested-With": "XMLHttpRequest" } });
       const data = await res.json();
-
       if (res.ok) {
+        currentPage = 1;
         renderTournaments(data.tournaments || []);
       } else {
         alert(data.error || "Gagal memuat turnamenmu.");
@@ -190,6 +256,7 @@ document.addEventListener("DOMContentLoaded", function() {
       alert("Gagal mengambil data turnamen kamu.");
     }
   });
+
   loadTournaments();
 });
 </script>
