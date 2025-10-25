@@ -6,6 +6,7 @@ from django.contrib.auth import login, authenticate, logout
 from django.contrib.auth.forms import AuthenticationForm
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
+from django.db.models import Q
 
 from .models import Member, Coach
 from .forms import (
@@ -240,3 +241,20 @@ def coach_list(request):
     }
     return render(request, 'coach_list.html', context)
     
+def coach_list(request):
+    query = request.GET.get('q', '')
+    coaches = Coach.objects.all()
+
+    if query:
+        coaches = coaches.filter(
+            Q(user__first_name__icontains=query) |
+            Q(user__last_name__icontains=query) |
+            Q(sport__icontains=query) |
+            Q(city__icontains=query)
+        ).distinct()
+
+    context = {
+        'coaches': coaches,
+        'search_query': query,
+    }
+    return render(request, 'coach_list.html', context)
