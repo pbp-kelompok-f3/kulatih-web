@@ -7,6 +7,7 @@ from django.contrib.auth.forms import AuthenticationForm
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
 from django.db.models import Q
+from django.utils import timezone
 
 from .models import Member, Coach
 from .forms import (
@@ -16,6 +17,7 @@ from .forms import (
     MemberEditForm,
     CoachEditForm
 )
+from booking.models import Booking
 
 
 # =========================
@@ -93,43 +95,34 @@ def logout_user(request):
 # PROFILE
 # =========================
 
-@login_required(login_url='/login')
+@login_required(login_url='/account/login/')
 def show_profile(request):
-    """
-    Tampilkan profil sesuai tipe user (Member / Coach).
-    """
-    if hasattr(request.user, 'member'):
-        profile = request.user.member
-        template = 'users/profile_member.html'
-        profile_form = MemberEditForm(instance=profile)
-    elif hasattr(request.user, 'coach'):
-        profile = request.user.coach
-        template = 'users/profile_coach.html'
-        profile_form = CoachEditForm(instance=profile)
-    else:
-        # Fallback for users without a profile (e.g., superuser)
-        messages.info(request, "You don't have a member or coach profile.")
-        return redirect('main:show_main')
+    user = request.user
+    context = {'user': user}
+    bookings = None
+    today = timezone.now().date()
 
-    user_form = UserEditForm(instance=request.user)
-
-    context = {
-        'profile': profile,
-        'user_form': user_form,
-        'profile_form': profile_form,
-    }
-
-    # You need to decide which template to render here.
-    # Assuming you want to show the modal on the user's profile page.
-    if hasattr(request.user, 'member'):
-        template = 'profile_member.html'
-        profile = request.user.member
-    else:
-        template = 'profile_coach.html'
-        profile = request.user.coach
-
-    context['profile'] = profile
-    return render(request, template, context)
+    if hasattr(user, 'member'):
+        profile = user.member
+        bookings = Booking.objects.filter(member=user.member).order_by('-date', '-start_time')
+        context.update({
+            'profile': profile,
+            'bookings': bookings,
+            'today': today,
+        })
+        return render(request, 'profile_member.html', context)
+    
+    elif hasattr(user, 'coach'):
+        profile = user.coach
+        bookings = Booking.objects.filter(coach=user.coach).order_by('-date', '-start_time')
+        context.update({
+            'profile': profile,
+            'bookings': bookings,
+            'today': today,
+        })
+        return render(request, 'profile_coach.html', context)
+    
+    return redirect('main:show_main')
 
 
 @login_required(login_url='/login')

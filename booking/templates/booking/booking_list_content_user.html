@@ -10,9 +10,11 @@
     </div>
 
     <!-- Tabs -->
-    <div class="flex justify-center mb-12">
+    <div class="w-full mb-10">
       <div
-        class="w-full max-w-4xl p-2 rounded-2xl border-2 border-[rgba(255,255,255,0.25)] bg-[rgba(255,255,255,0.05)] backdrop-blur-sm shadow-[inset_0_0_10px_rgba(255,255,255,0.08)] flex gap-3">
+        class="w-full p-2 rounded-2xl border-2 border-[rgba(255,255,255,0.25)] 
+               bg-[rgba(255,255,255,0.05)] backdrop-blur-sm 
+               shadow-[inset_0_0_10px_rgba(255,255,255,0.08)] flex gap-3">
         <button id="btn-upcoming"
           class="flex-1 py-3 font-semibold text-sm rounded-lg transition-all duration-200 
                 bg-[var(--yellow)] text-[var(--indigo-dark)] shadow-inner 
@@ -29,21 +31,21 @@
 
     <!-- Booking Cards -->
     {% if bookings %}
-    <div id="bookings-container" class="grid grid-cols-1 md:grid-cols-2 gap-8">
+    <div id="bookings-container" class="grid grid-cols-1 md:grid-cols-2 gap-8 -mt-2">
       {% for b in bookings %}
-      <article class="booking-card flex flex-col justify-between rounded-2xl bg-[var(--indigo-light)] border border-[rgba(255,255,255,0.1)] p-6 shadow-[0_6px_20px_rgba(0,0,0,0.3)] min-h-[260px]"
+      <article class="booking-card flex flex-col justify-between rounded-2xl bg-[var(--indigo-light)] border border-[rgba(255,255,255,0.1)] p-6 shadow-[0_6px_20px_rgba(0,0,0,0.3)] min-h-[280px]"
         data-category="{% if b.status == 'cancelled' or b.status == 'completed' or b.date < today %}history{% else %}upcoming{% endif %}">
 
         <!-- Header -->
-        <div>
-          <div class="flex justify-between items-start mb-3">
-            <div>
-              <p class="heading-font text-lg font-semibold tracking-wide">
-                <i class="fa-regular fa-calendar text-[var(--yellow)] mr-2"></i>
+        <div class="mb-4">
+          <div class="flex justify-between items-center">
+            <div class="flex items-center gap-3">
+              <i class="fa-regular fa-calendar text-[var(--yellow)] text-base"></i>
+              <p class="heading-font font-semibold text-[15px] tracking-wide">
                 {{ b.date|date:"l, j F Y" }}
               </p>
-              <p class="text-sm text-[rgba(255,255,255,0.8)] mt-1">
-                {{ b.start_time|time:"H:i" }}–{{ b.end_time|time:"H:i" }} WIB
+              <p class="text-sm text-[rgba(255,255,255,0.8)]">
+                • {{ b.start_time|time:"H:i" }} – {{ b.end_time|time:"H:i" }} WIB
               </p>
             </div>
             <span class="px-3 py-[2px] rounded-md text-[10px] font-bold uppercase tracking-[1px]
@@ -56,40 +58,59 @@
               {{ b.get_status_display }}
             </span>
           </div>
+          <div class="w-full h-[1px] bg-[rgba(255,255,255,0.15)] mt-3 mb-4"></div>
+        </div>
 
-          <!-- Coach Info -->
-          <div class="flex items-center gap-4 mb-4">
-            <img src="{{ b.coach.user.profile.avatar.url|default:'/static/images/default-user.png' }}" 
-                 alt="coach photo"
-                 class="w-16 h-16 rounded-full border border-[rgba(255,255,255,0.3)] object-cover">
-            <div>
-              <p class="text-xs opacity-60">COACH</p>
-              <p class="heading-font text-lg font-bold text-[var(--white)]">
-                {{ b.coach.user.get_full_name|default:b.coach.user.username }}
-              </p>
-            </div>
+        <!-- Coach Info -->
+        <div class="flex items-center gap-4 mb-4">
+          <img src="{{ b.coach.user.profile.avatar.url|default:'/static/images/default-user.png' }}" 
+               alt="coach photo"
+               class="w-16 h-16 rounded-full border border-[rgba(255,255,255,0.3)] object-cover">
+          <div>
+            <p class="text-xs opacity-60">COACH</p>
+            <p class="heading-font text-lg font-bold text-[var(--white)]">
+              {{ b.coach.user.get_full_name|default:b.coach.user.username }}
+            </p>
           </div>
+        </div>
 
-          <!-- Location -->
-          <div class="flex items-center gap-2 text-sm text-[rgba(255,255,255,0.8)] mb-4">
-            <i class="fa-solid fa-location-dot text-[var(--yellow)]"></i>
-            <span>{{ b.location|default:"Location not set" }}</span>
-          </div>
+        <!-- Location -->
+        <div class="flex items-center gap-2 text-sm text-[rgba(255,255,255,0.85)] mb-4">
+          <i class="fa-solid fa-location-dot text-[var(--yellow)]"></i>
+          <span>{{ b.location|default:"Location not set" }}</span>
         </div>
 
         <!-- Action Buttons -->
         {% if b.status == 'pending' or b.status == 'confirmed' or b.status == 'rescheduled' %}
         <div class="flex flex-wrap gap-2 mt-auto pt-3 border-t border-[rgba(255,255,255,0.1)]">
-          <a href="{% url 'booking:edit' b.id %}" 
-             class="heading-font px-4 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-md text-sm transition-all">Edit</a>
-          <a href="#" 
-             class="ajax-cancel-btn heading-font px-4 py-1.5 bg-gray-600 hover:bg-gray-700 text-white rounded-md text-sm transition-all"
-             data-url="{% url 'booking:ajax_cancel' b.id %}">Cancel</a>
+          <button type="button"
+          class="open-reschedule heading-font px-4 py-1.5 bg-[var(--indigo-dark)] hover:bg-[var(--indigo)] text-white rounded-md text-sm transition-all"
+          data-booking-id="{{ b.id }}">
+          Reschedule
+        </button>
+           <a href="#" 
+            class="ajax-cancel-btn heading-font px-4 py-1.5 bg-[#b43d3d] hover:bg-[#9b3535] text-white rounded-md text-sm transition-all"
+            data-url="{% url 'booking:ajax_cancel' b.id %}">
+            Cancel
+          </a>
         </div>
         {% endif %}
       </article>
       {% endfor %}
     </div>
+
+    <!-- Modal Reschedule -->
+    <div id="reschedule-modal" class="hidden fixed inset-0 flex items-center justify-center bg-[rgba(0,0,0,0.6)] backdrop-blur-sm z-50">
+      <div class="bg-[var(--indigo-dark)] p-8 rounded-2xl w-full max-w-md border border-[rgba(255,255,255,0.1)] shadow-lg text-center">
+        <h2 class="text-2xl font-bold text-[var(--yellow)] mb-4">Reschedule Booking</h2>
+        <input type="datetime-local" id="reschedule-date" class="w-full bg-[var(--indigo-light)] rounded-md px-4 py-3 text-[var(--white)] mb-6 focus:ring-2 focus:ring-[var(--yellow)]" />
+        <div class="flex justify-end gap-4">
+          <button id="close-modal" class="px-5 py-2 bg-gray-600 hover:bg-gray-700 rounded-md">Cancel</button>
+          <button id="save-reschedule" class="px-5 py-2 bg-[var(--yellow)] text-[var(--indigo-dark)] font-bold rounded-md hover:bg-yellow-400 transition-all">Save</button>
+        </div>
+      </div>
+    </div>
+
     {% else %}
       <div class="text-center p-16 bg-[var(--indigo-light)] rounded-2xl shadow-[0_8px_24px_rgba(0,0,0,0.3)]">
         <h2 class="heading-font text-2xl mb-2">NO BOOKINGS YET</h2>
@@ -98,8 +119,21 @@
            class="mt-6 inline-block px-6 py-2 bg-[var(--yellow)] text-[var(--indigo-dark)] font-semibold rounded-md hover:bg-yellow-400 transition-all">Find a Coach</a>
       </div>
     {% endif %}
+
+    <!-- 🔔 Toast otomatis untuk member -->
+    {% if messages %}
+      {% for message in messages %}
+        <script>
+          window.addEventListener("DOMContentLoaded", () => {
+            createToast("{{ message|escapejs }}", "{% if message.tags == 'success' %}success{% elif message.tags == 'error' %}error{% else %}info{% endif %}");
+          });
+        </script>
+      {% endfor %}
+    {% endif %}
+
   </div>
 </div>
+
 {% include 'booking/_booking_ajax_scripts.html' %}
 
 {# Auto-switch ke "View your review" saat halaman dibuka (tetap seperti flow sebelumnya) #}
@@ -126,3 +160,4 @@ document.addEventListener('DOMContentLoaded', async function () {
 });
 </script>
 {% endblock content %}
+
