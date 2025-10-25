@@ -1,13 +1,12 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.db import transaction
 from django.http import JsonResponse
-from django.http import JsonResponse
 from django.contrib import messages
 from django.contrib.auth import login, authenticate, logout
 from django.contrib.auth.forms import AuthenticationForm
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
-
+from django.db.models import Q
 
 from .models import Member, Coach
 from .forms import (
@@ -114,8 +113,7 @@ def show_profile(request):
     # Check if user is Member or Coach
     if hasattr(request.user, 'member'):
         profile = request.user.member
-        template = 'users/users/profile_member.html'
-        profile_form = MemberEditForm(instance=profile)
+        template = 'users/profile_member.html'
         profile_form = MemberEditForm(instance=profile)
     elif hasattr(request.user, 'coach'):
         profile = request.user.coach
@@ -128,31 +126,7 @@ def show_profile(request):
 
     user_form = UserEditForm(instance=request.user)
 
-        template = 'users/profile_coach.html'
-        profile_form = CoachEditForm(instance=profile)
-    else:
-        # Fallback for users without a profile (e.g., superuser)
-        messages.info(request, "You don't have a member or coach profile.")
-        return redirect('main:show_main')
-
-    user_form = UserEditForm(instance=request.user)
-
     context = {
-        'profile': profile,
-        'user_form': user_form,
-        'profile_form': profile_form,
-    }
-
-    # You need to decide which template to render here.
-    # Assuming you want to show the modal on the user's profile page.
-    if hasattr(request.user, 'member'):
-        template = 'profile_member.html'
-        profile = request.user.member
-    else:
-        template = 'profile_coach.html'
-        profile = request.user.coach
-
-    context['profile'] = profile
         'profile': profile,
         'user_form': user_form,
         'profile_form': profile_form,
@@ -190,30 +164,9 @@ def edit_profile(request):
         
         is_ajax = request.headers.get('x-requested-with') == 'XMLHttpRequest'
 
-        profile_form = ProfileEditForm(request.POST, instance=profile_instance)
-        
-        is_ajax = request.headers.get('x-requested-with') == 'XMLHttpRequest'
-
         if user_form.is_valid() and profile_form.is_valid():
             user_form.save()
             profile_form.save()
-            
-            if is_ajax:
-                return JsonResponse({
-                    'success': True,
-                    'user': {
-                        'first_name': request.user.first_name,
-                        'last_name': request.user.last_name,
-                        'email': request.user.email,
-                    },
-                    'profile': {
-                        'city': profile_instance.city,
-                        'phone': profile_instance.phone,
-                        'description': profile_instance.description,
-                        'profile_photo': profile_instance.profile_photo,
-                    }
-                })
-
             
             if is_ajax:
                 profile_data = {
@@ -238,17 +191,12 @@ def edit_profile(request):
 
             messages.success(request, 'Your profile has been updated successfully!')
             return redirect('users:show_profile')
-        elif is_ajax:
-            errors = user_form.errors.as_json() + profile_form.errors.as_json()
-            return JsonResponse({'success': False, 'errors': errors}, status=400)
-
 
     else:
         # For a GET request, create the initial forms with existing data
         user_form = UserEditForm(instance=request.user)
         profile_form = ProfileEditForm(instance=profile_instance)
 
-    # This context will be used for GET requests and invalid non-AJAX POSTs
     # This context will be used for GET requests and invalid non-AJAX POSTs
     context = {
         'user_form': user_form,
@@ -268,10 +216,7 @@ def edit_profile(request):
     context['profile'] = profile
     return render(request, f'users/{template}', context)
 
-# COACH LIST 
-
-
-# MEMBER
+# Details (Able to be viewed by all user)
 
 def member_details(request, id):
     member = get_object_or_404(Member, pk=id)
@@ -296,3 +241,20 @@ def coach_list(request):
     }
     return render(request, 'coach_list.html', context)
     
+def coach_list(request):
+    query = request.GET.get('q', '')
+    coaches = Coach.objects.all()
+
+    if query:
+        coaches = coaches.filter(
+            Q(user__first_name__icontains=query) |
+            Q(user__last_name__icontains=query) |
+            Q(sport__icontains=query) |
+            Q(city__icontains=query)
+        ).distinct()
+
+    context = {
+        'coaches': coaches,
+        'search_query': query,
+    }
+    return render(request, 'coach_list.html', context)

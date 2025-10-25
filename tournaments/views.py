@@ -27,7 +27,6 @@ def tournament_view(request):
                 'nama': t.namaTournaments,
                 'tipe': t.tipeTournaments,
                 'tanggal': t.tanggalTournaments.strftime('%b %d, %Y'),
-                'tanggal': t.tanggalTournaments.strftime('%b %d, %Y'),
                 'lokasi': t.lokasiTournaments,
                 'poster': t.posterTournaments or '/static/images/empty.png',  # 🟢 FIXED
                 'deskripsi': t.deskripsiTournaments,
@@ -41,12 +40,7 @@ def tournament_view(request):
     })
 
 
-from django.http import JsonResponse
-from django.contrib.auth.decorators import login_required
-from django.shortcuts import get_object_or_404
-from .models import Tournament
-
-@login_required
+@login_required(login_url=reverse_lazy('users:login'))
 def my_tournaments_ajax(request):
     if request.headers.get('x-requested-with') == 'XMLHttpRequest':
         user = request.user
@@ -74,39 +68,6 @@ def my_tournaments_ajax(request):
 
     return JsonResponse({'error': 'Invalid request'}, status=400)
 
-
-
-
-
-
-@login_required@login_required(login_url=reverse_lazy('users:login'))
-def my_tournaments_ajax(request):
-    if request.headers.get('x-requested-with') == 'XMLHttpRequest':
-        user = request.user
-
-        if hasattr(user, 'coach'):
-            tournaments = Tournament.objects.filter(pembuatTournaments=user.coach)
-        elif hasattr(user, 'member'):
-            tournaments = Tournament.objects.filter(pesertaTournaments=user.member)
-        else:
-            tournaments = Tournament.objects.none()
-
-        data = []
-        for t in tournaments:
-            data.append({
-                'id': str(t.idTournaments),
-                'nama': t.namaTournaments,
-                'tipe': t.tipeTournaments,
-                'tanggal': t.tanggalTournaments.strftime('%b %d, %Y'),
-                'lokasi': t.lokasiTournaments,
-                'poster': t.posterTournaments if hasattr(t, 'posterTournaments') else '',
-                'pembuat': t.pembuatTournaments.user.username,
-            })
-
-        return JsonResponse({'tournaments': data})
-
-    return JsonResponse({'error': 'Invalid request'}, status=400)
-
 @login_required(login_url=reverse_lazy('users:login'))
 def tournament_show(request, tournament_id):
     tournament = get_object_or_404(Tournament, idTournaments=tournament_id)
@@ -116,8 +77,6 @@ def tournament_show(request, tournament_id):
         if hasattr(tournament.pembuatTournaments, 'user')
         else "Unknown"
     )
-    is_coach = hasattr(request.user, 'coach')
-    is_member = hasattr(request.user, 'member')
     is_coach = hasattr(request.user, 'coach')
     is_member = hasattr(request.user, 'member')
 
@@ -135,15 +94,10 @@ def tournament_show(request, tournament_id):
         return JsonResponse({'tournament': data})
 
     return render(request, 'tournament_show.html', {
-        
         'tournament': tournament,
         'is_coach': is_coach,
         'is_member': is_member,
-    ,
-        'is_coach': is_coach,
-        'is_member': is_member,
     })
-
 
 
 
@@ -171,8 +125,6 @@ def create_tournament(request):
 
 
 @csrf_exempt
-@login_required
-
 
 @login_required(login_url=reverse_lazy('users:login'))
 
@@ -186,10 +138,8 @@ def delete_tournament(request, tournament_id):
 
     tournament.delete()
     if request.headers.get('x-requested-with') == 'XMLHttpRequest':
-        if request.headers.get('x-requested-with') == 'XMLHttpRequest':
         return JsonResponse({'message': 'Tournament berhasil dihapus!'})
 
-    return redirect('tournaments:tournament_view')
     return redirect('tournaments:tournament_view')
 
 @csrf_exempt
@@ -203,12 +153,8 @@ def assign_tournament(request, tournament_id):
 
     if not hasattr(request.user, 'member'):
         return JsonResponse({'error': 'Hanya member yang dapat mendaftar ke turnamen.'}, status=403)
-        return JsonResponse({'error': 'Hanya member yang dapat mendaftar ke turnamen.'}, status=403)
 
     member = request.user.member
-
-    if not tournament.flagTournaments:
-        return JsonResponse({'error': 'Pendaftaran turnamen ini sudah ditutup.'}, status=400)
 
     if not tournament.flagTournaments:
         return JsonResponse({'error': 'Pendaftaran turnamen ini sudah ditutup.'}, status=400)
@@ -221,9 +167,7 @@ def assign_tournament(request, tournament_id):
     return JsonResponse({'message': f'{member.user.username} berhasil daftar ke {tournament.namaTournaments}!'}, status=200)
 
 
-
-
-@login_required
+@login_required(login_url=reverse_lazy('users:login'))
 @csrf_exempt
 def edit_tournament_ajax(request, tournament_id):
     tournament = get_object_or_404(Tournament, idTournaments=tournament_id)
