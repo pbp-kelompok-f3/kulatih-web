@@ -198,28 +198,8 @@ def send_message_ajax(request, id):
 
 @login_required
 def edit_message(request, id, msg_id):
-    """Edit pesan (support AJAX dan fallback normal)"""
+    """Edit pesan"""
     message = get_object_or_404(Message, id=msg_id, sender=request.user)
-
-    # === Jika AJAX request (update via fetch) ===
-    if request.headers.get("X-Requested-With") == "XMLHttpRequest":
-        if request.method == 'POST':
-            form = MessageForm(request.POST, instance=message)
-            if form.is_valid():
-                form.save()
-                return JsonResponse({
-                    "success": True,
-                    "new_text": message.text,
-                    "message_id": message.id
-                })
-            else:
-                return JsonResponse({
-                    "success": False,
-                    "errors": form.errors
-                }, status=400)
-        return JsonResponse({"success": False, "error": "Invalid request method"}, status=405)
-
-    # === Jika akses normal (non-AJAX) ===
     if request.method == 'POST':
         form = MessageForm(request.POST, instance=message)
         if form.is_valid():
@@ -228,7 +208,6 @@ def edit_message(request, id, msg_id):
             return redirect('community:my_group', id=id)
     else:
         form = MessageForm(instance=message)
-
     return render(request, 'community/edit_message.html', {'form': form, 'community': message.community})
 
 
