@@ -7,6 +7,8 @@ from .forms import CommunityCreateForm, MessageForm
 from .models import Community, Membership, Message
 from django.http import JsonResponse
 import json
+from django.urls import reverse
+
 
 # COMMUNITY MAIN PAGE
 def community_home(request):
@@ -41,48 +43,30 @@ def community_home(request):
     })
 
 
-# CREATE COMMUNITY (otomatis kalo create = admin)
 @login_required
 def community_create(request):
     if request.method == 'POST':
         form = CommunityCreateForm(request.POST)
-        print(f"=== DEBUG CREATE COMMUNITY ===")
-        print(f"POST data: {request.POST}")
-        print(f"Form valid: {form.is_valid()}")
-        
         if form.is_valid():
-            print(f"Cleaned data: {form.cleaned_data}")
-            try:
-                community = form.save(user=request.user)
-                print(f"Community created successfully!")
-                print(f"ID: {community.id}")
-                print(f"Name: {community.name}")
-                print(f"Profile URL: {community.profile_image_url}")
-                
-                # Otomatis gabung sebagai admin
-                Membership.objects.get_or_create(
-                    community=community,
-                    user=request.user,
-                    defaults={'role': 'admin'}
-                )
-                
-                messages.success(request, f'Community "{community.name}" berhasil dibuat!')
-                return redirect('community:my_list')
-            except Exception as e:
-                print(f"ERROR saat save: {e}")
-                import traceback
-                traceback.print_exc()
-                messages.error(request, f'Error: {str(e)}')
+            community = form.save(user=request.user)
+
+            # Otomatis user jadi admin di komunitas baru
+            Membership.objects.get_or_create(
+                community=community,
+                user=request.user,
+                defaults={'role': 'admin'}
+            )
+
+            # Redirect ke my_list dengan parameter untuk toast
+            return redirect(reverse('community:my_list') + '?created=true')
         else:
-            print(f"Form TIDAK valid!")
-            print(f"Form errors: {form.errors}")
-            for field, errors in form.errors.items():
-                for error in errors:
-                    messages.error(request, f'{field}: {error}')
+            messages.error(request, "Please correct the errors below.")
     else:
         form = CommunityCreateForm()
 
     return render(request, 'community/create.html', {'form': form})
+
+
 
 
 
