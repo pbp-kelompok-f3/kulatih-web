@@ -86,4 +86,25 @@
 {% load static %}
 <script src="{% static 'admin/js/makecomm.js' %}"></script>
 
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+  // cek apakah URL mengandung '?created=true'
+  const urlParams = new URLSearchParams(window.location.search);
+  if (urlParams.get("created") === "true") {
+    const toast = document.createElement("div");
+    toast.textContent = "Community successfully created!";
+    toast.className = "fixed top-5 right-5 bg-green-600 text-white px-4 py-2 rounded-lg shadow-md z-50";
+    document.body.appendChild(toast);
+
+    // hilangkan setelah 3 detik
+    setTimeout(() => toast.remove(), 3000);
+
+    // hapus query param dari URL agar tidak muncul lagi kalau refresh
+    const cleanUrl = window.location.origin + window.location.pathname;
+    window.history.replaceState({}, document.title, cleanUrl);
+  }
+});
+</script>
+
+
 {% endblock %}
