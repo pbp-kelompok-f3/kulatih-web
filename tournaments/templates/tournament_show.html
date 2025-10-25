@@ -1,9 +1,13 @@
-{% extends 'base.html' %}
+{% extends "base.html" %}
 {% load static %}
 
+{% block meta %}
+<title>{{ tournament.namaTournaments }} - Tournament Detail</title>
+{% endblock meta %}
+
 {% block content %}
-<div class="min-h-screen bg-[#191831] flex flex-col items-center py-10 px-6 text-white">
-  <div class="max-w-4xl w-full bg-[#111024] bg-opacity-70 rounded-2xl shadow-lg overflow-hidden flex flex-col md:flex-row border border-black">
+<div class="min-h-screen bg-[#191831] flex flex-col items-center py-10 px-6 text-white font-bevietnam">
+  <div data-aos="fade-up" class="max-w-4xl w-full bg-[#111024] bg-opacity-70 rounded-2xl shadow-lg overflow-hidden flex flex-col md:flex-row border border-black">
     <div class="md:w-1/2">
       <img src="{{ tournament.posterTournaments }}" alt="{{ tournament.namaTournaments }}" class="w-full h-full object-cover">
     </div>
@@ -13,15 +17,9 @@
         <p class="text-blue-300 mb-4">{{ tournament.deskripsiTournaments }}</p>
 
         <ul class="space-y-3 text-sm">
-          <li class="flex items-center gap-2">
-            🏅 <span class="font-semibold">Kategori:</span> {{ tournament.tipeTournaments }}
-          </li>
-          <li class="flex items-center gap-2">
-            📍 <span class="font-semibold">Lokasi:</span> {{ tournament.lokasiTournaments }}
-          </li>
-          <li class="flex items-center gap-2">
-            📅 <span class="font-semibold">Tanggal:</span> {{ tournament.tanggalTournaments }}
-          </li>
+          <li>🏅 <span class="font-semibold">Kategori:</span> {{ tournament.tipeTournaments }}</li>
+          <li>📍 <span class="font-semibold">Lokasi:</span> {{ tournament.lokasiTournaments }}</li>
+          <li>📅 <span class="font-semibold">Tanggal:</span> {{ tournament.tanggalTournaments }}</li>
         </ul>
       </div>
 
@@ -37,30 +35,20 @@
       <div class="mt-6">
         {% if user.is_authenticated and user == tournament.pembuatTournaments.user %}
           <div class="flex gap-3">
-            <button 
-              id="edit-btn"
-              type="button"
-              class="px-6 py-2 rounded-full border border-gray-500 text-white hover:bg-yellow-500 hover:text-black transition font-semibold">
+            <button id="edit-btn" type="button" class="px-6 py-2 rounded-full border border-gray-500 text-white hover:bg-yellow-500 hover:text-black transition font-semibold">
               Edit
             </button>
-
-            <button 
-              id="delete-btn"
-              type="button"
-              class="px-6 py-2 rounded-full border border-gray-500 text-white hover:bg-red-600 transition font-semibold">
+            <button id="delete-btn" type="button" class="px-6 py-2 rounded-full border border-gray-500 text-white hover:bg-red-600 transition font-semibold">
               Delete
             </button>
           </div>
         {% elif user.is_authenticated and is_member and tournament.flagTournaments %}
-            <form id="assignForm">
-                {% csrf_token %}
-                <button id="assign-btn"
-                type="button"
-                data-id="{{ tournament.idTournaments }}"
-                class="block w-full bg-blue-600 hover:bg-blue-700 text-white text-center font-semibold py-2 rounded-lg transition">
-                Assign Tournament
-                </button>
-            </form>
+          <form id="assignForm">
+            {% csrf_token %}
+            <button id="assign-btn" type="button" data-id="{{ tournament.idTournaments }}" class="block w-full bg-blue-600 hover:bg-blue-700 text-white text-center font-semibold py-2 rounded-lg transition">
+              Assign Tournament
+            </button>
+          </form>
         {% endif %}
       </div>
     </div>
@@ -68,28 +56,26 @@
 
   {% if user.is_authenticated and user == tournament.pembuatTournaments.user %}
   <div class="mt-10 w-full">
-      <h3 class="text-2xl font-bold mb-4 text-center">Daftar Peserta</h3>
+    <h3 class="text-2xl font-bold mb-4 text-center">Daftar Peserta</h3>
 
-      {% if tournament.pesertaTournaments.all.count > 0 %}
-      <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
-          {% for peserta in tournament.pesertaTournaments.all %}
-          <div class="bg-[#111024] p-4 rounded-2xl shadow-md text-center border border-gray-800">
-              <img src="{{ peserta.profile_photo|default:'/static/images/empty.png' }}" 
-                  alt="{{ peserta.user.username }}" 
-                  class="w-24 h-24 mx-auto rounded-full object-cover border border-gray-700 mb-3">
-              <p class="font-semibold text-lg">{{ peserta.user.username }}</p>
-              <p class="text-sm text-gray-400">{{ peserta.city|default:'Kota tidak diketahui' }}</p>
-          </div>
-          {% endfor %}
+    {% if tournament.pesertaTournaments.all.count > 0 %}
+    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+      {% for peserta in tournament.pesertaTournaments.all %}
+      <div data-aos="fade-up" class="bg-[#111024] p-4 rounded-2xl shadow-md text-center border border-gray-800">
+        <img src="{{ peserta.profile_photo|default:'/static/images/empty.png' }}" alt="{{ peserta.user.username }}" class="w-24 h-24 mx-auto rounded-full object-cover border border-gray-700 mb-3">
+        <p class="font-semibold text-lg">{{ peserta.user.username }}</p>
+        <p class="text-sm text-gray-400">{{ peserta.city|default:'Kota tidak diketahui' }}</p>
       </div>
-      {% else %}
-      <p class="text-center text-gray-400 italic">Belum ada yang daftar.</p>
-      {% endif %}
+      {% endfor %}
+    </div>
+    {% else %}
+    <p class="text-center text-gray-400 italic">Belum ada yang daftar.</p>
+    {% endif %}
   </div>
   {% endif %}
 </div>
 <div id="editModal" class="fixed inset-0 bg-black/60 hidden justify-center items-center z-50">
-  <div class="bg-[#1e1b3a] p-6 rounded-xl w-full max-w-lg relative animate-fadeIn">
+  <div class="modal-box bg-[#1e1b3a] p-6 rounded-xl w-full max-w-lg relative animate-fadeIn">
     <h2 class="text-5xl text-white font-bebas mb-4">Edit Tournament</h2>
     <form id="editForm" class="text-white space-y-4">
       {% csrf_token %}
@@ -103,7 +89,6 @@
     <button id="closeModal" type="button" class="absolute top-3 right-3 text-gray-400 hover:text-white text-lg">✖</button>
   </div>
 </div>
-
 <div id="deleteModal" class="fixed inset-0 bg-black/60 hidden justify-center items-center z-50">
   <div class="bg-[#1e1b3a] p-6 rounded-xl w-full max-w-sm text-center animate-fadeIn">
     <h2 class="text-xl font-bold text-white mb-2">DELETE POST?</h2>
@@ -123,8 +108,16 @@
 </div>
 
 <style>
-@keyframes fadeIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
-.animate-fadeIn { animation: fadeIn 0.2s ease-out; }
+@keyframes fadeIn {
+  from { opacity: 0; transform: scale(0.95); }
+  to { opacity: 1; transform: scale(1); }
+}
+@keyframes fadeOut {
+  from { opacity: 1; transform: scale(1); }
+  to { opacity: 0; transform: scale(0.9); }
+}
+.animate-fadeIn { animation: fadeIn 0.4s ease-out forwards; }
+.animate-fadeOut { animation: fadeOut 0.5s ease-in forwards; }
 </style>
 
 <script>
@@ -157,23 +150,22 @@ document.addEventListener('DOMContentLoaded', () => {
       editModal.classList.remove('hidden');
       editModal.classList.add('flex');
     } catch (err) {
-      console.error(err);
       alert('Gagal membuka modal edit.');
     }
   });
+  const closeEditModal = () => {
+    const modalBox = editModal.querySelector('.modal-box');
+    modalBox.classList.remove('animate-fadeIn');
+    modalBox.classList.add('animate-fadeOut');
 
-  closeModal?.addEventListener('click', () => {
-    editModal.classList.add('hidden');
-    editModal.classList.remove('flex');
-  });
-
-  editModal?.addEventListener('click', (e) => {
-    if (e.target === editModal) {
+    setTimeout(() => {
       editModal.classList.add('hidden');
       editModal.classList.remove('flex');
-    }
-  });
-
+      modalBox.classList.remove('animate-fadeOut');
+    }, 500);
+  };
+  closeModal?.addEventListener('click', closeEditModal);
+  editModal?.addEventListener('click', (e) => { if (e.target === editModal) closeEditModal(); });
   editForm?.addEventListener('submit', async (e) => {
     e.preventDefault();
     const formData = {
@@ -205,7 +197,6 @@ document.addEventListener('DOMContentLoaded', () => {
       alert('Request gagal dikirim ke server.');
     }
   });
-
   assignBtn?.addEventListener('click', async (e) => {
     e.preventDefault();
     try {
@@ -222,22 +213,18 @@ document.addEventListener('DOMContentLoaded', () => {
       } else {
         alert(data.error || 'Terjadi kesalahan.');
       }
-    } catch (err) {
-      console.error(err);
+    } catch {
       alert('Gagal melakukan assign.');
     }
   });
-
   deleteBtn?.addEventListener('click', () => {
     deleteModal.classList.remove('hidden');
     deleteModal.classList.add('flex');
   });
-
   cancelDelete?.addEventListener('click', () => {
     deleteModal.classList.add('hidden');
     deleteModal.classList.remove('flex');
   });
-
   deleteModal?.addEventListener('click', (e) => {
     if (e.target === deleteModal) {
       deleteModal.classList.add('hidden');
@@ -246,5 +233,4 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 });
 </script>
-
 {% endblock content %}

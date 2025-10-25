@@ -1,5 +1,6 @@
 from django.db import models
 import uuid
+from datetime import date
 from users.models import Coach, Member
 
 class Tournament(models.Model):
@@ -32,3 +33,14 @@ class Tournament(models.Model):
 
     def __str__(self):
         return self.namaTournaments
+
+    @property
+    def is_active(self):
+        return self.tanggalTournaments >= date.today()
+
+    def save(self, *args, **kwargs):
+        if self.tanggalTournaments < date.today():
+            self.flagTournaments = False
+        else:
+            self.flagTournaments = True
+        super().save(*args, **kwargs)

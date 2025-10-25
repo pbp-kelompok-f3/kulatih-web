@@ -26,26 +26,22 @@
     textarea:focus::placeholder {
         color: #ffffff33;
     }
-
     select {
         background-color: #242244;
         color: white;
     }
-
     select option {
         background-color: #242244;
         color: white;
     }
-
     input:focus, textarea:focus, select:focus {
         outline: 2px solid #4B4BF4;
     }
 </style>
 
 <div class="min-h-screen flex flex-col items-center justify-center bg-[#0d0b26] text-white p-6">
-    <div class="bg-[#1a1836] w-full max-w-md p-8 rounded-2xl shadow-lg">
+    <div data-aos="fade-up" class="bg-[#1a1836] w-full max-w-md p-8 rounded-2xl shadow-lg">
         <h2 class="text-2xl font-bold mb-6 text-center">Create Tournament</h2>
-
         {% if not is_coach %}
             <p class="text-red-400 text-center">Hanya coach yang dapat membuat tournament.</p>
         {% else %}
@@ -55,34 +51,51 @@
                 <div>
                     <label class="block mb-1 text-sm">Nama Tournament</label>
                     {{ form.namaTournaments }}
+                    {% if form.namaTournaments.errors %}
+                        <p class="text-red-400 text-sm mt-1">{{ form.namaTournaments.errors.0 }}</p>
+                    {% endif %}
                 </div>
-
                 <div>
                     <label class="block mb-1 text-sm">Tipe Tournament</label>
                     {{ form.tipeTournaments }}
+                    {% if form.tipeTournaments.errors %}
+                        <p class="text-red-400 text-sm mt-1">{{ form.tipeTournaments.errors.0 }}</p>
+                    {% endif %}
                 </div>
-
                 <div>
                     <label class="block mb-1 text-sm">Tanggal Tournament</label>
                     {{ form.tanggalTournaments }}
+                    {% if form.tanggalTournaments.errors %}
+                        <p class="text-red-400 text-sm mt-1">{{ form.tanggalTournaments.errors.0 }}</p>
+                    {% endif %}
                 </div>
-
                 <div>
                     <label class="block mb-1 text-sm">Lokasi Tournament</label>
                     {{ form.lokasiTournaments }}
+                    {% if form.lokasiTournaments.errors %}
+                        <p class="text-red-400 text-sm mt-1">{{ form.lokasiTournaments.errors.0 }}</p>
+                    {% endif %}
                 </div>
-
                 <div>
                     <label class="block mb-1 text-sm">Poster URL</label>
                     {{ form.posterTournaments }}
+                    {% if form.posterTournaments.errors %}
+                        <p class="text-red-400 text-sm mt-1">{{ form.posterTournaments.errors.0 }}</p>
+                    {% endif %}
                 </div>
-
                 <div>
                     <label class="block mb-1 text-sm">Deskripsi</label>
                     {{ form.deskripsiTournaments }}
+                    {% if form.deskripsiTournaments.errors %}
+                        <p class="text-red-400 text-sm mt-1">{{ form.deskripsiTournaments.errors.0 }}</p>
+                    {% endif %}
                 </div>
             </div>
-
+            {% if form.non_field_errors %}
+                <div class="text-red-400 text-sm mt-3">
+                    {{ form.non_field_errors }}
+                </div>
+            {% endif %}
             <div class="flex justify-between mt-6">
                 <a href="{% url 'tournaments:tournament_view' %}" class="bg-gray-600 px-4 py-2 rounded hover:bg-gray-700">
                     Cancel
