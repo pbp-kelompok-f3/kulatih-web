@@ -119,6 +119,18 @@
            class="mt-6 inline-block px-6 py-2 bg-[var(--yellow)] text-[var(--indigo-dark)] font-semibold rounded-md hover:bg-yellow-400 transition-all">Find a Coach</a>
       </div>
     {% endif %}
+
+    <!-- 🔔 Toast otomatis untuk member -->
+    {% if messages %}
+      {% for message in messages %}
+        <script>
+          window.addEventListener("DOMContentLoaded", () => {
+            createToast("{{ message|escapejs }}", "{% if message.tags == 'success' %}success{% elif message.tags == 'error' %}error{% else %}info{% endif %}");
+          });
+        </script>
+      {% endfor %}
+    {% endif %}
+
   </div>
 </div>
 
