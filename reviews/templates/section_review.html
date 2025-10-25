@@ -1,0 +1,140 @@
+<section id="reviews-section" class="w-full">
+  <div class="flex items-center justify-between mb-4">
+    <h2 class="heading-font text-[28px] md:text-[32px]" style="color:var(--yellow);">
+      RATING AND FEEDBACK
+    </h2>
+
+    <div class="flex items-center gap-2">
+      <span class="font-bevietnam text-sm opacity-80" style="color:var(--white);">Sort</span>
+      <select id="rf-sort"
+              class="rounded-lg border px-3 py-1.5 text-sm"
+              style="background:var(--indigo-dark); color:var(--white); border-color:#2e2b55;">
+        <option value="" selected>Latest (default)</option>
+        <option value="highest">Highest</option>
+        <option value="lowest">Lowest</option>
+      </select>
+    </div>
+  </div>
+
+  <div id="rf-list" class="flex flex-col gap-4"></div>
+
+  <div class="flex items-center justify-between mt-4">
+    <button id="rf-prev"
+            class="hidden rounded-lg border px-4 py-2"
+            style="background:var(--indigo-dark); color:var(--white); border-color:#2e2b55;">
+      Prev
+    </button>
+
+    <div id="rf-page-indicator" class="font-bevietnam opacity-80" style="color:var(--white);"></div>
+
+    <button id="rf-next"
+            class="hidden rounded-lg border px-4 py-2"
+            style="background:var(--indigo-dark); color:var(--white); border-color:#2e2b55;">
+      Next
+    </button>
+  </div>
+</section>
+
+<script>
+(function(){
+  var coachId = "{{ coach_id|default:coach.id }}";
+  var LIST_URL = "{% url 'reviews:coach_reviews_json' '00000000-0000-0000-0000-000000000000' %}"
+                 .replace('00000000-0000-0000-0000-000000000000', coachId);
+
+  var sortSelect = document.getElementById('rf-sort');
+  var listEl  = document.getElementById('rf-list');
+  var prevBtn = document.getElementById('rf-prev');
+  var nextBtn = document.getElementById('rf-next');
+  var pageInd = document.getElementById('rf-page-indicator');
+
+  // default: latest (sort kosong)
+  var state = { sort:'', page:1, page_size:10 };
+
+  function starHTML(n){
+    var filled = Array(n+1).join('★');
+    var empty  = Array(5-n+1).join('★');
+    return '<span style="color:var(--yellow)">' + filled +
+           '</span><span style="color:#3c395f">' + empty + '</span>';
+  }
+
+  function avatarHTML(name){
+    var initial = (name || '?').charAt(0).toUpperCase();
+    return '' +
+      '<div class="w-12 h-12 rounded-full flex items-center justify-center" style="background:#2f2c56;">' +
+        '<span class="heading-font text-xl" style="color:var(--white);">' + initial + '</span>' +
+      '</div>';
+  }
+
+  function cardHTML(it){
+  var detailUrl = "{% url 'reviews:review_detail_page' 0 %}".replace('/0/', '/' + it.id + '/');
+  return '' +
+    '<article class="rounded-2xl border px-4 py-3" style="background:var(--indigo-light); border-color:#2e2b55;">' +
+      '<div class="flex gap-3 min-w-0">' +
+        avatarHTML(it.reviewer_username) +
+        '<div class="flex-1 min-w-0">' +
+          '<div class="flex items-start justify-between gap-3">' +
+            '<div class="min-w-0">' +
+              '<div class="font-bevietnam font-semibold" style="color:var(--white);">' + it.reviewer_username + '</div>' +
+              '<div class="font-bevietnam text-sm opacity-90" style="color:var(--white);">' +
+                it.rating + ' ' + starHTML(it.rating) +
+              '</div>' +
+            '</div>' +
+            '<a href="' + detailUrl + '" class="text-xs underline opacity-70 shrink-0" style="color:#c9c9d9;">view detail</a>' +
+          '</div>' +
+
+          '<p class="font-bevietnam mt-2 opacity-90" ' +
+             'style="white-space:pre-wrap; overflow-wrap:anywhere; word-break:break-word; ' +
+                    'display:-webkit-box; -webkit-line-clamp:3; -webkit-box-orient:vertical; overflow:hidden; color:var(--white);">' +
+            (it.comment || '') +
+          '</p>' +
+
+        '</div>' +
+      '</div>' +
+    '</article>';
+}
+
+  async function load(){
+    try {
+      var url = new URL(LIST_URL, window.location.origin);
+      if (state.sort) url.searchParams.set('sort', state.sort); 
+      url.searchParams.set('page', state.page);
+      url.searchParams.set('page_size', state.page_size);
+
+      var res = await fetch(url);
+      if (!res.ok){
+        listEl.innerHTML = '<div style="color:#ff9a9a">Failed to load reviews.</div>';
+        return;
+      }
+      var data = await res.json();
+
+      listEl.innerHTML = (data.items && data.items.length)
+        ? data.items.map(cardHTML).join('')
+        : (
+          '<div class="rounded-2xl border p-6 text-center" ' +
+          '     style="background:var(--indigo-light); border-color:#2e2b55;">' +
+          '  <div class="heading-font text-xl md:text-2xl mb-1" style="color:var(--white);">No reviews yet</div>' +
+          '  <p class="font-bevietnam opacity-80">Be the first to leave a rating & feedback.</p>' +
+          '</div>'
+        );
+
+      if (prevBtn) prevBtn.classList.toggle('hidden', !data.pagination.has_previous);
+      if (nextBtn) nextBtn.classList.toggle('hidden', !data.pagination.has_next);
+      if (pageInd) pageInd.textContent = (data.pagination.total_pages > 1)
+        ? 'Page ' + data.pagination.page + ' / ' + data.pagination.total_pages
+        : '';
+    } catch(e) {
+      console.error(e);
+    }
+  }
+
+  sortSelect.onchange = function(){
+    state.sort = sortSelect.value; 
+    state.page = 1;
+    load();
+  };
+  prevBtn.onclick = function(){ state.page = Math.max(1, state.page - 1); load(); };
+  nextBtn.onclick = function(){ state.page = state.page + 1; load(); };
+
+  load();
+})();
+</script>
