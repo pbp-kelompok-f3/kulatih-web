@@ -28,19 +28,19 @@ class CommunityCreateForm(forms.ModelForm):
         return name
     
     def clean_profile_image_url(self):
-        url = self.cleaned_data.get('profile_image_url', '').strip()
-        
-        # Jika kosong, boleh
+        url = self.cleaned_data.get('profile_image_url')
+
+        # Jika kosong, kembalikan None tanpa error
         if not url:
-            return url
-        
-        # Validasi: harus dimulai dengan http://, https://, atau data:image/
+            return None
+
+        url = url.strip()
         if not (url.startswith('http://') or url.startswith('https://') or url.startswith('data:image/')):
             raise forms.ValidationError(
                 "URL harus dimulai dengan http://, https://, atau data:image/ untuk base64"
             )
-        
         return url
+
 
     def save(self, commit=True, user=None):
         obj = super().save(commit=False)

@@ -46,36 +46,47 @@ def community_home(request):
 def community_create(request):
     if request.method == 'POST':
         form = CommunityCreateForm(request.POST)
-        print(f"=== DEBUG CREATE COMMUNITY ===")
-        print(f"POST data: {request.POST}")
-        print(f"Form valid: {form.is_valid()}")
-        
+        print("=== DEBUG CREATE COMMUNITY ===")
+        print("POST data:", request.POST)
+        print("Form valid:", form.is_valid())
+
         if form.is_valid():
-            print(f"Cleaned data: {form.cleaned_data}")
             try:
                 community = form.save(user=request.user)
-                print(f"Community created successfully!")
-                print(f"ID: {community.id}")
-                print(f"Name: {community.name}")
-                print(f"Profile URL: {community.profile_image_url}")
-                
+                print("Community created successfully!")
+                print(f"ID: {community.id}, Name: {community.name}, Profile URL: {community.profile_image_url}")
+
                 # Otomatis gabung sebagai admin
                 Membership.objects.get_or_create(
                     community=community,
                     user=request.user,
                     defaults={'role': 'admin'}
                 )
-                
-                messages.success(request, f'Community "{community.name}" berhasil dibuat!')
+
+                # === Jika request via AJAX ===
+                if request.headers.get("X-Requested-With") == "XMLHttpRequest":
+                    return JsonResponse({
+                        "success": True,
+                        "message": f'Community "{community.name}" was successfully created!'
+                    })
+
+        
+                messages.success(request, f'Community "{community.name}" was successfully created!')
                 return redirect('community:my_list')
+
             except Exception as e:
                 print(f"ERROR saat save: {e}")
                 import traceback
                 traceback.print_exc()
+                if request.headers.get("X-Requested-With") == "XMLHttpRequest":
+                    return JsonResponse({"success": False, "error": str(e)}, status=500)
                 messages.error(request, f'Error: {str(e)}')
+
         else:
-            print(f"Form TIDAK valid!")
-            print(f"Form errors: {form.errors}")
+            print("Form TIDAK valid!")
+            print("Form errors:", form.errors)
+            if request.headers.get("X-Requested-With") == "XMLHttpRequest":
+                return JsonResponse({"success": False, "errors": form.errors}, status=400)
             for field, errors in form.errors.items():
                 for error in errors:
                     messages.error(request, f'{field}: {error}')
@@ -83,6 +94,7 @@ def community_create(request):
         form = CommunityCreateForm()
 
     return render(request, 'community/create.html', {'form': form})
+
 
 
 
