@@ -6,30 +6,41 @@
 {% endblock meta %}
 
 {% block content %}
+<style>
+    
+  input[type="datetime-local"]::-webkit-calendar-picker-indicator {
+    filter: invert(1);
+    opacity: 0.7;
+    cursor: pointer;
+  }
+
+  input:focus {
+    background-color: var(--indigo-light) !important;
+    outline: none !important;
+    box-shadow: 0 0 0 2px var(--yellow);
+  }
+
+  ::placeholder {
+    color: rgba(255, 255, 255, 0.4);
+  }
+</style>
+
 <div class="min-h-screen bg-[var(--indigo)] flex items-center justify-center px-6 py-12 text-[var(--white)]">
   <div class="bg-[var(--indigo-dark)] rounded-2xl shadow-lg w-full max-w-lg p-10 border border-[rgba(255,255,255,0.08)]">
 
     <!-- Title -->
-    <h1 class="text-center text-[var(--yellow)] text-4xl font-bold mb-10 heading-font tracking-wide">
-      BOOKING
-    </h1>
+    <div class="text-center mb-8">
+      <h1 class="text-[var(--yellow)] text-4xl font-bold heading-font tracking-wide">
+        BOOKING COACH
+      </h1>
+      <p class="text-lg text-gray-300 mt-2">
+        You are booking a session with <strong class="text-white">{{ coach.user.get_full_name }}</strong>
+      </p>
+    </div>
 
     <!-- Form -->
     <form method="POST" class="space-y-6">
       {% csrf_token %}
-
-      <!-- Name -->
-      <div>
-        <label class="block text-sm font-semibold uppercase mb-2 tracking-wide">Name</label>
-        <input
-          type="text"
-          name="name"
-          placeholder="Enter your name"
-          value="{{ request.user.member.name|default:'' }}"
-          required
-          class="w-full bg-[var(--indigo-light)] rounded-md px-4 py-3 focus:outline-none focus:ring-2 focus:ring-[var(--yellow)] text-[var(--white)] placeholder-gray-400"
-        />
-      </div>
 
       <!-- Location -->
       <div>
@@ -69,6 +80,7 @@
         </button>
       </div>
     </form>
+
   </div>
 </div>
 {% endblock content %}

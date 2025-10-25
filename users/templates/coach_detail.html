@@ -28,12 +28,6 @@
                 <p class="text-lg text-[var(--white)]">
                     <strong>{{ coach.get_sport_display }}</strong> - {{ coach.city }}
                 </p>
-                <div class="flex justify-center items-center gap-2 pt-2">
-                    <span class="text-[var(--yellow)] text-2xl">★</span>
-                    <span class="text-[var(--white)] text-lg font-medium">
-                        5 (39 reviews)
-                    </span>
-                </div>
             </div>
         </div>
 
@@ -43,7 +37,7 @@
                 Description
             </h2>
             <p class="text-[var(--white)] text-xl opacity-80 leading-relaxed">
-                {{ coach.description }}
+                {{ coach.description|default:"This coach has not added a description." }}
             </p>
 
             <div class="flex-grow"></div>
@@ -51,13 +45,13 @@
             <div class="space-y-3">
                 <dl class="flex items-center mb-2">
                     <dt class="w-auto mr-4 text-xl text-[var(--white)] opacity-80 font-semibold text-lg">Fee</dt>
-                    <dd class="text-xl text-[var(--white)] font-medium text-lg"><strong class="text-2xl">IDR{{ coach.hourly_fee }}</strong> / Hour</dd>
+                    <dd class="text-xl text-[var(--white)] font-medium text-lg"><strong class="text-2xl">IDR {{ coach.hourly_fee }}</strong> / Hour</dd>
                 </dl>
             </div>
 
             {% if user.is_authenticated and user.member %}
                 <div class="text-center mt-4">
-                  <a href="#" class="block w-full bg-[var(--yellow)] text-center text-[var(--indigo-dark)] font-bold text-3xl py-3 px-8 rounded-lg hover:opacity-90 transition-opacity font-bebas tracking-wider">
+                  <a href="" class="block w-full bg-[var(--yellow)] text-center text-[var(--indigo-dark)] font-bold text-3xl py-3 px-8 rounded-lg hover:opacity-90 transition-opacity font-bebas tracking-wider">
                       BOOK COACH
                   </a>
             {% elif user.is_anonymous %}
@@ -72,7 +66,5 @@
     </main>
 
 </div>
-
-{% include 'footer.html' %}
 
 {% endblock content %}
