@@ -5,9 +5,9 @@ from datetime import time as dtime
 
 
 class Booking(models.Model):
-    # --- Relasi ---
-    coach = models.ManyToManyField(Coach, blank=True, related_name="bookings")
-    member = models.ManyToManyField(Member, blank=True, related_name="bookings")
+    # --- Relasi (One-to-One) ---
+    coach = models.ForeignKey(Coach, on_delete=models.CASCADE, related_name="bookings")
+    member = models.ForeignKey(Member, on_delete=models.CASCADE, related_name="bookings")
 
     # --- Waktu & Lokasi ---
     location = models.CharField(max_length=255, default="-")
@@ -30,9 +30,9 @@ class Booking(models.Model):
         ordering = ['-date', '-start_time', '-created_at']
 
     def __str__(self):
-        coach_names = ", ".join(c.name for c in self.coach.all()) or "No Coach"
-        member_names = ", ".join(m.name for m in self.member.all()) or "No Member"
-        return f"{member_names} with {coach_names} on {self.date} {self.start_time}-{self.end_time}"
+        coach_name = self.coach.user.get_full_name() if self.coach else "No Coach"
+        member_name = self.member.user.get_full_name() if self.member else "No Member"
+        return f"{member_name} with {coach_name} on {self.date} {self.start_time}-{self.end_time}"
 
     # ---------- UTIL: Deteksi Overlap ----------
     @staticmethod
@@ -64,14 +64,13 @@ class Booking(models.Model):
         if new_start_time >= new_end_time:
             raise ValueError("Jam mulai harus lebih kecil dari jam selesai")
 
-        # Cek bentrok untuk tiap coach
-        for c in self.coach.all():
-            if Booking.is_conflict(
-                coach=c, date=new_date,
-                start_time=new_start_time, end_time=new_end_time,
-                exclude_booking_id=self.id
-            ):
-                raise ValueError(f"Coach {c.name} sudah punya booking yang bentrok")
+        # Cek bentrok untuk coach
+        if Booking.is_conflict(
+            coach=self.coach, date=new_date,
+            start_time=new_start_time, end_time=new_end_time,
+            exclude_booking_id=self.id
+        ):
+            raise ValueError(f"Coach {self.coach.user.get_full_name()} sudah punya booking yang bentrok")
 
         self.date = new_date
         self.start_time = new_start_time
