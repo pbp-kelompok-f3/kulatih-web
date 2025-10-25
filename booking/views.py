@@ -199,23 +199,35 @@ def ajax_cancel(request, booking_id):
         return JsonResponse({"ok": False, "error": "Booking not found"}, status=404)
 
 
-# 🟢 AJAX RESCHEDULE
+# 🟢 AJAX RESCHEDULE (MEMBER)
 @require_POST
 def ajax_reschedule(request, booking_id):
     try:
+        import json
         b = Booking.objects.get(id=booking_id)
-        nd = request.POST.get("new_date")
-        ns = request.POST.get("new_start_time")
-        ne = request.POST.get("new_end_time")
-        if not (nd and ns and ne):
-            return JsonResponse({"ok": False, "error": "Missing data"})
-        new_date = datetime.strptime(nd, "%Y-%m-%d").date()
-        new_start = datetime.strptime(ns, "%H:%M").time()
-        new_end = datetime.strptime(ne, "%H:%M").time()
+        data = json.loads(request.body.decode("utf-8"))
+        new_date_str = data.get("date")
+        if not new_date_str:
+            return JsonResponse({"ok": False, "error": "Missing date"})
+
+        from datetime import datetime, timedelta
+        new_dt = datetime.strptime(new_date_str, "%Y-%m-%dT%H:%M")
+        new_date = new_dt.date()
+        new_start = new_dt.time()
+        new_end = (new_dt + timedelta(hours=1)).time()
+
         b.reschedule(new_date, new_start, new_end)
+
+        # Kirim notifikasi ke coach (disimpan via Django messages)
+        messages.info(request, f"Reschedule request sent to {b.coach.user.get_full_name()}!")
+
         return JsonResponse({"ok": True})
+
+    except Booking.DoesNotExist:
+        return JsonResponse({"ok": False, "error": "Booking not found"}, status=404)
     except Exception as e:
-        return JsonResponse({"ok": False, "error": str(e)})
+        return JsonResponse({"ok": False, "error": str(e)}, status=400)
+
 
 
 # 🟢 AJAX ACCEPT RESCHEDULE (COACH)

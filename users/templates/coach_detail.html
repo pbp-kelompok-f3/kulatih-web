@@ -3,8 +3,7 @@
 
 {% block content %}
 
-<div class="bg-[var(--indigo)] text-[var(--white)] font-bevietnam flex justify-center px-8 md:px-20 py-12">
-
+<div class="bg-[var(--indigo)] text-[var(--white)] font-bevietnam flex flex-col px-8 md:px-20 py-12">
     <main class="flex flex-col lg:flex-row gap-8 w-full max-w-5xl">
       
         <div class="bg-[var(--indigo-light)] p-8 rounded-2xl shadow-lg w-full lg:w-2/5 flex flex-col items-center text-center">
@@ -51,7 +50,7 @@
 
             {% if user.is_authenticated and user.member %}
                 <div class="text-center mt-4">
-                  <a href="" class="block w-full bg-[var(--yellow)] text-center text-[var(--indigo-dark)] font-bold text-3xl py-3 px-8 rounded-lg hover:opacity-90 transition-opacity font-bebas tracking-wider">
+                  <a href="{% url 'booking:create' coach.id %}" class="block w-full bg-[var(--yellow)] text-center text-[var(--indigo-dark)] font-bold text-3xl py-3 px-8 rounded-lg hover:opacity-90 transition-opacity font-bebas tracking-wider">
                       BOOK COACH
                   </a>
             {% elif user.is_anonymous %}
