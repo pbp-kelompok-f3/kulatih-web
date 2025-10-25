@@ -1,5 +1,7 @@
+{% extends 'base.html' %}
 {% load static %}
 
+{% block content %}
 <div class="min-h-screen bg-[var(--indigo)] px-6 py-10 text-[var(--white)] flex justify-center">
   <div class="w-full max-w-6xl bg-[var(--indigo-dark)] rounded-2xl shadow-[0_8px_30px_rgba(0,0,0,0.4)] border border-[rgba(255,255,255,0.1)] p-10">
 
@@ -80,26 +82,41 @@
           <span>{{ b.location|default:"Location not set" }}</span>
         </div>
 
-        <!-- Action Buttons -->
+        <!-- Action Buttons (existing) -->
         {% if b.status == 'pending' or b.status == 'confirmed' or b.status == 'rescheduled' %}
         <div class="flex flex-wrap gap-2 mt-auto pt-3 border-t border-[rgba(255,255,255,0.1)]">
           <button type="button"
-          class="open-reschedule heading-font px-4 py-1.5 bg-[var(--indigo-dark)] hover:bg-[var(--indigo)] text-white rounded-md text-sm transition-all"
-          data-booking-id="{{ b.id }}">
-          Reschedule
-        </button>
-           <a href="#" 
-            class="ajax-cancel-btn heading-font px-4 py-1.5 bg-[#b43d3d] hover:bg-[#9b3535] text-white rounded-md text-sm transition-all"
-            data-url="{% url 'booking:ajax_cancel' b.id %}">
+            class="open-reschedule heading-font px-4 py-1.5 bg-[var(--indigo-dark)] hover:bg-[var(--indigo)] text-white rounded-md text-sm transition-all"
+            data-booking-id="{{ b.id }}">
+            Reschedule
+          </button>
+          <a href="#" 
+             class="ajax-cancel-btn heading-font px-4 py-1.5 bg-[#b43d3d] hover:bg-[#9b3535] text-white rounded-md text-sm transition-all"
+             data-url="{% url 'booking:ajax_cancel' b.id %}">
             Cancel
           </a>
         </div>
         {% endif %}
+
+        <!-- RF: tombol Leave Review untuk status completed -->
+        {% if b.status == 'completed' %}
+        <div class="flex flex-wrap gap-2 mt-auto pt-3 border-t border-[rgba(255,255,255,0.1)]">
+          <a href="#"
+             class="heading-font px-4 py-1.5 rounded-md bg-[var(--yellow)] text-[var(--indigo-dark)] text-sm transition-all"
+             data-review-open="{{ b.coach.id }}">
+            Leave Review
+          </a>
+        </div>
+
+        <!-- RF: include modal review per coach -->
+        {% include "review_modal.html" with coach_id=b.coach.id coach_username=b.coach.user.username %}
+        {% endif %}
+
       </article>
       {% endfor %}
     </div>
 
-    <!-- Modal Reschedule -->
+    <!-- Modal Reschedule (existing) -->
     <div id="reschedule-modal" class="hidden fixed inset-0 flex items-center justify-center bg-[rgba(0,0,0,0.6)] backdrop-blur-sm z-50">
       <div class="bg-[var(--indigo-dark)] p-8 rounded-2xl w-full max-w-md border border-[rgba(255,255,255,0.1)] shadow-lg text-center">
         <h2 class="text-2xl font-bold text-[var(--yellow)] mb-4">Reschedule Booking</h2>
@@ -120,7 +137,7 @@
       </div>
     {% endif %}
 
-    <!-- 🔔 Toast otomatis untuk member -->
+    <!-- 🔔 Toast otomatis untuk member (existing) -->
     {% if messages %}
       {% for message in messages %}
         <script>
@@ -135,3 +152,28 @@
 </div>
 
 {% include 'booking/_booking_ajax_scripts.html' %}
+
+{# RF: Auto-switch ke "View your review" saat halaman dibuka (tanpa ubah UI temanmu) #}
+<script>
+document.addEventListener('DOMContentLoaded', async function () {
+  const btns = document.querySelectorAll('[data-review-open]');
+  for (const btn of btns) {
+    const coachId = btn.getAttribute('data-review-open');
+    try {
+      const url = new URL(`/reviews/coach/${coachId}/`, window.location.origin);
+      url.searchParams.set('page', 1);
+      url.searchParams.set('page_size', 20);
+      const res = await fetch(url);
+      if (!res.ok) continue;
+      const data = await res.json();
+      const mine = (data.items || []).find(it => it.is_owner);
+      if (mine) {
+        btn.textContent = 'View your review';
+        btn.href = "{% url 'reviews:review_detail_page' 0 %}".replace('/0/', '/' + mine.id + '/');
+        btn.removeAttribute('data-review-open'); // supaya tidak buka modal lagi
+      }
+    } catch (e) {}
+  }
+});
+</script>
+{% endblock content %}

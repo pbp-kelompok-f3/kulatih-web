@@ -1,14 +1,14 @@
-from django.shortcuts import render, get_object_or_404
+from django.shortcuts import render, get_object_or_404, redirect
 from django.http import JsonResponse
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.csrf import csrf_exempt
+from django.urls import reverse_lazy
+import json
+
 from .models import Tournament
 from users.models import Coach, Member
 from .forms import TournamentForm
-import json
-from django.shortcuts import render, redirect
-from django.contrib.auth.decorators import login_required
-from django.urls import reverse_lazy
+
 
 def tournament_view(request):
     tournaments = Tournament.objects.all()
@@ -28,7 +28,7 @@ def tournament_view(request):
                 'tipe': t.tipeTournaments,
                 'tanggal': t.tanggalTournaments.strftime('%b %d, %Y'),
                 'lokasi': t.lokasiTournaments,
-                'poster': t.posterTournaments or '/static/images/empty.png',  # 🟢 FIXED
+                'poster': t.posterTournaments or '/static/images/empty.png',
                 'deskripsi': t.deskripsiTournaments,
                 'pembuat': pembuat_username,
             })
@@ -36,7 +36,7 @@ def tournament_view(request):
 
     return render(request, 'tournament_list.html', {
         'tournaments': tournaments,
-        'is_coach': is_coach
+        'is_coach': is_coach,
     })
 
 
@@ -102,8 +102,6 @@ def tournament_show(request, tournament_id):
 
 
 @csrf_exempt
-
-
 @login_required(login_url=reverse_lazy('users:login'))
 def create_tournament(request):
     is_coach = hasattr(request.user, 'coach')
@@ -127,12 +125,12 @@ def create_tournament(request):
 @csrf_exempt
 
 @login_required(login_url=reverse_lazy('users:login'))
-
 def delete_tournament(request, tournament_id):
     if request.method not in ["POST", "DELETE"]:
         return JsonResponse({'error': 'Invalid request method'}, status=405)
 
     tournament = get_object_or_404(Tournament, idTournaments=tournament_id)
+
     if not hasattr(request.user, 'coach') or request.user.coach != tournament.pembuatTournaments:
         return JsonResponse({'error': 'Kamu tidak berhak menghapus tournament ini'}, status=403)
 
@@ -143,7 +141,6 @@ def delete_tournament(request, tournament_id):
     return redirect('tournaments:tournament_view')
 
 @csrf_exempt
-
 @login_required(login_url=reverse_lazy('users:login'))
 def assign_tournament(request, tournament_id):
     if request.method != 'POST':
@@ -161,6 +158,7 @@ def assign_tournament(request, tournament_id):
 
     if tournament.pesertaTournaments.filter(pk=member.pk).exists():
         return JsonResponse({'message': 'Anda sudah terdaftar di turnamen ini!'}, status=200)
+
     tournament.pesertaTournaments.add(member)
     tournament.save()
 
@@ -190,6 +188,5 @@ def edit_tournament_ajax(request, tournament_id):
         tournament.posterTournaments = data.get("posterTournaments", tournament.posterTournaments)
         tournament.save()
         return JsonResponse({"message": "Tournament updated successfully!"})
-    
+
     return JsonResponse({"error": "Invalid request method"}, status=405)
-    
