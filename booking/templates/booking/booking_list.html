@@ -2,7 +2,24 @@
 {% load static %}
 
 {% block content %}
+<div class="min-h-screen bg-[var(--indigo)] text-[var(--white)]">
 
-    {% include 'booking/booking_list_content.html' %}
+  {% if is_member %}
+    {% include 'booking/booking_list_content_user.html' %}
+  {% elif is_coach %}
+    {% include 'booking/booking_list_content_coach.html' %}
+  {% else %}
+    <div class="flex items-center justify-center min-h-screen">
+      <div class="text-center">
+        <h1 class="text-3xl heading-font text-[var(--yellow)] mb-4">ACCESS DENIED</h1>
+        <p class="text-gray-300">You must be logged in as a Member or a Coach to view bookings.</p>
+        <a href="/accounts/login/" class="mt-6 inline-block px-6 py-2 bg-[var(--yellow)] text-[var(--indigo-dark)] font-semibold rounded-md">Go to Login</a>
+      </div>
+    </div>
+  {% endif %}
+
+</div>
+
+{% include 'booking/_booking_ajax_scripts.html' %}
   
 {% endblock content %}

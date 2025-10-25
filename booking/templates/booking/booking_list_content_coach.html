@@ -1,0 +1,105 @@
+{% load static %}
+
+<div class="min-h-screen bg-[var(--indigo)] px-6 py-10 text-[var(--white)] flex justify-center">
+  <div class="w-full max-w-6xl bg-[var(--indigo-dark)] rounded-2xl shadow-[0_8px_30px_rgba(0,0,0,0.4)] border border-[rgba(255,255,255,0.1)] p-10">
+
+    <!-- Title -->
+    <div class="text-left mb-10">
+      <h1 class="heading-font text-[var(--yellow)] text-5xl mb-3">BOOKING REQUESTS</h1>
+      <div class="h-[2px] w-24 bg-[var(--yellow)]"></div>
+    </div>
+
+    <!-- Tabs -->
+    <div class="flex justify-center mb-12">
+      <div
+        class="w-full max-w-4xl p-2 rounded-2xl border-2 border-[rgba(255,255,255,0.25)] bg-[rgba(255,255,255,0.05)] backdrop-blur-sm shadow-[inset_0_0_10px_rgba(255,255,255,0.08)] flex gap-3">
+        <button id="btn-upcoming"
+          class="flex-1 py-3 font-semibold text-sm rounded-lg transition-all duration-200 
+                bg-[var(--yellow)] text-[var(--indigo-dark)] shadow-inner 
+                border border-[rgba(255,255,255,0.25)] hover:border-[rgba(255,255,255,0.35)]">
+          Upcoming
+        </button>
+        <button id="btn-history"
+          class="flex-1 py-3 font-semibold text-sm rounded-lg transition-all duration-200 
+                bg-transparent text-[var(--white)] border border-[rgba(255,255,255,0.25)] hover:border-[rgba(255,255,255,0.35)]">
+          History
+        </button>
+      </div>
+    </div>
+
+    <!-- Booking Cards -->
+    {% if bookings %}
+    <div id="bookings-container" class="grid grid-cols-1 md:grid-cols-2 gap-8">
+      {% for b in bookings %}
+      <article class="booking-card flex flex-col justify-between rounded-2xl bg-[var(--indigo-light)] border border-[rgba(255,255,255,0.1)] p-6 shadow-[0_6px_20px_rgba(0,0,0,0.3)] min-h-[260px]"
+        data-category="{% if b.status == 'cancelled' or b.status == 'completed' or b.date < today %}history{% else %}upcoming{% endif %}">
+
+        <!-- Header -->
+        <div>
+          <div class="flex justify-between items-start mb-3">
+            <div>
+              <p class="heading-font text-lg font-semibold tracking-wide">
+                <i class="fa-regular fa-calendar text-[var(--yellow)] mr-2"></i>
+                {{ b.date|date:"l, j F Y" }}
+              </p>
+              <p class="text-sm text-[rgba(255,255,255,0.8)] mt-1">
+                {{ b.start_time|time:"H:i" }}–{{ b.end_time|time:"H:i" }} WIB
+              </p>
+            </div>
+            <span class="px-3 py-[2px] rounded-md text-[10px] font-bold uppercase tracking-[1px]
+              {% if b.status == 'confirmed' %} bg-green-700 text-white
+              {% elif b.status == 'pending' %} bg-[var(--yellow)] text-[var(--indigo-dark)]
+              {% elif b.status == 'rescheduled' %} bg-purple-700 text-white
+              {% elif b.status == 'cancelled' %} bg-gray-500 text-white
+              {% elif b.status == 'completed' %} bg-blue-700 text-white
+              {% endif %}">
+              {{ b.get_status_display }}
+            </span>
+          </div>
+
+          <!-- Member Info -->
+          <div class="flex items-center gap-4 mb-4">
+            <img src="{{ b.member.user.profile.avatar.url|default:'/static/images/default-user.png' }}" 
+                 alt="member photo"
+                 class="w-16 h-16 rounded-full border border-[rgba(255,255,255,0.3)] object-cover">
+            <div>
+              <p class="text-xs opacity-60">MEMBER</p>
+              <p class="heading-font text-lg font-bold text-[var(--white)]">
+                {{ b.member.user.get_full_name|default:b.member.user.username }}
+              </p>
+            </div>
+          </div>
+
+          <!-- Location -->
+          <div class="flex items-center gap-2 text-sm text-[rgba(255,255,255,0.8)] mb-4">
+            <i class="fa-solid fa-location-dot text-[var(--yellow)]"></i>
+            <span>{{ b.location|default:"Location not set" }}</span>
+          </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="flex flex-wrap gap-2 mt-auto pt-3 border-t border-[rgba(255,255,255,0.1)]">
+          {% if b.status == 'rescheduled' %}
+            <a href="#" class="ajax-accept-res-btn heading-font px-4 py-1.5 bg-green-600 hover:bg-green-700 rounded-md text-sm text-white transition-all"
+               data-url="{% url 'booking:ajax_accept_reschedule' b.id %}">Accept</a>
+            <a href="#" class="ajax-reject-res-btn heading-font px-4 py-1.5 bg-red-600 hover:bg-red-700 rounded-md text-sm text-white transition-all"
+               data-url="{% url 'booking:ajax_reject_reschedule' b.id %}">Reject</a>
+          {% elif b.status == 'pending' %}
+            <a href="#" class="ajax-confirm-btn heading-font px-4 py-1.5 bg-[var(--yellow)] text-[var(--indigo-dark)] hover:bg-yellow-400 rounded-md text-sm transition-all"
+               data-url="{% url 'booking:ajax_confirm_booking' b.id %}">Confirm</a>
+            <a href="#" class="ajax-cancel-btn heading-font px-4 py-1.5 bg-gray-600 hover:bg-gray-700 text-white rounded-md text-sm transition-all"
+               data-url="{% url 'booking:ajax_cancel' b.id %}">Cancel</a>
+          {% endif %}
+        </div>
+      </article>
+      {% endfor %}
+    </div>
+    {% else %}
+      <div class="text-center p-16 bg-[var(--indigo-light)] rounded-2xl shadow-[0_8px_24px_rgba(0,0,0,0.3)]">
+        <h2 class="heading-font text-2xl mb-2">NO BOOKINGS</h2>
+        <p class="opacity-60">No one has booked you yet.</p>
+      </div>
+    {% endif %}
+  </div>
+</div>
+{% include 'booking/_booking_ajax_scripts.html' %}

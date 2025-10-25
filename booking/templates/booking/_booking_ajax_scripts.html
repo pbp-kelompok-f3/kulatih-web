@@ -1,0 +1,76 @@
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const btnUpcoming = document.getElementById('btn-upcoming');
+    const btnHistory = document.getElementById('btn-history');
+    const bookingCards = document.querySelectorAll('.booking-card');
+
+    function filterBookings(category) {
+        bookingCards.forEach(card => {
+            if (card.dataset.category === category) {
+                card.style.display = 'block';
+            } else {
+                card.style.display = 'none';
+            }
+        });
+    }
+
+    if (btnUpcoming && btnHistory) {
+        btnUpcoming.addEventListener('click', () => {
+            filterBookings('upcoming');
+            btnUpcoming.classList.add('bg-[var(--yellow)]', 'text-[var(--indigo-dark)]');
+            btnUpcoming.classList.remove('bg-transparent', 'text-[var(--white)]');
+            btnHistory.classList.add('bg-transparent', 'text-[var(--white)]');
+            btnHistory.classList.remove('bg-[var(--yellow)]', 'text-[var(--indigo-dark)]');
+        });
+
+        btnHistory.addEventListener('click', () => {
+            filterBookings('history');
+            btnHistory.classList.add('bg-[var(--yellow)]', 'text-[var(--indigo-dark)]');
+            btnHistory.classList.remove('bg-transparent', 'text-[var(--white)]');
+            btnUpcoming.classList.add('bg-transparent', 'text-[var(--white)]');
+            btnUpcoming.classList.remove('bg-[var(--yellow)]', 'text-[var(--indigo-dark)]');
+        });
+
+        // Initial filter
+        filterBookings('upcoming');
+    }
+
+    // --- AJAX Actions ---
+    document.body.addEventListener('click', function(event) {
+        const handleAjaxClick = (event, selector, confirmationMessage) => {
+            const target = event.target.closest(selector);
+            if (!target) return;
+
+            event.preventDefault();
+
+            if (confirm(confirmationMessage)) {
+                const url = target.dataset.url;
+                fetch(url, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': '{{ csrf_token }}',
+                        'Content-Type': 'application/json'
+                    },
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.ok) {
+                        window.location.reload();
+                    } else {
+                        alert('Error: ' + (data.error || 'An unknown error occurred.'));
+                    }
+                })
+                .catch(err => {
+                    console.error('Fetch error:', err);
+                    alert('A network error occurred. Please try again.');
+                });
+            }
+        };
+
+        handleAjaxClick(event, '.ajax-cancel-btn', 'Are you sure you want to cancel this booking?');
+        handleAjaxClick(event, '.ajax-confirm-btn', 'Are you sure you want to confirm this booking?');
+        handleAjaxClick(event, '.ajax-accept-res-btn', 'Are you sure you want to accept this reschedule request?');
+        handleAjaxClick(event, '.ajax-reject-res-btn', 'Are you sure you want to reject this reschedule request?');
+    });
+});
+</script>

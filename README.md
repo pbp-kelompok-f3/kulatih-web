@@ -34,23 +34,25 @@ Masalah yang kami coba selesaikan adalah keterbatasan platform khusus bagi para 
 <details align="justify">
     <summary><b>📑 Daftar Modul</b></summary>
 
-1. 👤 User Profile
-Modul User Profile berfungsi sebagai pusat identitas pengguna di dalam platform KuLatih. Melalui modul ini, pengguna dapat melihat dan mengelola data pribadi seperti nama, foto profil, informasi kontak, serta riwayat aktivitas dan sesi latihan. Fitur ini juga menjadi pintu utama untuk mengatur preferensi akun, notifikasi, dan privasi pengguna.
+1.👤 User Profile
+Modul User Profile berfungsi sebagai pusat identitas seluruh pengguna di dalam platform KuLatih, mencakup Coach dan Member. Melalui modul ini, pengguna dapat melihat dan mengelola data pribadi seperti nama, foto profil, informasi kontak, serta riwayat aktivitas dan sesi latihan. Modul ini juga menjadi akses utama untuk mengatur preferensi akun, notifikasi, dan privasi pengguna.
 
-    Fitur utama:
-    - Melihat dan mengedit profil pribadi
-    - Mengganti foto profil
-    - Mengelola pengaturan akun & notifikasi
-    - Meninjau riwayat booking dan aktivitas latihan
+    Fitur utama:
+    - Melihat dan mengedit profil pribadi (untuk Member & Coach)
+    - Mengganti foto profil
+    - Mengelola pengaturan akun & notifikasi
+    - Meninjau riwayat booking dan aktivitas latihan
+    - Menampilkan perbedaan tampilan dan fitur sesuai peran (Coach atau Member)
 
-2. 🧑‍🏫 Coach
-Modul Coach menjadi wadah bagi para pelatih untuk menampilkan profil profesional mereka di KuLatih. Setiap coach dapat menambahkan informasi tentang keahlian, pengalaman, cabang olahraga, dan tarif latihan. Pengguna dapat dengan mudah menemukan, mempelajari profil coach, serta menghubunginya sesuai kebutuhan.
+2.🏆 Tournament
+Modul Tournament menyediakan wadah bagi komunitas olahraga di KuLatih untuk membuat, mengelola, dan berpartisipasi dalam turnamen. Melalui modul ini, pengguna dapat melihat daftar turnamen yang sedang berlangsung maupun yang akan datang, mendaftar sebagai peserta, serta memantau hasil pertandingan. Pelatih juga dapat membuat turnamen untuk cabang olahraga tertentu dan mengatur detail seperti jadwal, peserta, serta sistem pertandingan.
 
-    Fitur utama:
-    - Menampilkan daftar dan profil pelatih
-    - Filter berdasarkan cabang olahraga, lokasi, atau spesialisasi
-    - Informasi detail pengalaman coach
-    - Akses langsung untuk booking sesi latihan
+    Fitur utama:
+    - Melihat daftar turnamen (All Tournaments & My Tournaments)
+    - Membuat dan mengelola turnamen (khusus Coach)
+    - Mendaftar dan mengikuti turnamen (untuk Member)
+    - Menampilkan detail turnamen seperti jadwal, peserta, dan hasil pertandingan
+    - Filter turnamen berdasarkan kategori, cabang olahraga, atau status (ongoing/upcoming)
 
 3. 🗓️ Booking & Jadwal
 Modul Booking & Jadwal menjadi inti dari proses interaksi antara pengguna dan pelatih.
