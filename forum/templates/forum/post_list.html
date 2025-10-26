@@ -241,8 +241,17 @@
     <script>
     /* ---------- Modal ---------- */
     const modal=document.getElementById('postModal'); const openBtn=document.getElementById('openModal'); const closeBtn=document.getElementById('closeModal');
-    function openModal(){if(!modal)return;modal.classList.remove('hidden');modal.classList.add('flex');document.body.style.overflow='hidden';}
-    function closeModal(){if(!modal)return;modal.classList.add('hidden');modal.classList.remove('flex');document.body.style.overflow='';}
+    function openModal(){
+        if(!modal) return;
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+    }
+    function closeModal(){
+        if(!modal) return;
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+
+    }
     if(openBtn)openBtn.addEventListener('click',openModal); if(closeBtn)closeBtn.addEventListener('click',closeModal); if(modal)modal.addEventListener('click',e=>{if(e.target===modal)closeModal();});
 
     /* ---------- Toast ---------- */

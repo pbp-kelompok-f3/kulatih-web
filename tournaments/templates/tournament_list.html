@@ -8,23 +8,24 @@
 {% block content %}
 
 <div class="bg-[#191831] min-h-screen text-white top-0 pb-10 font-bevietnam">
-  <section data-aos="fade-down" class="z-0 relative text-white min-h-[300px] flex items-center mb-12">
-    <img src="{% static 'image/bg-tournament.svg' %}" 
-         alt="Tournament Background" 
-         class="absolute inset-0 w-full h-full object-cover z-0"/>
+    <section data-aos="fade-down" class="relative text-white min-h-[400px] flex flex-col items-center justify-center overflow-hidden mb-12 px-6 text-center">
+        <img 
+            src="{% static 'image/bg-tournament.svg' %}" 
+            alt="Tournament Background" 
+            class="absolute inset-0 w-full h-full object-cover z-0"
+        />
+        <div class="absolute inset-0 bg-gradient-to-b from-transparent via-[#0c0b1c]/60 to-[#191831] z-10"></div>
+        <div class="relative z-20 space-y-4 max-w-3xl mx-auto py-16">
+            <h1 class="heading-font font-bebas text-4xl sm:text-5xl md:text-6xl font-extrabold leading-tight text-white drop-shadow-lg">
+                FIND YOUR <span class="text-[var(--yellow)]">PERFECT TOURNAMENT</span>
+            </h1>
+            <p class="max-w-2xl mx-auto text-gray-200 text-base sm:text-lg">
+                Discover, join, and compete in tournaments that match your passion and skills.
+            </p>
+        </div>
+    </section>
 
-    <div class="absolute inset-0 bg-[#0c0b1c]/70 z-0"></div>
-    <div class="relative z-10 w-full flex flex-col items-center justify-center px-6 py-20 text-center">
-      <h1 class="heading-font text-4xl sm:text-5xl md:text-6xl font-extrabold leading-tight text-white drop-shadow-lg">
-        FIND YOUR PERFECT TOURNAMENT
-      </h1> 
-      <p class="mt-4 max-w-2xl text-gray-200 text-base sm:text-lg">
-        Discover, join, and compete in tournaments that match your passion and skills.
-      </p>
-    </div>
 
-    <div class="absolute inset-x-0 bottom-0 h-12 bg-gradient-to-b from-transparent to-[#0c0b1c]/95"></div>
-  </section>
 
   <div class="max-w-7xl mx-auto px-6">
     <div data-aos="fade-up" class="flex justify-center gap-3 mt-6 mb-10">
@@ -43,7 +44,7 @@
       {% endif %}
     </div>
     <div data-aos="fade-up" class="relative mb-10 flex justify-center">
-      <input id="searchInput" type="text" placeholder="Search Tournament or Location or Organizer"
+      <input id="searchInput" type="text" placeholder="Find tournaments by name, location, organizer, or sport"
         class="w-full md:w-2/3 bg-[#1b1b3a] border border-gray-700 rounded-xl py-3 px-4 pl-12 text-gray-300 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-yellow-400" />
       <svg xmlns="http://www.w3.org/2000/svg"
         class="hidden md:block w-5 h-5 absolute left-[calc(50%-33%)] top-1/2 -translate-y-1/2 text-gray-400"
@@ -98,24 +99,42 @@ document.addEventListener("DOMContentLoaded", function() {
       const card = document.createElement("div");
       card.className = "bg-[#1b1b3a] rounded-2xl overflow-hidden shadow-lg hover:scale-105 transition transform duration-300";
       card.innerHTML = `
-        <div data-aos="fade-up" class="relative bg-[#111024]/50 rounded-3xl overflow-hidden shadow-[0_0_25px_#facc15]/30 hover:shadow-[0_0_35px_#facc15]/60 hover:scale-105 transition-all duration-300 flex flex-col md:flex-row">
-        <div data-aos="fade-up" class="md:w-1/2 relative">
-            <img src="${poster}" alt="${t.nama}" class="w-full h-56 md:h-full object-cover">
-            <div class="absolute top-0 left-0 w-full h-full bg-gradient-to-tr from-transparent via-[#1e1b3a]/30 to-[#1e1b3a]/80 clip-path-polygon(0_0,100%_0,100%_70%,0_100%)"></div>
-            <span class="absolute top-3 left-3 bg-yellow-400 text-black px-3 py-1 font-bold rounded-full shadow-md text-sm">${t.tipe}</span>
-        </div>
-        <div class="md:w-1/2 p-6 flex flex-col justify-between">
-            <h3 class="text-2xl font-bold text-white mb-2 tracking-tight hover:text-yellow-400 transition-colors">${t.nama}</h3>
-            <div class="flex flex-col gap-2 text-gray-300 text-sm mb-4">
-              <div class="flex items-center gap-2"><span>🏟</span> ${t.lokasi}</div>
-              <div class="flex items-center gap-2"><span>📅</span> ${t.tanggal}</div>
-              <div class="flex items-center gap-2"><span>👤</span> By ${t.pembuat}</div>
+        <div data-aos="fade-up" 
+        class="relative group bg-gradient-to-br from-[#111024]/90 to-[#1c1a3a]/80 rounded-3xl border border-[#facc15]/20 overflow-hidden shadow-[0_0_20px_#facc15]/20 hover:shadow-[0_0_35px_#facc15]/40 transition-all duration-500 hover:-translate-y-2">
+
+        <div class="relative h-56 overflow-hidden">
+            <img src="${poster}" alt="${t.nama}" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110">
+            <div class="absolute inset-0 bg-gradient-to-t from-[#0f0e2e]/90 via-[#0f0e2e]/30 to-transparent"></div>
+            <span class="absolute top-3 left-3 bg-yellow-400 text-black font-bold text-xs px-3 py-1 rounded-full shadow-md uppercase">${t.tipe}</span>
+            <div class="absolute bottom-3 right-3 bg-[#facc15]/20 text-yellow-400 text-xs px-3 py-1 rounded-full border border-[#facc15]/30 backdrop-blur-sm font-semibold tracking-wide">
+            ${t.tanggal}
             </div>
-            <a href="/tournament/${t.id}/" class="relative block w-full text-center bg-yellow-400 text-black font-bold py-2 rounded-xl overflow-hidden transition-all duration-300 hover:bg-yellow-500">
-              <span class="absolute inset-0 bg-gradient-to-r from-yellow-400 via-yellow-200 to-yellow-400 opacity-20 blur-lg animate-pulse"></span>
-              <span class="relative z-10">View Details</span>
+        </div>
+
+        <div class="p-6 flex flex-col justify-between space-y-4">
+            <div>
+            <h3 class="text-2xl font-bold text-white tracking-tight group-hover:text-yellow-400 transition-colors">
+                ${t.nama}
+            </h3>
+            <p class="text-gray-300 text-sm mt-2 flex items-center gap-2">
+                <span>🏟</span> ${t.lokasi}
+            </p>
+            <p class="text-gray-400 text-sm mt-1 flex items-center gap-2">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.6" stroke="white" class="w-4 h-4">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.5 20.25a8.25 8.25 0 0115 0v.75H4.5v-.75z" />
+            </svg>
+            By ${t.pembuat}
+            </p>
+            </div>
+
+            <a href="/tournament/${t.id}/"
+            class="relative block text-center bg-yellow-400 text-black font-bold py-2 rounded-xl overflow-hidden transition-all duration-300 hover:bg-yellow-500 shadow-[0_0_15px_#facc15]/40">
+            <span class="absolute inset-0 bg-gradient-to-r from-yellow-400 via-yellow-200 to-yellow-400 opacity-20 blur-md animate-pulse"></span>
+            <span class="relative z-10">View Details</span>
             </a>
         </div>
+
+        <div class="absolute inset-0 rounded-3xl border border-transparent group-hover:border-[#facc15]/50 transition-all duration-500"></div>
         </div>
       `;
       grid.appendChild(card);
