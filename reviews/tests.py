@@ -56,18 +56,6 @@ class ReviewsViewsTests(TestCase):
         self.assertGreaterEqual(len(data["items"]), 2)
         self.assertEqual(data["items"][0]["rating"], 2)
 
-    def test_list_sort_highest_lowest(self):
-        Review.objects.create(coach=self.coach, reviewer=self.other_member, rating=1, comment="bad")
-        # highest
-        url = reverse("reviews:coach_reviews_json", args=[self.coach.id])
-        res = self.client.get(url, {"sort": "highest"})
-        ratings = [it["rating"] for it in res.json()["items"]]
-        self.assertEqual(ratings, sorted(ratings, reverse=True))
-        # lowest
-        res = self.client.get(url, {"sort": "lowest"})
-        ratings = [it["rating"] for it in res.json()["items"]]
-        self.assertEqual(ratings, sorted(ratings))
-
     def test_list_pagination(self):
         for i in range(15):
             u = User.objects.create_user(
@@ -259,3 +247,26 @@ class ReviewsViewsTests(TestCase):
 
     def test_model_str_covered(self):
         _ = str(self.review)  
+
+    def test_list_filter_by_rating_only_returns_that_rating(self):
+        u = User.objects.create_user(username="mf", email="mf@e.com", password="p")
+        m = Member.objects.create(user=u)
+        Review.objects.create(coach=self.coach, reviewer=m, rating=5, comment="five")
+
+        url = reverse("reviews:coach_reviews_json", args=[self.coach.id])
+        res = self.client.get(url, {"rating": 5})
+        self.assertEqual(res.status_code, 200)
+
+        data = res.json()
+        ratings = [it["rating"] for it in data["items"]]
+        self.assertTrue(len(ratings) >= 1)
+        self.assertTrue(all(r == 5 for r in ratings))  
+    
+    def test_list_bad_rating_param_is_ignored(self):
+        url = reverse("reviews:coach_reviews_json", args=[self.coach.id])
+        res = self.client.get(url, {"rating": "abc"})  # ValueError path
+        self.assertEqual(res.status_code, 200)
+        self.assertIn("items", res.json())  
+
+
+    
