@@ -77,12 +77,10 @@ document.addEventListener("DOMContentLoaded", function () {
     }
   });
 });
-
 document.addEventListener("click", function (e) {
   const loader = document.getElementById("loader");
   const content = document.getElementById("content");
-
-  const excluded = e.target.closest(".delete-btn, .js-post-reply, .js-reply-btn, .js-replies-toggle, .js-compose, .js-toggle-comments");
+  const excluded = e.target.closest(".delete-btn, .js-post-reply, .js-reply-btn, .js-replies-toggle, .js-compose, .js-toggle-comments, [data-review-open]");
 
   if (
     e.target.tagName === "A" &&
