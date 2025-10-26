@@ -48,7 +48,7 @@ Dengan demikian, KuLatih hadir sebagai solusi terpadu yang menghubungkan pelatih
 <details align="justify">
     <summary><b>📑 Daftar Modul</b></summary>
 
-## 🏃 Modul: User Profile (Albert) 🏃
+## 🏃 Modul: <i>User Profile</i> (Albert) 🏃
 
 Modul **User Profile** bertanggung jawab untuk manajemen data pengguna dalam platform KuLatih. Modul ini terbagi menjadi dua bagian utama: **Member** dan **Profile**.
 Submodul **Member** menangani informasi dasar pengguna yang mendaftar di platform, member sebagai murid. Fitur utamanya meliputi:
@@ -64,7 +64,7 @@ Submodul **Coach** fokus pada pengelolaan informasi profil pelatih secara lebih 
 - Mengelola foto dan informasi tambahan yang memperkuat reputasi pengguna di platform.
 - Membuat sebuah kompetisi yang dapat diikuti oleh Member
 
-## 🏆 Modul: Tournament (Salman) 🏆
+## 🏆 Modul: <i>Tournament</i> (Salman) 🏆
 
 Modul **Tournament** bertanggung jawab untuk pengelolaan kompetisi olahraga yang dibuat oleh pelatih di platform KuLatih. Modul ini dirancang agar pelatih dapat mengelola turnamen secara penuh, mulai dari pembuatan hingga pemantauan peserta.
 
@@ -75,7 +75,7 @@ Modul **Tournament** bertanggung jawab untuk pengelolaan kompetisi olahraga yang
 
 Modul ini membantu pelatih untuk tidak hanya mengajar, tetapi juga membangun komunitas kompetitif dan interaktif, serta memberikan pengalaman profesional bagi peserta turnamen.
 
-## 🗓️ Modul: Booking (Khalisha) 🗓️
+## 🗓️ Modul: <i>Booking</i> (Khalisha) 🗓️
 
 Modul **Booking** berfungsi untuk mengelola pemesanan sesi pelatihan antara murid (member) dan pelatih (coach) di platform KuLatih. Modul ini memastikan proses booking berjalan mudah, terstruktur, dan transparan.
 
@@ -87,7 +87,7 @@ Modul **Booking** berfungsi untuk mengelola pemesanan sesi pelatihan antara muri
 
 Modul ini membantu menciptakan pengalaman profesional, terorganisir, dan fleksibel bagi member dan coach, sehingga interaksi dan transaksi di platform KuLatih menjadi lebih efisien dan terpercaya.
 
-## ⭐ Modul: Reviews (Airin) ⭐
+## ⭐ Modul: <i>Reviews</i> (Airin) ⭐
 
 Modul **Reviews** berfungsi untuk mengelola sistem penilaian dan ulasan dari member terhadap pelatih di platform KuLatih. Modul ini membantu membangun reputasi pelatih serta memberikan referensi bagi calon murid lain.
 
@@ -115,7 +115,6 @@ Modul ini mendukung interaksi yang terstruktur dan membantu pengguna saling berb
 
 Modul **Community** berfungsi sebagai ruang sosial yang lebih bebas bagi pengguna KuLatih untuk berinteraksi, berbagi pengalaman, dan membangun jaringan. Berbeda dengan Forum yang fokus pada diskusi terstruktur, Community bersifat lebih santai dan interaktif.
 
-### Fitur Utama
 - **Membuat dan Bergabung dengan Komunitas**: Pengguna dapat membuat komunitas baru sesuai minat atau cabang olahraga, serta bergabung dengan komunitas yang sudah ada.  
 - **Posting <i>Chat</i> dan Diskusi Ringan**: Pengguna dapat membagikan pengalaman, tips, atau informasi terkait olahraga dalam bentuk postingan.   
 - **Edit dan Hapus <i>Chat/Post</i>**: Pengguna dapat mengedit atau menghapus chat atau postingan yang mereka buat.  
@@ -133,7 +132,7 @@ Data set ini bersumber utama dari https://www.superprof.co.id/, dengan beberapa 
     <summary><b>👥 Deskripsi Peran Pengguna</b></summary>
 
 # Peran Pengguna di KuLatih
-1. 🧑‍🏫 **Pelatih (Coach)** 🧑‍🏫
+1. 🧑‍🏫 **Pelatih (<i>Coach</i>)** 🧑‍🏫
 Pelatih merupakan pengguna yang menawarkan jasa bimbingan dalam berbagai bidang, khususnya olahraga. Mereka berperan sebagai penyedia layanan utama, dapat menampilkan profil profesional, mengatur jadwal latihan, serta berinteraksi dengan pengguna yang melakukan booking. Pelatih juga dapat membuat dan mengelola turnamen untuk meningkatkan engagement dengan murid dan komunitas.
 
 **Fitur Utama Pelatih:**
@@ -144,7 +143,7 @@ Pelatih merupakan pengguna yang menawarkan jasa bimbingan dalam berbagai bidang,
 - Membuat, mengedit, melihat peserta, dan menghapus turnamen.  
 - Berinteraksi dengan pengguna melalui forum dan komunitas.
 
-2. 👤 **Pengguna (Murid/Member)**   👤
+2. 👤 **Pengguna (Murid/<i>Member</i>)**   👤
 Pengguna adalah individu yang mencari pelatih sesuai kebutuhan mereka. Mereka dapat menelusuri daftar pelatih, melakukan booking sesi latihan, memberikan ulasan, serta ikut berpartisipasi dalam turnamen dan komunitas. Peran pengguna penting untuk menjaga interaksi dan kualitas layanan di platform.
 
 **Fitur Utama Pengguna:**
