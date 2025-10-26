@@ -17,7 +17,7 @@
   </style>
 </head>
 
-<body class="bg-[#111024] text-white font-bevietnam relative">
+<body class="bg-[#0d0b26] text-white font-bevietnam relative">
   <div id="loader" class="fixed inset-0 bg-[#0d0b26]/90 z-50 flex flex-col items-center justify-center">
     <div class="relative w-16 h-16">
       <div class="absolute inset-0 rounded-full border-4 border-yellow-400 animate-ping"></div>
@@ -28,6 +28,7 @@
     </div>
     <p class="mt-4 text-yellow-400 font-semibold text-lg animate-pulse">Loading...</p>
   </div>
+
   <div data-aos="fade-down" id="content" style="display:none;">
     {% include 'navbar.html' %}
     {% block content %}{% endblock content %}
@@ -36,60 +37,62 @@
     {% include 'footer.html' %}
   </div>
 
-<script src="https://unpkg.com/aos@2.3.4/dist/aos.js"></script>
-<script>
-  document.addEventListener("DOMContentLoaded", function () {
-    const loader = document.getElementById("loader");
-    const content = document.getElementById("content");
-    const navbar = document.querySelector("nav[data-aos]");
-
-    if (content) content.style.display = "none";
-
-    function initAOS() {
-      if (typeof AOS !== "undefined") {
-        AOS.init({
-          duration: 1000,
-          once: true,
-          offset: 100,
-          easing: "ease-out-cubic",
-          delay: 50,
-        });
-      }
-    }
-
-    function hideLoader() {
-      if (!loader || loader.style.display === "none") return;
-
-      loader.style.transition = "opacity 0.6s ease";
-      loader.style.opacity = 0;
-      setTimeout(() => {
-        loader.style.display = "none";
-        content.style.display = "block";
-        initAOS();
-      }, 600);
-    }
-
-    window.addEventListener("load", hideLoader);
-
-    setTimeout(hideLoader, 2000);
-  });
-
-  document.addEventListener("click", function (e) {
-    if (e.target.tagName === "A" && e.target.href && !e.target.target) {
+  <script src="https://unpkg.com/aos@2.3.4/dist/aos.js"></script>
+  <script>
+    document.addEventListener("DOMContentLoaded", function () {
       const loader = document.getElementById("loader");
       const content = document.getElementById("content");
-      if (loader && content) {
-        loader.style.display = "flex";
-        loader.style.opacity = 1;
-        content.style.display = "none";
+
+      if (content) content.style.display = "none";
+
+      function initAOS() {
+        if (typeof AOS !== "undefined") {
+          AOS.init({
+            duration: 1000,
+            once: true,
+            offset: 100,
+            easing: "ease-out-cubic",
+            delay: 50,
+          });
+        }
       }
-    }
-  });
-</script>
 
+      function hideLoader() {
+        if (!loader || loader.style.display === "none") return;
+        loader.style.transition = "opacity 0.6s ease";
+        loader.style.opacity = 0;
+        setTimeout(() => {
+          loader.style.display = "none";
+          content.style.display = "block";
+          initAOS();
+        }, 600);
+      }
 
+      window.addEventListener("load", hideLoader);
+      setTimeout(hideLoader, 2000);
+    });
 
+    document.addEventListener("click", function (e) {
+      const loader = document.getElementById("loader");
+      const content = document.getElementById("content");
 
-
+      if (
+        e.target.tagName === "A" &&
+        e.target.href &&
+        !e.target.target &&
+        !e.target.classList.contains("js-post-reply") &&
+        !e.target.classList.contains("js-reply-btn") &&
+        !e.target.classList.contains("js-replies-toggle") &&
+        !e.target.closest(".js-compose") &&
+        !e.target.closest(".js-toggle-comments")
+      ) {
+        if (loader && content) {
+          loader.style.display = "flex";
+          loader.style.opacity = 1;
+          content.style.display = "none";
+        }
+      }
+    });
+  </script>
 </body>
 </html>
