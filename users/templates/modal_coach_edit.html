@@ -1,5 +1,13 @@
-<div id="edit-profile-modal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black bg-opacity-60 font-bevietnam overflow-y-auto py-10">
-  <div class="bg-[var(--indigo)] text-white w-full max-w-lg px-8 pt-6 pb-8 rounded-2xl shadow-lg m-4">
+<div id="edit-profile-modal"
+  class="fixed inset-0 z-50 hidden bg-black/60 font-bevietnam transition-opacity duration-300 opacity-0
+         flex top-20 justify-center p-6">
+  
+  <div id="modal-content"
+    class="bg-[var(--indigo)] text-white w-full max-w-lg px-8 pt-6 pb-8 rounded-2xl shadow-xl
+           transform scale-95 transition-all duration-300 opacity-0 translate-y-2
+           max-h-[90vh] overflow-y-auto">
+
+
     <div class="flex justify-between items-center mb-6">
       <h2 class="text-2xl font-bebas">Edit Your Coach Profile</h2>
       <button id="close-modal-btn" class="text-4xl hover:text-yellow-400">&times;</button>
@@ -8,22 +16,49 @@
     <form id="edit-profile-form" method="POST" action="{% url 'users:edit_profile' %}">
       {% csrf_token %}
       <div class="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
-        
-        <!-- Fields -->
-        <div class="md:col-span-1"><label class="block mb-1 text-sm">First Name</label>{{ user_form.first_name }}</div>
-        <div class="md:col-span-1"><label class="block mb-1 text-sm">Last Name</label>{{ user_form.last_name }}</div>
-        <div class="md:col-span-2"><label class="block mb-1 text-sm">Email</label>{{ user_form.email }}</div>
-        <div class="md:col-span-2"><label class="block mb-1 text-sm">Profile Photo URL</label>{{ profile_form.profile_photo }}</div>
-        <div class="md:col-span-1"><label class="block mb-1 text-sm">City</label>{{ profile_form.city }}</div>
-        <div class="md:col-span-1"><label class="block mb-1 text-sm">Phone</label>{{ profile_form.phone }}</div>
-        <div class="md:col-span-1"><label class="block mb-1 text-sm">Sport</label>{{ profile_form.sport }}</div>
-        <div class="md:col-span-1"><label class="block mb-1 text-sm">Hourly Fee (IDR)</label>{{ profile_form.hourly_fee }}</div>
-        <div class="md:col-span-2"><label class="block mb-1 text-sm">Description</label>{{ profile_form.description }}</div>
+        <div>
+          <label class="block mb-1 text-sm">First Name</label>
+          {{ user_form.first_name }}
+        </div>
+        <div>
+          <label class="block mb-1 text-sm">Last Name</label>
+          {{ user_form.last_name }}
+        </div>
+        <div class="md:col-span-2">
+          <label class="block mb-1 text-sm">Email</label>
+          {{ user_form.email }}
+        </div>
+        <div class="md:col-span-2">
+          <label class="block mb-1 text-sm">Profile Photo URL</label>
+          {{ profile_form.profile_photo }}
+        </div>
+        <div>
+          <label class="block mb-1 text-sm">City</label>
+          {{ profile_form.city }}
+        </div>
+        <div>
+          <label class="block mb-1 text-sm">Phone</label>
+          {{ profile_form.phone }}
+        </div>
+        <div>
+          <label class="block mb-1 text-sm">Sport</label>
+          {{ profile_form.sport }}
+        </div>
+        <div>
+          <label class="block mb-1 text-sm">Hourly Fee (IDR)</label>
+          {{ profile_form.hourly_fee }}
+        </div>
+        <div class="md:col-span-2">
+          <label class="block mb-1 text-sm">Description</label>
+          {{ profile_form.description }}
+        </div>
       </div>
 
       <div class="flex justify-end mt-8 gap-4">
-        <button type="button" id="cancel-modal-btn" class="px-6 py-2 rounded-lg bg-gray-600 hover:bg-gray-700">Cancel</button>
-        <button type="submit" class="px-6 py-2 rounded-lg bg-yellow-500 text-black font-semibold hover:bg-yellow-400">Save Changes</button>
+        <button type="button" id="cancel-modal-btn"
+          class="px-6 py-2 rounded-lg bg-gray-600 hover:bg-gray-700 transition">Cancel</button>
+        <button type="submit"
+          class="px-6 py-2 rounded-lg bg-yellow-500 text-black font-semibold hover:bg-yellow-400 transition">Save Changes</button>
       </div>
     </form>
   </div>
@@ -31,87 +66,88 @@
 
 <script>
 document.addEventListener('DOMContentLoaded', () => {
-    const modal = document.getElementById('edit-profile-modal');
-    if (!modal) return;
+  const modal = document.getElementById('edit-profile-modal');
+  const modalContent = document.getElementById('modal-content');
+  if (!modal) return;
 
-    const openBtn = document.getElementById('edit-profile-btn');
-    const closeBtn = document.getElementById('close-modal-btn');
-    const cancelBtn = document.getElementById('cancel-modal-btn');
-    const form = document.getElementById('edit-profile-form');
+  const openBtn = document.getElementById('edit-profile-btn');
+  const closeBtn = document.getElementById('close-modal-btn');
+  const cancelBtn = document.getElementById('cancel-modal-btn');
+  const form = document.getElementById('edit-profile-form');
 
-    function openModal() { modal.classList.remove('hidden'); modal.classList.add('flex'); }
-    function closeModal() { 
-        modal.classList.add('hidden'); 
-        modal.classList.remove('flex'); 
-        const url = new URL(window.location);
-        url.searchParams.delete('action');
-        window.history.replaceState({}, '', url);
-    }
-    
-    const urlParams = new URLSearchParams(window.location.search);
-    if (urlParams.get('action') === 'edit') {
-        openModal();
-    }  
+  // 🎬 OPEN ANIMATION
+  function openModal() {
+    modal.classList.remove('hidden', 'opacity-0');
+    modal.classList.add('flex', 'opacity-100');
+    setTimeout(() => {
+      modalContent.classList.remove('opacity-0', 'scale-95', 'translate-y-2');
+      modalContent.classList.add('opacity-100', 'scale-100', 'translate-y-0');
+    }, 10);
+    if (typeof AOS !== "undefined") AOS.refreshHard();
+  }
 
-    if (openBtn) openBtn.addEventListener('click', openModal);
-    if (closeBtn) closeBtn.addEventListener('click', closeModal);
-    if (cancelBtn) cancelBtn.addEventListener('click', closeModal);
+  // 🎞 CLOSE ANIMATION
+  function closeModal() {
+    modalContent.classList.remove('opacity-100', 'scale-100', 'translate-y-0');
+    modalContent.classList.add('opacity-0', 'scale-95', 'translate-y-2');
+    modal.classList.remove('opacity-100');
+    modal.classList.add('opacity-0');
+    setTimeout(() => {
+      modal.classList.remove('flex');
+      modal.classList.add('hidden');
+    }, 300);
 
-    if (form) {
-        form.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const formData = new FormData(form);
-            const url = form.action;
+    const url = new URL(window.location);
+    url.searchParams.delete('action');
+    window.history.replaceState({}, '', url);
+  }
 
-            try {
-                const response = await fetch(url, {
-                    method: 'POST',
-                    body: formData,
-                    headers: {
-                        'X-Requested-With': 'XMLHttpRequest',
-                        'X-CSRFToken': formData.get('csrfmiddlewaretoken')
-                    }
-                });
+  // Auto open if ?action=edit
+  const urlParams = new URLSearchParams(window.location.search);
+  if (urlParams.get('action') === 'edit') openModal();
 
-                const data = await response.json();
+  if (openBtn) openBtn.addEventListener('click', openModal);
+  if (closeBtn) closeBtn.addEventListener('click', closeModal);
+  if (cancelBtn) cancelBtn.addEventListener('click', closeModal);
 
-                if (data.success) {
-                    // Update profile page
-                    document.getElementById('coach-fullname').textContent = data.user.first_name + ' ' + data.user.last_name;
-                    document.getElementById('coach-email').textContent = data.user.email;
-                    document.getElementById('coach-city').textContent = data.profile.city || 'Not specified';
-                    document.getElementById('coach-phone').textContent = data.profile.phone || '-';
-                    document.getElementById('coach-description').textContent = data.profile.description || 'This coach has not added a description.';
-                    document.getElementById('coach-sport').textContent = data.profile.sport;
-                    document.getElementById('coach-fee').textContent = 'Rp ' + data.profile.hourly_fee;
-
-                    const photoEl = document.getElementById('coach-photo');
-                    if (data.profile.profile_photo) {
-                        photoEl.src = data.profile.profile_photo;
-                    } else {
-                        photoEl.src = "https://icon-library.com/images/default-profile-icon/default-profile-icon-24.jpg";
-                    }
-
-                    // Update Navbar (assuming generic IDs)
-                    document.getElementById('profile-fullname').textContent = data.user.first_name + ' ' + data.user.last_name;
-                    const navbarPhoto = document.getElementById('profile-photo');
-                    if (navbarPhoto) {
-                        if (data.profile.profile_photo) {
-                            navbarPhoto.src = data.profile.profile_photo;
-                        } else {
-                            navbarPhoto.src = "https://icon-library.com/images/default-profile-icon/default-profile-icon-24.jpg";
-                        }
-                    }
-
-                    closeModal();
-                } else {
-                    alert('Error: ' + JSON.stringify(data.errors));
-                }
-            } catch (error) {
-                console.error('An error occurred:', error);
-                alert('An unexpected error occurred. Please try again.');
-            }
+  // 📨 Handle AJAX form submission
+  if (form) {
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const formData = new FormData(form);
+      const url = form.action;
+      try {
+        const response = await fetch(url, {
+          method: 'POST',
+          body: formData,
+          headers: {
+            'X-Requested-With': 'XMLHttpRequest',
+            'X-CSRFToken': formData.get('csrfmiddlewaretoken')
+          }
         });
-    }
+        const data = await response.json();
+        if (data.success) {
+          document.getElementById('coach-fullname').textContent = data.user.first_name + ' ' + data.user.last_name;
+          document.getElementById('coach-email').textContent = data.user.email;
+          document.getElementById('coach-city').textContent = data.profile.city || 'Not specified';
+          document.getElementById('coach-phone').textContent = data.profile.phone || '-';
+          document.getElementById('coach-description').textContent = data.profile.description || 'This coach has not added a description.';
+          document.getElementById('coach-sport').textContent = data.profile.sport;
+          document.getElementById('coach-fee').textContent = 'Rp ' + data.profile.hourly_fee;
+          const photoEl = document.getElementById('coach-photo');
+          photoEl.src = data.profile.profile_photo || "https://icon-library.com/images/default-profile-icon/default-profile-icon-24.jpg";
+          const navbarPhoto = document.getElementById('profile-photo');
+          if (navbarPhoto) navbarPhoto.src = data.profile.profile_photo || "https://icon-library.com/images/default-profile-icon/default-profile-icon-24.jpg";
+          document.getElementById('profile-fullname').textContent = data.user.first_name + ' ' + data.user.last_name;
+          closeModal();
+        } else {
+          alert('Error: ' + JSON.stringify(data.errors));
+        }
+      } catch (error) {
+        console.error('An error occurred:', error);
+        alert('An unexpected error occurred. Please try again.');
+      }
+    });
+  }
 });
 </script>

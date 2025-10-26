@@ -7,63 +7,42 @@
 
 {% block content %}
 
-<style>
-.bg-tournament {
-  position: relative;
-  background-image: url("{% static 'image/bg-tournament.svg' %}");
-  background-size: cover;
-  background-position: center;
-  background-repeat: no-repeat;
-  height: 300px;
-  border-radius: 1rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  overflow: hidden;
-  z-index: 0;
-}
-.bg-tournament::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background: rgba(0, 0, 50, 0.4);
-  z-index: 0;
-}
-.bg-tournament h1 {
-  position: relative;
-  z-index: 1;
-  color: #fff;
-  font-weight: 900;
-  letter-spacing: 0.05em;
-  text-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
-}
-</style>
+<div class="bg-[#191831] min-h-screen text-white top-0 pb-10 font-bevietnam">
+  <section data-aos="fade-down" class="z-0 relative text-white min-h-[300px] flex items-center mb-12">
+    <img src="{% static 'image/bg-tournament.svg' %}" 
+         alt="Tournament Background" 
+         class="absolute inset-0 w-full h-full object-cover z-0"/>
 
-<div class="bg-[#191831] min-h-screen text-white pt-20 pb-10">
-  <div class="max-w-7xl mx-auto px-6">
-    <div class="text-center">
-      <div data-aos="fade-up" class="bg-tournament">
-        <h1 class="text-4xl md:text-6xl font-extrabold tracking-wide mb-4">
-          FIND YOUR PERFECT TOURNAMENT
-        </h1>
-      </div>
-      <div data-aos="fade-up" class="flex justify-center gap-3 mt-16 mb=10 translate-y-10">
-        <button id="allBtn" class="px-5 py-2 bg-gray-700 rounded-full font-semibold hover:bg-yellow-400 hover:text-black transition">
-          All Tournaments
-        </button>
-        {% if user.is_authenticated %}
-        <button id="myBtn" class="px-5 py-2 bg-gray-700 rounded-full font-semibold hover:bg-yellow-400 hover:text-black transition">
-          My Tournaments
-        </button>
-        {% endif %}
-        {% if is_coach %}
-        <a href="{% url 'tournaments:create_tournament' %}" class="px-5 py-2 bg-gray-700 rounded-full font-semibold hover:bg-yellow-400 hover:text-black transition">
-          Create Tournament
-        </a>
-        {% endif %}
-      </div>
+    <div class="absolute inset-0 bg-[#0c0b1c]/70 z-0"></div>
+    <div class="relative z-10 w-full flex flex-col items-center justify-center px-6 py-20 text-center">
+      <h1 class="heading-font text-4xl sm:text-5xl md:text-6xl font-extrabold leading-tight text-white drop-shadow-lg">
+        FIND YOUR PERFECT TOURNAMENT
+      </h1> 
+      <p class="mt-4 max-w-2xl text-gray-200 text-base sm:text-lg">
+        Discover, join, and compete in tournaments that match your passion and skills.
+      </p>
     </div>
-    <div data-aos="fade-up" class="relative mb-10 mt-16 flex justify-center">
+
+    <div class="absolute inset-x-0 bottom-0 h-12 bg-gradient-to-b from-transparent to-[#0c0b1c]/95"></div>
+  </section>
+
+  <div class="max-w-7xl mx-auto px-6">
+    <div data-aos="fade-up" class="flex justify-center gap-3 mt-6 mb-10">
+      <button id="allBtn" class="px-5 py-2 bg-gray-700 rounded-full font-semibold hover:bg-yellow-400 hover:text-black transition">
+        All Tournaments
+      </button>
+      {% if user.is_authenticated %}
+      <button id="myBtn" class="px-5 py-2 bg-gray-700 rounded-full font-semibold hover:bg-yellow-400 hover:text-black transition">
+        My Tournaments
+      </button>
+      {% endif %}
+      {% if is_coach %}
+      <a href="{% url 'tournaments:create_tournament' %}" class="px-5 py-2 bg-gray-700 rounded-full font-semibold hover:bg-yellow-400 hover:text-black transition">
+        Create Tournament
+      </a>
+      {% endif %}
+    </div>
+    <div data-aos="fade-up" class="relative mb-10 flex justify-center">
       <input id="searchInput" type="text" placeholder="Search Tournament or Location"
         class="w-full md:w-2/3 bg-[#1b1b3a] border border-gray-700 rounded-xl py-3 px-4 pl-12 text-gray-300 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-yellow-400" />
       <svg xmlns="http://www.w3.org/2000/svg"
@@ -80,7 +59,6 @@
     <div id="pagination" class="flex justify-center mt-10"></div>
   </div>
 </div>
-
 <script>
 document.addEventListener("DOMContentLoaded", function() {
   const grid = document.getElementById("tournamentGrid");
