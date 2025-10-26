@@ -102,7 +102,6 @@ class ReviewsViewsTests(TestCase):
     def test_create_requires_login(self):
         url = reverse("reviews:create_review_json", args=[self.coach.id])
         res = self.client.post(url, data=json.dumps({"rating": 5}), content_type="application/json")
-        # Django will redirect to login (302) or 302->200 for test client, accept 302
         self.assertIn(res.status_code, (302, 401, 403))
 
     def test_create_success(self):
