@@ -45,9 +45,16 @@
             
             <!-- Foto -->
             <div class="rounded-xl overflow-hidden w-full aspect-square mb-4">
-              <img src="{{ coach.profile_photo.url|default:'https://icon-library.com/images/default-profile-icon/default-profile-icon-24.jpg' }}" 
-                   alt="{{ coach.user.username }}" 
-                   class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300">
+            {% if coach.profile_photo %}
+                <img src="{{ coach.profile_photo.url }}" 
+                    alt="{{ coach.user.username }}" 
+                    class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300">
+            {% else %}
+                <img src="https://icon-library.com/images/default-profile-icon/default-profile-icon-24.jpg" 
+                    alt="{{ coach.user.username }}" 
+                    class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300">
+            {% endif %}
+
             </div>
 
             <!-- Nama -->
