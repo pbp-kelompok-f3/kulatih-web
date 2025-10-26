@@ -8,6 +8,7 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
 from django.db.models import Q
 from django.utils import timezone
+from django.core.paginator import Paginator
 
 from .models import Member, Coach
 from .forms import (
@@ -214,19 +215,14 @@ def member_details(request, id):
 def coach_detail(request, coach_id):
     coach = get_object_or_404(Coach, pk=coach_id)
     return render(request, 'coach_detail.html', {'coach': coach})
-
-
-def coach_list(request):
-    coaches = Coach.objects.all()
-    context = {
-        'coaches': coaches
-    }
-    return render(request, 'coach_list.html', context)
     
 def coach_list(request):
     query = request.GET.get('q', '')
+    sport_filter = request.GET.get('sport', '')
+    
     coaches = Coach.objects.all()
 
+    # Search filter
     if query:
         coaches = coaches.filter(
             Q(user__first_name__icontains=query) |
@@ -235,8 +231,23 @@ def coach_list(request):
             Q(city__icontains=query)
         ).distinct()
 
+    # Sport filter
+    if sport_filter:
+        coaches = coaches.filter(sport=sport_filter)
+
+    # Get sport choices from the Coach model
+    sport_choices = Coach._meta.get_field('sport').choices
+
+    # Pagination - 12 coaches per page
+    paginator = Paginator(coaches, 12)
+    page_number = request.GET.get('page', 1)
+    page_obj = paginator.get_page(page_number)
+
     context = {
-        'coaches': coaches,
+        'coaches': page_obj,
         'search_query': query,
+        'sport_filter': sport_filter,
+        'sport_choices': sport_choices,
+        'page_obj': page_obj,
     }
     return render(request, 'coach_list.html', context)

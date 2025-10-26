@@ -8,6 +8,7 @@ from .models import Community, Membership, Message
 from django.http import JsonResponse
 import json
 from django.urls import reverse
+from django.core.paginator import Paginator
 
 
 # COMMUNITY MAIN PAGE
@@ -15,14 +16,16 @@ def community_home(request):
     q = request.GET.get('q', '').strip()
     communities = Community.objects.all()
 
+    # Filter komunitas yang belum dijoin
     if request.user.is_authenticated:
         joined_ids = set(
             Membership.objects.filter(user=request.user).values_list('community_id', flat=True)
         )
-        communities = communities.exclude(id__in=joined_ids)  # 🔥 sembunyikan yang sudah dijoin
+        communities = communities.exclude(id__in=joined_ids)
     else:
         joined_ids = set()
 
+    # Pencarian
     if q:
         communities = communities.filter(
             Q(name__icontains=q) |
@@ -30,14 +33,13 @@ def community_home(request):
             Q(full_description__icontains=q)
         )
 
-    # list yg sudah di join user 
-    joined_ids = set()
-    if request.user.is_authenticated:
-        joined_ids = set(
-            Membership.objects.filter(user=request.user).values_list('community_id', flat=True)
-        )
+    # Pagination — tampil 6 per halaman
+    paginator = Paginator(communities, 6)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+
     return render(request, 'community/main_community.html', {
-        'communities': communities,
+        'communities': page_obj,
         'q': q,
         'joined_ids': joined_ids,
     })
@@ -90,17 +92,26 @@ def join_community(request, id):
     c = get_object_or_404(Community, id=id)
     mem, created = Membership.objects.get_or_create(community=c, user=request.user, defaults={'role': 'user'})
     if created:
-        messages.success(request, f'Kamu bergabung di {c.name}.')
+        messages.success(request, f'You have joined {c.name}.')
     else:
-        messages.info(request, f'Kamu sudah menjadi anggota {c.name}.')
+        messages.info(request, f'You are already a member of {c.name}.')
     return redirect('community:my_list')
 
 
 # MY COMMUNITY LIST (daftar komunitas yang di join)
 @login_required
 def my_community_list(request):
-    memberships = Membership.objects.filter(user=request.user).select_related('community').order_by('joined_at')
-    return render(request, 'community/my_list.html', {'memberships': memberships})
+    memberships = Membership.objects.filter(
+        user=request.user
+    ).select_related('community').order_by('joined_at')
+
+    # aktifkan pagination
+    paginator = Paginator(memberships, 6)  
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+
+    return render(request, 'community/my_list.html', {'memberships': page_obj})
+
 
 
 # LEAVE (hapus membership, balikin ke Community main)
@@ -108,7 +119,7 @@ def my_community_list(request):
 def leave_community(request, id):
     c = get_object_or_404(Community, id=id)
     Membership.objects.filter(user=request.user, community=c).delete()
-    messages.success(request, f'Kamu keluar dari {c.name}.')
+    messages.success(request, f'You are no longer a member of {c.name}.')
     return redirect('community:home')
 
 
@@ -176,7 +187,6 @@ def edit_message(request, id, msg_id):
         form = MessageForm(request.POST, instance=message)
         if form.is_valid():
             form.save()
-            messages.success(request, "Pesan berhasil diperbarui.")
             return redirect('community:my_group', id=id)
     else:
         form = MessageForm(instance=message)

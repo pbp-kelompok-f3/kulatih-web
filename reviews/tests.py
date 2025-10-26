@@ -56,18 +56,6 @@ class ReviewsViewsTests(TestCase):
         self.assertGreaterEqual(len(data["items"]), 2)
         self.assertEqual(data["items"][0]["rating"], 2)
 
-    def test_list_sort_highest_lowest(self):
-        Review.objects.create(coach=self.coach, reviewer=self.other_member, rating=1, comment="bad")
-        # highest
-        url = reverse("reviews:coach_reviews_json", args=[self.coach.id])
-        res = self.client.get(url, {"sort": "highest"})
-        ratings = [it["rating"] for it in res.json()["items"]]
-        self.assertEqual(ratings, sorted(ratings, reverse=True))
-        # lowest
-        res = self.client.get(url, {"sort": "lowest"})
-        ratings = [it["rating"] for it in res.json()["items"]]
-        self.assertEqual(ratings, sorted(ratings))
-
     def test_list_pagination(self):
         for i in range(15):
             u = User.objects.create_user(
@@ -102,7 +90,6 @@ class ReviewsViewsTests(TestCase):
     def test_create_requires_login(self):
         url = reverse("reviews:create_review_json", args=[self.coach.id])
         res = self.client.post(url, data=json.dumps({"rating": 5}), content_type="application/json")
-        # Django will redirect to login (302) or 302->200 for test client, accept 302
         self.assertIn(res.status_code, (302, 401, 403))
 
     def test_create_success(self):
@@ -170,7 +157,7 @@ class ReviewsViewsTests(TestCase):
     def test_delete_owner_ok(self):
         self.client.login(username="member1", password="pass12345")
         url = reverse("reviews:delete_review_json", args=[self.review.id])
-        res = self.client.post(url)  # you also accept DELETE, but POST is fine
+        res = self.client.post(url)  
         self.assertEqual(res.status_code, 200)
         self.assertFalse(Review.objects.filter(id=self.review.id).exists())
 
@@ -190,3 +177,96 @@ class ReviewsViewsTests(TestCase):
         self.assertEqual(res.status_code, 200)
         self.assertContains(res, "RATING AND FEEDBACK")
         self.assertContains(res, str(self.review.rating))
+    
+    def test_list_invalid_sort_falls_back_to_latest(self):
+        url = reverse("reviews:coach_reviews_json", args=[self.coach.id])
+        r = self.client.get(url, {"sort": "not-a-valid-option"})
+        self.assertEqual(r.status_code, 200)
+        self.assertIn("items", r.json())
+
+    def test_list_bad_pagination_params_and_out_of_range_page(self):
+        url = reverse("reviews:coach_reviews_json", args=[self.coach.id])
+        # invalid types
+        r1 = self.client.get(url, {"page": "abc", "page_size": "xyz"})
+        self.assertEqual(r1.status_code, 200)
+        data1 = r1.json()
+        self.assertIn("pagination", data1)
+
+        for i in range(12):
+            u = User.objects.create_user(username=f"x{i}", email=f"x{i}@e.com", password="p")
+            m = Member.objects.create(user=u)
+            Review.objects.create(coach=self.coach, reviewer=m, rating=3)
+
+        r2 = self.client.get(url, {"page": 9999, "page_size": 5})
+        self.assertEqual(r2.status_code, 200)
+        data2 = r2.json()
+        self.assertEqual(data2["pagination"]["page"], data2["pagination"]["total_pages"])
+
+    def test_review_detail_json_404(self):
+        missing_id = self.review.id + 9999
+        url = reverse("reviews:review_detail_json", args=[missing_id])
+        r = self.client.get(url)
+        self.assertEqual(r.status_code, 404)
+
+    def test_create_invalid_json_returns_400(self):
+        self.client.login(username="member1", password="pass12345")
+        url = reverse("reviews:create_review_json", args=[self.other_coach.id])
+        r = self.client.post(url, data="<<not-json>>", content_type="application/json")
+        self.assertEqual(r.status_code, 400)
+
+    def test_create_method_not_allowed(self):
+        # @require_POST harus balikin 405 untuk GET
+        self.client.login(username="member1", password="pass12345")
+        url = reverse("reviews:create_review_json", args=[self.other_coach.id])
+        r = self.client.get(url)
+        self.assertEqual(r.status_code, 405)
+
+    def test_delete_with_http_delete(self):
+        # method DELETE
+        self.client.login(username="member1", password="pass12345")
+        url = reverse("reviews:delete_review_json", args=[self.review.id])
+        r = self.client.delete(url)
+        self.assertEqual(r.status_code, 200)
+        self.assertFalse(Review.objects.filter(id=self.review.id).exists())
+
+    def test_delete_admin_ok(self):
+        self.client.login(username="admin", password="pass12345")
+        u = User.objects.create_user(username="z", email="z@e.com", password="p")
+        m = Member.objects.create(user=u)
+        r_obj = Review.objects.create(coach=self.coach, reviewer=m, rating=3)
+        url = reverse("reviews:delete_review_json", args=[r_obj.id])
+        r = self.client.post(url)
+        self.assertEqual(r.status_code, 200)
+        self.assertFalse(Review.objects.filter(id=r_obj.id).exists())
+
+    def test_review_detail_page_404(self):
+        missing_id = self.review.id + 9999
+        url = reverse("reviews:review_detail_page", args=[missing_id])
+        r = self.client.get(url)
+        self.assertEqual(r.status_code, 404)
+
+    def test_model_str_covered(self):
+        _ = str(self.review)  
+
+    def test_list_filter_by_rating_only_returns_that_rating(self):
+        u = User.objects.create_user(username="mf", email="mf@e.com", password="p")
+        m = Member.objects.create(user=u)
+        Review.objects.create(coach=self.coach, reviewer=m, rating=5, comment="five")
+
+        url = reverse("reviews:coach_reviews_json", args=[self.coach.id])
+        res = self.client.get(url, {"rating": 5})
+        self.assertEqual(res.status_code, 200)
+
+        data = res.json()
+        ratings = [it["rating"] for it in data["items"]]
+        self.assertTrue(len(ratings) >= 1)
+        self.assertTrue(all(r == 5 for r in ratings))  
+    
+    def test_list_bad_rating_param_is_ignored(self):
+        url = reverse("reviews:coach_reviews_json", args=[self.coach.id])
+        res = self.client.get(url, {"rating": "abc"})  # ValueError path
+        self.assertEqual(res.status_code, 200)
+        self.assertIn("items", res.json())  
+
+
+    

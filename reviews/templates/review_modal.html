@@ -1,12 +1,11 @@
-
 <div id="rfm-{{ coach_id }}" class="fixed inset-0 hidden items-center justify-center z-[100]"
      style="background:rgba(0,0,0,.6);">
   <div class="w-[92vw] max-w-[680px] rounded-2xl border p-6"
        style="background:var(--indigo); border-color:#2e2b55; color:var(--white);">
-    <div class="mb-4">
-      <div class="heading-font text-[22px] md:text-[26px]">RATE YOUR COACH</div>
+      <div class="mb-4 text-center">
+        <div class="heading-font text-[22px] md:text-[26px]">RATE YOUR COACH</div>
       <div class="font-bevietnam opacity-75 text-sm">
-        Your honest feedback is valuable to us{{ coach_username|default:"" }}.
+        Your honest feedback is valuable to us.
       </div>
     </div>
 
@@ -44,6 +43,22 @@
 
 <script>
 (function(){
+  function showToast(msg){
+    try{
+      let t = document.getElementById('toast');
+      if(!t){
+        t = document.createElement('div'); t.id='toast';
+        t.style.position='fixed'; t.style.bottom='20px'; t.style.left='50%'; t.style.transform='translateX(-50%)';
+        t.style.background='var(--indigo-light)'; t.style.color='var(--white)';
+        t.style.border='1px solid #2e2b55'; t.style.padding='10px 14px'; t.style.borderRadius='10px';
+        t.style.zIndex='9999'; document.body.appendChild(t);
+      }
+      t.textContent = msg; t.style.opacity='1';
+      setTimeout(()=>{ t.style.transition='opacity .4s'; t.style.opacity='0'; }, 1200);
+    }catch(e){}
+  }
+  // =========================================================
+
   const coachId   = "{{ coach_id }}";
   const modal     = document.getElementById("rfm-" + coachId);
   const commentEl = document.getElementById("rfm-comment-" + coachId);
@@ -104,6 +119,8 @@
       t.onclick = null;
     }
 
+    // Toast
+    showToast('Review submitted');
     closeModal();
   };
 
