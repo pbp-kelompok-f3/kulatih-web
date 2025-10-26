@@ -139,10 +139,10 @@ Admin bertugas sebagai pengelola utama platform KuLatih. Mereka memastikan selur
 
 <details align="justify">
     <summary><b>🌐 Link Deployment</b></summary>
-https://kulatih.vercel.app
+https://muhammad-salman42-kulatih.pbp.cs.ui.ac.id/
 </details>
 
 <details align="justify">
     <summary><b>🎨 Link Design</b></summary>
-https://www.figma.com/files/team/1555528949421288347/project/463179219/Proyek-Tengah-Semester-PBP?fuid=1467317633894488150
+https://www.figma.com/design/0uR1wVLqtNDkJXa9DYLdEF/KuLatih?node-id=0-1&p=f&t=ltEQ5AxvHZHnM78s-0
 </details>
