@@ -6,12 +6,15 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 from django.views.decorators.cache import never_cache
 from django.views.decorators.http import require_POST
+from django.core.paginator import Paginator
 
 from .models import ForumPost, Vote, Comment
+
 
 # ================== Helpers ==================
 def _is_ajax(request):
     return request.headers.get("X-Requested-With") == "XMLHttpRequest"
+
 
 def _vote_payload(post, user):
     score = post.votes.aggregate(total=Sum("value"))["total"] or 0
@@ -24,6 +27,7 @@ def _vote_payload(post, user):
             or 0
         )
     return {"ok": True, "score": score, "user_vote": user_vote}
+
 
 def _node_from_comment(c, user_id=None):
     return {
@@ -38,6 +42,7 @@ def _node_from_comment(c, user_id=None):
         "replies_count": 0,
         "is_owner": bool(user_id and c.author_id == user_id),
     }
+
 
 def _build_comment_tree(post, user):
     all_comments = list(
@@ -68,9 +73,10 @@ def _build_comment_tree(post, user):
         dfs_count(r)
     return roots, len(all_comments)
 
+
 # ================== Posts ==================
 def post_list(request):
-    """List post + filter (q & mine) dan empty-state jika tidak ada hasil."""
+    """List post + filter (q & mine) + pagination (10 per halaman)."""
     q = (request.GET.get("q") or "").strip()
     mine = request.GET.get("mine") == "1"
 
@@ -86,19 +92,25 @@ def post_list(request):
     if mine and request.user.is_authenticated:
         qs = qs.filter(author=request.user)
 
-    # evaluasi sekarang supaya count pasti akurat
-    posts = list(qs)
+    filtered_count = qs.count()
+    is_filtered = bool(q or (mine and request.user.is_authenticated))
+
+    paginator = Paginator(qs, 10)
+    page_number = request.GET.get("page")
+    page_obj = paginator.get_page(page_number)
+
+    posts = list(page_obj.object_list)
     for p in posts:
         p.local_created = timezone.localtime(p.created_at)
-
-    is_filtered = bool(q or (mine and request.user.is_authenticated))
-    filtered_count = len(posts)
 
     return render(
         request,
         "forum/post_list.html",
         {
             "posts": posts,
+            "page_obj": page_obj,
+            "is_paginated": page_obj.has_other_pages(),
+            "paginator": paginator,
             "q": q,
             "mine": mine,
             "is_filtered": is_filtered,
@@ -106,33 +118,37 @@ def post_list(request):
         },
     )
 
+
 @login_required
 @require_POST
 def create_post(request):
     content = (request.POST.get("content") or "").strip()
     if not content:
-        # kalau AJAX, balas JSON error
-        if request.headers.get("X-Requested-With") == "XMLHttpRequest":
+        if _is_ajax(request):
             return JsonResponse({"ok": False, "error": "Content is required."}, status=400)
         messages.error(request, "Content is required.")
         return redirect("forum:post_list")
 
     post = ForumPost.objects.create(author=request.user, content=content)
 
-    # kalau AJAX, balas JSON sukses
-    if request.headers.get("X-Requested-With") == "XMLHttpRequest":
-        return JsonResponse({
-            "ok": True,
-            "id": post.id,
-            "author": request.user.username,
-            "content": post.content,
-            "created_iso": timezone.localtime(post.created_at).isoformat(),
-            "score": 0,
-            "comments": 0,
-        })
+    if _is_ajax(request):
+        return JsonResponse(
+            {
+                "ok": True,
+                "id": post.id,
+                "author": request.user.username,
+                "content": post.content,
+                "created_iso": timezone.localtime(post.created_at).isoformat(),
+                "score": 0,
+                "comments": 0,
+                # penting buat langsung munculin kebab tanpa reload
+                "can_edit": True,
+            }
+        )
 
     messages.success(request, "Post created.")
     return redirect("forum:post_list")
+
 
 @login_required
 @require_POST
@@ -151,6 +167,7 @@ def upvote(request, post_id):
         return JsonResponse(_vote_payload(post, request.user))
     return redirect("forum:post_list")
 
+
 @login_required
 @require_POST
 def downvote(request, post_id):
@@ -168,15 +185,17 @@ def downvote(request, post_id):
         return JsonResponse(_vote_payload(post, request.user))
     return redirect("forum:post_list")
 
+
 @login_required
 def delete_post(request, post_id):
     if request.method != "POST":
         return JsonResponse({"ok": False, "error": "method not allowed"}, status=405)
     post = get_object_or_404(ForumPost, id=post_id)
-    if request.user.id != post.author_id:
+    if request.user.id != post.author_id and not request.user.is_staff:
         return JsonResponse({"ok": False, "error": "forbidden"}, status=403)
     post.delete()
     return JsonResponse({"ok": True, "id": post_id})
+
 
 @login_required
 @require_POST
@@ -191,6 +210,7 @@ def edit_post(request, post_id):
     post.save(update_fields=["content"])
     return JsonResponse({"ok": True, "content": post.content})
 
+
 # ================== Comments ==================
 @never_cache
 def comment_list(request, post_id):
@@ -202,6 +222,7 @@ def comment_list(request, post_id):
     resp["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0"
     resp["Pragma"] = "no-cache"
     return resp
+
 
 @login_required
 @require_POST
