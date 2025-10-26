@@ -3,46 +3,40 @@
 
 {% block content %}
 <div class="min-h-[80vh] bg-[var(--indigo)] text-[var(--white)]">
-    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-10 space-y-6">
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-10 space-y-5 sm:space-y-6">
 
         <!-- HEADER -->
-        <div class="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
-        <div>
-            <h1 class="heading-font text-5xl sm:text-6xl leading-none px-1 text-[var(--yellow)]">FORUM</h1>
-            <span class="heading-font inline-block mt-2 ml-1 text-lg sm:text-xl px-3 py-1 rounded tracking-wide bg-[var(--white)] text-[var(--indigo-dark)]">SHARE YOUR THOUGHTS</span>
+        <div class="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3 sm:gap-4">
+        <div class="min-w-0">
+            <h1 class="heading-font text-4xl md:text-6xl leading-none px-1 text-[var(--yellow)]">FORUM</h1>
+            <span class="heading-font inline-block mt-2 ml-1 text-base md:text-xl px-3 py-1 rounded tracking-wide bg-[var(--white)] text-[var(--indigo-dark)]">SHARE YOUR THOUGHTS</span>
         </div>
 
         <div class="sm:self-end">
             {% if request.user.is_authenticated %}
             <button id="openModal"
-                    class="heading-font w-full sm:w-auto inline-flex items-center justify-center gap-2 px-7 sm:px-8 py-3 sm:py-3.5 text-xl sm:text-2xl font-extrabold tracking-wide rounded-xl bg-[var(--yellow)] text-[var(--indigo-dark)] shadow-lg hover:brightness-110 ring-2 ring-[var(--yellow)]/20 hover:ring-[var(--yellow)]/30 focus:outline-none focus-visible:ring-4 focus-visible:ring-[var(--yellow)]/40 transition">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M11 5h2v14h-2zM5 11h14v2H5z"/></svg>
+            class="heading-font w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 sm:px-7 py-2.5 sm:py-3 text-lg sm:text-2xl font-extrabold tracking-wide rounded-xl bg-[var(--yellow)] text-[var(--indigo-dark)] shadow-lg hover:brightness-110 ring-2 ring-[var(--yellow)]/20 hover:ring-[var(--yellow)]/30 focus:outline-none focus-visible:ring-4 focus-visible:ring-[var(--yellow)]/40 transition">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M11 5h2v14h-2zM5 11h14v2H5z"/></svg>
             ADD POST
             </button>
             {% else %}
-            <a href="{% url 'users:login' %}"
-            class="heading-font w-full sm:w-auto inline-block px-5 py-2 rounded-md bg-[var(--yellow)] text-[var(--indigo-dark)] shadow hover:brightness-110 transition">LOGIN TO POST</a>
+            <a href="{% url 'users:login' %}" class="heading-font w-full sm:w-auto inline-block px-5 py-2 rounded-md bg-[var(--yellow)] text-[var(--indigo-dark)] shadow hover:brightness-110 transition">LOGIN TO POST</a>
             {% endif %}
         </div>
         </div>
 
-        <!-- FILTER BAR -->
-        <form method="get"
-            class="rounded-xl border border-[var(--indigo-light)] bg-[var(--indigo)]/40 p-3 sm:p-4 -mb-2">
+        <!-- FILTER BAR (AJAX) -->
+        <form id="filterForm" method="get" class="rounded-xl border border-[var(--indigo-light)] bg-[var(--indigo)]/40 p-3 sm:p-4 -mb-2">
         <div class="flex flex-col gap-3 sm:flex-row sm:items-center">
-            <!-- Search -->
-            <div class="flex-1">
+            <div class="flex-1 min-w-0">
             <input type="text" name="q" value="{{ q|default:'' }}" placeholder="Search posts or author…"
-                    class="w-full rounded-md px-3 py-2 body-font bg-[var(--indigo-dark)] border border-[var(--indigo-light)] text-[var(--white)] placeholder:text-[var(--white)]/50 focus:outline-none"/>
+                class="w-full rounded-md px-3 py-2 body-font bg-[var(--indigo-dark)] border border-[var(--indigo-light)] text-[var(--white)] placeholder:text-[var(--white)]/50 focus:outline-none" />
             </div>
 
-            <!-- Controls row (mobile: checkbox kiri, tombol kanan) -->
             <div class="flex items-center gap-3 sm:gap-4 w-full sm:w-auto sm:ml-4">
             <label class="inline-flex items-center gap-2 text-sm body-font">
-                <input type="checkbox" name="mine" value="1"
-                    {% if mine %}checked{% endif %}
-                    {% if not request.user.is_authenticated %}disabled{% endif %}
-                    class="rounded border-[var(--indigo-light)] bg-[var(--indigo-dark)]"/>
+                <input type="checkbox" name="mine" value="1" {% if mine %}checked{% endif %} {% if not request.user.is_authenticated %}disabled{% endif %}
+                class="rounded border-[var(--indigo-light)] bg-[var(--indigo-dark)]" />
                 <span>My posts</span>
                 {% if not request.user.is_authenticated %}
                 <span class="opacity-60">(login required)</span>
@@ -50,7 +44,7 @@
             </label>
 
             <div class="ml-auto flex gap-2">
-                <button class="px-4 py-2 rounded-md bg-[var(--yellow)] text-[var(--indigo-dark)] heading-font">APPLY</button>
+                <button type="submit" class="px-4 py-2 rounded-md bg-[var(--yellow)] text-[var(--indigo-dark)] heading-font">APPLY</button>
                 <a href="{% url 'forum:post_list' %}"
                 class="px-4 py-2 rounded-md border border-[var(--indigo-light)] hover:bg-[var(--indigo)] body-font">Clear</a>
             </div>
@@ -59,145 +53,114 @@
 
         {% if q or mine %}
         <div class="mt-2 flex flex-wrap gap-2 text-xs body-font">
-            {% if q %}
-            <span class="px-2 py-1 rounded bg-[var(--indigo-dark)] border border-[var(--indigo-light)]">Search: “{{ q }}”</span>
-            {% endif %}
-            {% if mine %}
-            <span class="px-2 py-1 rounded bg-[var(--indigo-dark)] border border-[var(--indigo-light)]">My posts</span>
-            {% endif %}
+            {% if q %}<span class="px-2 py-1 rounded bg-[var(--indigo-dark)] border border-[var(--indigo-light)] max-w-full truncate">Search: “{{ q }}”</span>{% endif %}
+            {% if mine %}<span class="px-2 py-1 rounded bg-[var(--indigo-dark)] border border-[var(--indigo-light)]">My posts</span>{% endif %}
         </div>
         {% endif %}
         </form>
 
         <!-- POSTS + EMPTY STATES -->
-        <div id="forum-posts" class="space-y-6">
+        <div id="forum-posts" class="space-y-4 sm:space-y-6">
         {% if is_filtered and filtered_count == 0 %}
-            <!-- No results due to filters -->
-            <div class="rounded-2xl bg-[var(--indigo)] border border-[var(--indigo-light)] p-10 text-center">
-            <h2 class="heading-font text-2xl sm:text-3xl leading-none mb-2">No results</h2>
+            <div class="rounded-2xl bg-[var(--indigo)] border border-[var(--indigo-light)] p-8 sm:p-10 text-center">
+            <h2 class="heading-font text-xl sm:text-3xl leading-none mb-2">No results</h2>
             <p class="opacity-80 body-font mb-4">
                 {% if q %}No posts match <span class="font-semibold">“{{ q }}”</span>{% if mine %} in <span class="font-semibold">My posts</span>{% endif %}.{% else %}No posts found in <span class="font-semibold">My posts</span>.{% endif %}
             </p>
-            <a href="{% url 'forum:post_list' %}"
-                class="inline-flex items-center px-4 py-2 rounded-md bg-[var(--yellow)] text-[var(--indigo-dark)] shadow hover:brightness-110 transition">Clear filters</a>
+            <a href="{% url 'forum:post_list' %}" class="inline-flex items-center px-4 py-2 rounded-md bg-[var(--yellow)] text-[var(--indigo-dark)] shadow hover:brightness-110 transition">Clear filters</a>
             </div>
-
         {% elif not is_filtered and filtered_count == 0 %}
-            <!-- Forum truly empty -->
-            <div class="rounded-2xl bg-[var(--indigo)] border border-[var(--indigo-light)] p-10 text-center">
-            <h2 class="heading-font text-2xl sm:text-3xl leading-none mb-2">NO POST</h2>
+            <div class="rounded-2xl bg-[var(--indigo)] border border-[var(--indigo-light)] p-8 sm:p-10 text-center">
+            <h2 class="heading-font text-xl sm:text-3xl leading-none mb-2">NO POST</h2>
             <p class="opacity-70 body-font">Nobody has said anything yet...</p>
             </div>
-
         {% else %}
             {% for post in posts %}
-            <article id="post-{{ post.id }}"
-                    class="relative rounded-2xl bg-[var(--indigo-light)] border border-[var(--indigo-light)] p-4 sm:p-6">
-
+            <article id="post-{{ post.id }}" class="relative rounded-2xl bg-[var(--indigo-light)] border border-[var(--indigo-light)] p-3 sm:p-6">
             <!-- HEADER -->
             <div class="flex items-start gap-3 sm:gap-4">
                 <div class="flex-shrink-0">
-                <div class="w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-[var(--indigo-light)]
-                            flex items-center justify-center text-xl sm:text-2xl
-                            ring-1 ring-[rgb(245_245_245/0.25)] hover:ring-[rgb(245_245_245/0.4)]">👤</div>
+                <div class="w-10 h-10 sm:w-14 sm:h-14 rounded-full bg-[var(--indigo-light)] flex items-center justify-center text-lg sm:text-2xl ring-1 ring-[rgb(245_245_245/0.25)] hover:ring-[rgb(245_245_245/0.4)]">👤</div>
                 </div>
 
-                <div class="flex-1 min-w-0">
-                <div class="heading-font text-base sm:text-lg text-[var(--yellow)] leading-none truncate">
-                    {{ post.author.username|upper }}
-                </div>
-                <p class="mt-2 leading-relaxed text-[var(--white)]/90 text-justify body-font"
-                    id="post-content-{{ post.id }}">{{ post.content }}</p>
-                </div>
+<div class="flex-1 min-w-0 text-left">  <!-- paksa kiri di wrapper juga -->
+  <div class="heading-font text-xl sm:text-2xl text-[var(--yellow)] leading-none truncate">
+    {{ post.author.username|upper }}
+  </div>
+
+  <p id="post-content-{{ post.id }}"
+     class="mt-2 body-font text-left text-[15px] sm:text-base text-[var(--white)]/90
+            leading-[1.7] whitespace-pre-wrap break-all sm:break-words max-w-full hyphens-auto">
+    {{ post.content }}
+  </p>
+</div>
+
             </div>
 
             <!-- ACTION BAR -->
-            <div class="mt-6 grid grid-cols-2 items-end">
-                <!-- Comments -->
-                <button type="button"
-                        class="js-toggle-comments -ml-1 inline-flex items-center gap-2 text-sm px-3 py-2 rounded-md hover:bg-[var(--indigo)] body-font w-max"
-                        data-post="{{ post.id }}">
-                <svg aria-hidden="true" viewBox="0 0 20 20" width="18" height="18" class="opacity-80 align-middle">
-                    <path fill="currentColor" d="M10 1a9 9 0 00-9 9c0 1.947.79 3.58 1.935 4.957L.231 17.661A.784.784 0 00.785 19H10a9 9 0 009-9 9 9 0 00-9-9z"></path>
-                </svg>
-                <span class="sm:hidden font-medium">(<span id="c-count-{{ post.id }}">{{ post.active_comments|default:0 }}</span>)</span>
-                <span class="hidden sm:inline uppercase tracking-wide">COMMENTS (<span id="c-count-{{ post.id }}-lg">{{ post.active_comments|default:0 }}</span>)</span>
-                </button>
-
-                <!-- Right cluster: votes + time + menu -->
-                <div class="col-start-2 flex items-center gap-3 sm:gap-4 justify-end">
+            <div class="mt-5 sm:mt-6">
+                <div class="flex items-center gap-2 sm:gap-4 justify-between flex-wrap">
                 <!-- Votes -->
-                <span class="inline-flex items-center gap-3 rounded-full px-3 sm:px-4 py-1.5
-                            bg-[var(--white)] text-[var(--indigo-dark)]
-                            ring-1 ring-[rgb(0_0_0/0.08)] shadow-sm select-none">
-                    <form action="{% url 'forum:upvote' post.id %}" method="post"
-                        class="inline-flex js-vote" data-post-id="{{ post.id }}" data-role="up">
+                <span class="inline-flex items-center gap-2 sm:gap-3 rounded-full px-2.5 sm:px-4 py-1.5 bg-[var(--white)] text-[var(--indigo-dark)] ring-1 ring-[rgb(0_0_0/0.08)] shadow-sm select-none shrink-0">
+                    <form action="{% url 'forum:upvote' post.id %}" method="post" class="inline-flex js-vote" data-post-id="{{ post.id }}" data-role="up">
                     {% csrf_token %}
                     <button type="button" class="js-vote-btn group inline-flex items-center justify-center h-7 w-7 rounded" aria-label="Upvote">
                         <svg class="icon-solid hidden" viewBox="0 0 20 20" width="20" height="20" fill="currentColor"><path d="M10 19a3.966 3.966 0 01-3.96-3.962V10.98H2.838a1.731 1.731 0 01-1.605-1.073 1.734 1.734 0 01.377-1.895L9.364.254a.925.925 0 011.272 0l7.754 7.759c.498.499.646 1.242.376 1.894-.27.652-.9 1.073-1.605 1.073h-3.202v4.058A3.965 3.965 0 019.999 19H10z"/></svg>
-                        <svg class="icon-outline text-[rgb(0_0_0/0.45)] group-hover:text-[var(--indigo-dark)]"
-                            viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7 7h-4v6a3 3 0 0 1-6 0V10H5l7-7z"/></svg>
+                        <svg class="icon-outline text-[rgb(0_0_0/0.45)] group-hover:text-[var(--indigo-dark)]" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7 7h-4v6a3 3 0 0 1-6 0V10H5l7-7z"/></svg>
                     </button>
                     </form>
 
-                    <span class="body-font text-base js-score" id="score-{{ post.id }}">{{ post.score }}</span>
+                    <span class="body-font text-sm sm:text-base js-score" id="score-{{ post.id }}">{{ post.score }}</span>
 
-                    <form action="{% url 'forum:downvote' post.id %}" method="post"
-                        class="inline-flex js-vote" data-post-id="{{ post.id }}" data-role="down">
+                    <form action="{% url 'forum:downvote' post.id %}" method="post" class="inline-flex js-vote" data-post-id="{{ post.id }}" data-role="down">
                     {% csrf_token %}
                     <button type="button" class="js-vote-btn group inline-flex items-center justify-center h-7 w-7 rounded" aria-label="Downvote">
                         <svg class="icon-solid hidden" viewBox="0 0 20 20" width="20" height="20" fill="currentColor"><path d="M10 1a3.966 3.966 0 013.96 3.962V9.02h3.202c.706 0 1.335.42 1.605 1.073.27.652.122 1.396-.377 1.895l-7.754 7.759a.925.925 0 01-1.272 0l-7.754-7.76a1.734 1.734 0 01-.376-1.894c.27-.652.9-1.073 1.605-1.073h3.202V4.962A3.965 3.965 0 0110 1z"/></svg>
-                        <svg class="icon-outline text-[rgb(0_0_0/0.45)] group-hover:text-[var(--indigo-dark)]"
-                            viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21l-7-7h4V8a3 3 0 0 1 6 0v6h4l-7 7z"/></svg>
+                        <svg class="icon-outline text-[rgb(0_0_0/0.45)] group-hover:text-[var(--indigo-dark)]" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21l-7-7h4V8a3 3 0 0 1 6 0v6h4l-7 7z"/></svg>
                     </button>
                     </form>
                 </span>
 
-                <!-- Time -->
-                <div class="text-sm text-[var(--yellow)] whitespace-nowrap body-font">
+                <!-- Time + Kebab -->
+                <div class="flex items-center gap-2 sm:gap-3 ml-auto shrink-0">
+                    <div class="text-xs sm:text-sm text-[var(--yellow)] whitespace-nowrap body-font">
                     {% if post.local_created %}{{ post.local_created|date:"g:i A · M d, Y" }}{% else %}{{ post.created_at|date:"g:i A · M d, Y" }}{% endif %}
-                </div>
-
-                <!-- Kebab (author only) -->
-                {% if request.user.is_authenticated and request.user.id == post.author_id %}
-                <div class="relative">
-                    <button type="button"
-                            class="js-post-menu inline-flex h-10 w-10 items-center justify-center rounded-full text-[var(--yellow)] hover:bg-[var(--yellow)] hover:text-[var(--indigo-dark)] transition"
-                            aria-haspopup="menu" aria-expanded="false" data-id="{{ post.id }}">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-                        <path d="M12 7a2 2 0 110-4 2 2 0 010 4zm0 7a2 2 0 110-4 2 2 0 010 4zm0 7a2 2 0 110-4 2 2 0 010 4z"></path>
-                    </svg>
-                    <span class="sr-only">Open menu</span>
-                    </button>
-
-                    <div class="js-menu-panel hidden absolute right-0 bottom-12 z-10 min-w-[140px]
-                                rounded-xl border border-[var(--indigo-dark)] bg-[var(--indigo)]
-                                shadow-lg overflow-hidden">
-                    <button class="js-post-edit w-full text-left px-4 py-2 hover:bg-[var(--indigo-dark)]" data-id="{{ post.id }}">Edit</button>
-                    <button class="js-menu-delete w-full text-left px-4 py-2 text-red-300 hover:bg-red-500/10" data-id="{{ post.id }}">Delete</button>
                     </div>
 
+                    {% if request.user.is_authenticated and request.user.id == post.author_id %}
+                    <div class="relative">
+                    <button type="button" class="js-post-menu inline-flex h-9 w-9 sm:h-10 sm:w-10 items-center justify-center rounded-full text-[var(--yellow)] hover:bg-[var(--yellow)] hover:text-[var(--indigo-dark)] transition" aria-haspopup="menu" aria-expanded="false" data-id="{{ post.id }}">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 7a2 2 0 110-4 2 2 0 010 4zm0 7a2 2 0 110-4 2 2 0 010 4zm0 7a2 2 0 110-4 2 2 0 010 4z"></path></svg>
+                        <span class="sr-only">Open menu</span>
+                    </button>
+                    <div class="js-menu-panel hidden absolute right-0 bottom-12 z-10 min-w-[140px] rounded-xl border border-[var(--indigo-dark)] bg-[var(--indigo)] shadow-lg overflow-hidden">
+                        <button class="js-post-edit w-full text-left px-4 py-2 hover:bg-[var(--indigo-dark)]" data-id="{{ post.id }}">Edit</button>
+                        <button class="js-menu-delete w-full text-left px-4 py-2 text-red-300 hover:bg-red-500/10" data-id="{{ post.id }}">Delete</button>
+                    </div>
                     <form id="del-form-{{ post.id }}" action="{% url 'forum:delete_post' post.id %}" method="post" class="hidden js-delete">
-                    {% csrf_token %}
+                        {% csrf_token %}
                     </form>
+                    </div>
+                    {% endif %}
                 </div>
-                {% endif %}
+                </div>
+
+                <!-- Row 2: Comments -->
+                <div class="mt-5 pt-5 border-t border-[var(--white)]">
+                <button type="button" class="js-toggle-comments -ml-1 inline-flex items-center gap-2 text-sm px-3 py-2 rounded-md hover:bg-[var(--indigo)] body-font" data-post="{{ post.id }}">
+                    <svg aria-hidden="true" viewBox="0 0 20 20" width="18" height="18" class="opacity-80 align-middle"><path fill="currentColor" d="M10 1a9 9 0 00-9 9c0 1.947.79 3.58 1.935 4.957L.231 17.661A.784.784 0 00.785 19H10a9 9 0 009-9 9 9 0 00-9-9z"></path></svg>
+                    <span class="font-medium">Comments (<span id="c-count-{{ post.id }}">{{ post.active_comments|default:0 }}</span>)</span>
+                </button>
                 </div>
             </div>
 
-            <hr class="mt-5 border-[var(--indigo-dark)]"/>
-
             <!-- COMMENTS -->
-            <section class="mt-4">
+            <section class="mt-3 sm:mt-4">
                 <div id="c-wrap-{{ post.id }}" class="hidden space-y-4">
-                <div class="flex items-center gap-4">
-                    {% if request.user.is_authenticated %}
-                    <a href="#" class="js-post-reply text-sm underline underline-offset-2 opacity-70 hover:opacity-100"
-                        data-post="{{ post.id }}">Reply</a>
-                    {% endif %}
+                <div class="flex items-center gap-3">
+                    {% if request.user.is_authenticated %}<a href="#" class="js-post-reply text-sm underline underline-offset-2 opacity-70 hover:opacity-100" data-post="{{ post.id }}">Reply</a>{% endif %}
                     <span class="text-xs opacity-60 body-font">to this post.</span>
                 </div>
-
                 <div id="c-compose-{{ post.id }}"></div>
                 <ul id="c-list-{{ post.id }}" class="space-y-4"></ul>
                 </div>
@@ -207,130 +170,281 @@
         {% endif %}
         </div>
 
-    </div>
-    </div>
-
-    {% if request.user.is_authenticated %}
-    <!-- MODAL: Create Post -->
-    <div id="postModal" class="fixed inset-0 hidden flex items-center justify-center">
-    <div class="absolute inset-0 bg-black/60"></div>
-    <div class="relative z-10 w-full max-w-xl rounded-2xl border border-[var(--indigo-light)]
-                p-6 bg-[var(--indigo)] text-[var(--white)]">
-        <h3 class="heading-font text-2xl text-center leading-none text-[var(--yellow)]">TELL US YOUR STORY</h3>
-        <p class="text-center opacity-70 mt-2 mb-4 body-font">What stories do you have right now?</p>
-
-        <form action="{% url 'forum:create_post' %}" method="post" class="space-y-3">
-        {% csrf_token %}
-        <textarea name="content" rows="5"
-            class="w-full rounded-xl border border-[var(--indigo-dark)]
-                bg-[var(--indigo-dark)] text-[var(--white)] p-3 focus:outline-none body-font"
-            placeholder="Write your thoughts here..." required></textarea>
-        <div class="flex justify-end gap-3 pt-2">
-            <button type="button" id="closeModal"
-                    class="heading-font px-5 py-2 rounded-md border border-[var(--indigo-dark)]
-                        hover:bg-[var(--indigo-light)] transition">CANCEL</button>
-            <button class="heading-font px-5 py-2 rounded-md bg-[var(--yellow)] text-[var(--indigo-dark)]
-                        shadow hover:brightness-110 transition">POST</button>
-        </div>
+        <!-- PAGINATION -->
+        {% if is_paginated %}
+        <form id="pagerForm" method="get" class="hidden">
+        {% if q %}<input type="hidden" name="q" value="{{ q }}">{% endif %}
+        {% if mine %}<input type="hidden" name="mine" value="1">{% endif %}
+        <input type="hidden" name="page" id="pagerPage">
         </form>
-    </div>
-    </div>
-    {% endif %}
 
-    <!-- MODAL: Confirm Delete -->
-    <div id="confirmDelete" class="fixed inset-0 hidden items-center justify-center">
-    <div class="absolute inset-0 bg-black/60"></div>
-    <div class="relative z-50 w-[320px] rounded-xl border border-[var(--indigo-light)]
-                bg-[var(--indigo)] text-[var(--white)] p-5">
-        <div class="heading-font text-lg mb-2">Delete?</div>
-        <p class="text-sm opacity-75 body-font">This action cannot be undone.</p>
-        <div class="mt-5 flex justify-end gap-2">
-        <button id="confirmCancel" class="px-4 py-2 rounded border border-[var(--indigo-dark)]
-                                        hover:bg-[var(--indigo-light)]">Cancel</button>
-        <button id="confirmOk" class="heading-font px-4 py-2 rounded bg-[var(--yellow)] text-[var(--indigo-dark)]">Delete</button>
+        <nav id="pagerNav" aria-label="Pagination" class="mt-6 sm:mt-8 flex justify-center">
+        <ul class="flex items-center gap-2 sm:gap-3">
+            <li>
+            <button type="button" {% if page_obj.has_previous %}data-page="{{ page_obj.previous_page_number }}"{% endif %}
+                class="js-page w-9 h-9 sm:w-10 sm:h-10 rounded-full grid place-items-center bg-[var(--indigo-light)] text-[var(--white)]/90 border border-[var(--indigo-dark)] hover:bg-[var(--indigo)] disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-[var(--indigo-light)]">&lt;</button>
+            </li>
+            {% for num in page_obj.paginator.page_range %}
+            <li>
+            {% if num == page_obj.number %}
+            <span class="w-9 h-9 sm:w-10 sm:h-10 rounded-full grid place-items-center bg-[var(--yellow)] text-[var(--indigo-dark)] font-bold border border-[var(--yellow)]">{{ num }}</span>
+            {% else %}
+            <button type="button" data-page="{{ num }}" class="js-page w-9 h-9 sm:w-10 sm:h-10 rounded-full grid place-items-center bg-[var(--indigo-light)] text-[var(--white)]/90 border border-[var(--indigo-dark)] hover:bg-[var(--indigo)]">{{ num }}</button>
+            {% endif %}
+            </li>
+            {% endfor %}
+            <li>
+            <button type="button" {% if page_obj.has_next %}data-page="{{ page_obj.next_page_number }}"{% endif %}
+                class="js-page w-9 h-9 sm:w-10 sm:h-10 rounded-full grid place-items-center bg-[var(--indigo-light)] text-[var(--white)]/90 border border-[var(--indigo-dark)] hover:bg-[var(--indigo)] disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-[var(--indigo-light)]">&gt;</button>
+            </li>
+        </ul>
+        </nav>
+        {% endif %}
+
+        {% if request.user.is_authenticated %}
+        <!-- MODAL: Create Post -->
+        <div id="postModal" class="fixed inset-0 hidden flex items-center justify-center">
+        <div class="absolute inset-0 bg-black/60"></div>
+        <div class="relative z-10 w-full max-w-xl rounded-2xl border border-[var(--indigo-light)] p-6 bg-[var(--indigo)] text-[var(--white)]">
+            <h3 class="heading-font text-2xl text-center leading-none text-[var(--yellow)]">TELL US YOUR STORY</h3>
+            <p class="text-center opacity-70 mt-2 mb-4 body-font">What stories do you have right now?</p>
+
+            <form id="createPostForm" action="{% url 'forum:create_post' %}" method="post" class="space-y-3">
+            {% csrf_token %}
+            <textarea name="content" rows="5" class="w-full rounded-xl border border-[var(--indigo-dark)] bg-[var(--indigo-dark)] text-[var(--white)] p-3 focus:outline-none body-font" placeholder="Write your thoughts here..." required></textarea>
+            <div class="flex justify-end gap-3 pt-2">
+                <button type="button" id="closeModal" class="heading-font px-5 py-2 rounded-md border border-[var(--indigo-dark)] hover:bg-[var(--indigo-light)] transition">CANCEL</button>
+                <button type="submit" class="heading-font px-5 py-2 rounded-md bg-[var(--yellow)] text-[var(--indigo-dark)] shadow hover:brightness-110 transition">POST</button>
+            </div>
+            </form>
         </div>
+        </div>
+        {% endif %}
+
+        <!-- MODAL: Confirm Delete -->
+        <div id="confirmDelete" class="fixed inset-0 hidden items-center justify-center">
+        <div class="absolute inset-0 bg-black/60"></div>
+        <div class="relative z-50 w-[320px] rounded-xl border border-[var(--indigo-light)] bg-[var(--indigo)] text-[var(--white)] p-5">
+            <div class="heading-font text-lg mb-2">Delete?</div>
+            <p class="text-sm opacity-75 body-font">This action cannot be undone.</p>
+            <div class="mt-5 flex justify-end gap-2">
+            <button id="confirmCancel" class="px-4 py-2 rounded border border-[var(--indigo-dark)] hover:bg-[var(--indigo-light)]">Cancel</button>
+            <button id="confirmOk" class="heading-font px-4 py-2 rounded bg-[var(--yellow)] text-[var(--indigo-dark)]">Delete</button>
+            </div>
+        </div>
+        </div>
+
     </div>
     </div>
 
     <!-- ===== SCRIPTS ===== -->
     <script>
-    /* Modal */
+    /* ---------- Modal ---------- */
     const modal=document.getElementById('postModal'); const openBtn=document.getElementById('openModal'); const closeBtn=document.getElementById('closeModal');
     function openModal(){if(!modal)return;modal.classList.remove('hidden');modal.classList.add('flex');document.body.style.overflow='hidden';}
     function closeModal(){if(!modal)return;modal.classList.add('hidden');modal.classList.remove('flex');document.body.style.overflow='';}
     if(openBtn)openBtn.addEventListener('click',openModal); if(closeBtn)closeBtn.addEventListener('click',closeModal); if(modal)modal.addEventListener('click',e=>{if(e.target===modal)closeModal();});
 
-    /* Toast */
-    function showToast(msg){if(window.showToast){window.showToast(msg);return;}let t=document.getElementById('__toast');if(!t){t=document.createElement('div');t.id='__toast';t.className='fixed bottom-6 left-1/2 -translate-x-1/2 px-4 py-2 rounded shadow z-50 transition-opacity';t.style.background='var(--indigo-dark)';t.style.color='var(--white)';t.style.opacity=0;document.body.appendChild(t);}t.textContent=msg;t.style.opacity=1;setTimeout(()=>t.style.opacity=0,1500);}
+    /* ---------- Toast ---------- */
+    function showToast(msg){let t=document.getElementById('__toast');if(!t){t=document.createElement('div');t.id='__toast';t.className='fixed bottom-6 left-1/2 -translate-x-1/2 px-4 py-2 rounded shadow z-50 transition-opacity';t.style.background='var(--indigo-dark)';t.style.color='var(--white)';t.style.opacity=0;document.body.appendChild(t);}t.textContent=msg;t.style.opacity=1;setTimeout(()=>t.style.opacity=0,1500);}
 
-    /* Utils */
-    window.IS_AUTH = ("{{ request.user.is_authenticated|yesno:'true,false' }}" === "true");
-    function el(id){return document.getElementById(id);} function esc(s){return (s||'').toString().replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;', "'":'&#39;'}[m]));}
-    function csrfFrom(scope=document){const input=scope.querySelector('input[name="csrfmiddlewaretoken"]');if(input) return input.value;const m=document.cookie.match(/(?:^|;\s*)csrftoken=([^;]+)/);return m?decodeURIComponent(m[1]):'';}
-    function fmtDate(iso){try{const d=new Date(iso);if(isNaN(d)) return esc(iso||'');const t=new Intl.DateTimeFormat('en-US',{hour:'numeric',minute:'2-digit',hour12:true,timeZone:'Asia/Jakarta'}).format(d);const mdY=new Intl.DateTimeFormat('en-US',{month:'short',day:'2-digit',year:'numeric',timeZone:'Asia/Jakarta'}).format(d);return `${t} · ${mdY}`;}catch{return esc(iso||'');}}
+    /* ---------- Utils ---------- */
+    window.IS_AUTH=("{{ request.user.is_authenticated|yesno:'true,false' }}"==="true");
+    function el(id){return document.getElementById(id);}
+    function esc(s){return (s||'').toString().replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));}
+    function csrfFrom(scope=document){const input=scope.querySelector('input[name="csrfmiddlewaretoken"]');if(input)return input.value;const m=document.cookie.match(/(?:^|;\s*)csrftoken=([^;]+)/);return m?decodeURIComponent(m[1]):'';}
+    function fmtDate(iso){try{const d=new Date(iso);if(isNaN(d))return esc(iso||'');const t=new Intl.DateTimeFormat('en-US',{hour:'numeric',minute:'2-digit',hour12:true,timeZone:'Asia/Jakarta'}).format(d);const mdY=new Intl.DateTimeFormat('en-US',{month:'short',day:'2-digit',year:'numeric',timeZone:'Asia/Jakarta'}).format(d);return `${t} · ${mdY}`;}catch{return esc(iso||'');}}
 
-    /* Votes */
-    function setActiveIcons(form,isActive){const solid=form.querySelector('.icon-solid'); const outline=form.querySelector('.icon-outline'); if(!solid||!outline) return; if(isActive){solid.classList.remove('hidden'); outline.classList.add('hidden');} else {solid.classList.add('hidden'); outline.classList.remove('hidden');}}
-    document.querySelectorAll('form.js-vote .js-vote-btn').forEach(btn=>{btn.addEventListener('click',async(e)=>{const form=e.currentTarget.closest('form.js-vote'); const csrf=csrfFrom(form); const postId=form.dataset.postId; try{const res=await fetch(form.action,{method:'POST',headers:{'X-CSRFToken':csrf,'X-Requested-With':'XMLHttpRequest'}}); if(!res.ok)throw 0; const data=await res.json(); if(!data.ok)throw 0; const scoreEl=document.getElementById(`score-${postId}`); if(scoreEl) scoreEl.textContent=data.score; const pill=form.closest('span'); const upForm=pill.querySelector('form.js-vote[data-role="up"]'); const downForm=pill.querySelector('form.js-vote[data-role="down"]'); setActiveIcons(upForm,data.user_vote===1); setActiveIcons(downForm,data.user_vote===-1);}catch{ showToast('Failed to vote'); }});});
+    /* URL templates */
+    const UPVOTE_TPL="{% url 'forum:upvote' 0 %}";
+    const DOWNVOTE_TPL="{% url 'forum:downvote' 0 %}";
+    const DEL_TPL="{% url 'forum:delete_post' 0 %}";
+    const EDIT_TPL="{% url 'forum:edit_post' 0 %}";
+    const COMMENT_ADD_TPL="{% url 'forum:comment_add' 0 %}";
+    const COMMENT_LIST_TPL="{% url 'forum:comment_list' 0 %}";
 
-    /* Confirm delete */
-    const confirmWrap = document.getElementById('confirmDelete'); const confirmOk = document.getElementById('confirmOk'); const confirmCancel = document.getElementById('confirmCancel'); let pendingAction = null;
-    function openConfirm(runFn){ pendingAction = runFn; confirmWrap.classList.remove('hidden'); confirmWrap.classList.add('flex'); } function closeConfirm(){ confirmWrap.classList.add('hidden'); confirmWrap.classList.remove('flex'); pendingAction=null; }
-    if(confirmCancel) confirmCancel.addEventListener('click', closeConfirm); if(confirmWrap) confirmWrap.addEventListener('click', e=>{ if(e.target===confirmWrap) closeConfirm(); });
-    if(confirmOk){ confirmOk.addEventListener('click', async ()=>{ if(!pendingAction){ closeConfirm(); return; } try{ await pendingAction(); } finally{ closeConfirm(); } }); }
+    /* ---------- Voting (delegation) ---------- */
+    function setActiveIcons(form,isActive){if(!form)return;const s=form.querySelector('.icon-solid');const o=form.querySelector('.icon-outline');if(!s||!o)return;if(isActive){s.classList.remove('hidden');o.classList.add('hidden');}else{s.classList.add('hidden');o.classList.remove('hidden');}}
+    document.addEventListener('click',async(e)=>{const voteBtn=e.target.closest('form.js-vote .js-vote-btn');if(!voteBtn)return;e.preventDefault();const form=voteBtn.closest('form.js-vote');const csrf=csrfFrom(form);const postId=form.dataset.postId;try{const res=await fetch(form.action,{method:'POST',headers:{'X-CSRFToken':csrf,'X-Requested-With':'XMLHttpRequest'}});if(!res.ok)throw 0;const data=await res.json();if(!data.ok)throw 0;const scoreEl=el(`score-${postId}`);if(scoreEl)scoreEl.textContent=data.score;const pill=form.closest('span');const upForm=pill.querySelector('form.js-vote[data-role="up"]');const downForm=pill.querySelector('form.js-vote[data-role="down"]');setActiveIcons(upForm,data.user_vote===1);setActiveIcons(downForm,data.user_vote===-1);}catch{showToast('Failed to vote');}});
 
-    /* Menu (kebab) */
-    let OPEN_MENU = null;
-    document.addEventListener('click',(e)=>{const btn = e.target.closest('.js-post-menu'); const clickedInsideMenu = e.target.closest('.js-menu-panel'); if(btn){e.preventDefault(); const panel = btn.parentElement.querySelector('.js-menu-panel'); if(OPEN_MENU && OPEN_MENU!==panel){ OPEN_MENU.classList.add('hidden'); } panel.classList.toggle('hidden'); OPEN_MENU = panel.classList.contains('hidden') ? null : panel; return;} if(OPEN_MENU && !clickedInsideMenu){ OPEN_MENU.classList.add('hidden'); OPEN_MENU=null; }});
-    document.addEventListener('click',(e)=>{const delBtn = e.target.closest('.js-menu-delete'); if(!delBtn) return; e.preventDefault(); const id = delBtn.dataset.id; const form = document.getElementById(`del-form-${id}`); const csrf = csrfFrom(form); const url  = form.action; const article=delBtn.closest('article'); openConfirm(async ()=>{const res=await fetch(url,{method:'POST',headers:{'X-CSRFToken':csrf,'X-Requested-With':'XMLHttpRequest'}}); if(!res.ok) throw 0; const data=await res.json(); if(!data.ok) throw 0; article.style.transition='opacity .2s, transform .2s'; article.style.opacity='0'; article.style.transform='scale(0.98)'; setTimeout(()=>article.remove(),180); showToast('Post deleted');});});
+    /* ---------- Confirm delete ---------- */
+    const confirmWrap=el('confirmDelete');const confirmOk=el('confirmOk');const confirmCancel=el('confirmCancel');let pendingAction=null;
+    function openConfirm(runFn){pendingAction=runFn;confirmWrap.classList.remove('hidden');confirmWrap.classList.add('flex');}
+    function closeConfirm(){confirmWrap.classList.add('hidden');confirmWrap.classList.remove('flex');pendingAction=null;}
+    if(confirmCancel)confirmCancel.addEventListener('click',closeConfirm);
+    if(confirmWrap)confirmWrap.addEventListener('click',e=>{if(e.target===confirmWrap)closeConfirm();});
+    if(confirmOk){confirmOk.addEventListener('click',async()=>{if(!pendingAction){closeConfirm();return;}try{await pendingAction();}finally{closeConfirm();}});}
 
-    /* Comments (tree) */
-    function oneCommentHTML(postId, c, level=0){const STEP = 14; const indent = Math.max(level - 1, 0) * STEP; const replyCount = (Array.isArray(c.replies) ? c.replies.length : (c.replies_count || 0)) || 0; const hasChildren = replyCount > 0; return `
+    /* Delete (delegation) */
+    document.addEventListener('click',(e)=>{const delBtn=e.target.closest('.js-menu-delete');if(!delBtn)return;e.preventDefault();const id=delBtn.dataset.id;const form=el(`del-form-${id}`);if(!form){showToast('Form delete tidak ditemukan');return;}const csrf=csrfFrom(form);const url=form.action;const article=delBtn.closest('article');openConfirm(async()=>{const res=await fetch(url,{method:'POST',headers:{'X-CSRFToken':csrf,'X-Requested-With':'XMLHttpRequest'}});if(!res.ok)throw 0;const data=await res.json();if(!data.ok)throw 0;article.style.transition='opacity .2s, transform .2s';article.style.opacity='0';article.style.transform='scale(0.98)';setTimeout(()=>article.remove(),180);showToast('Post deleted');});});
+
+    /* ---------- Kebab menu ---------- */
+    let OPEN_MENU=null;
+    document.addEventListener('click',(e)=>{const btn=e.target.closest('.js-post-menu');const inside=e.target.closest('.js-menu-panel');if(btn){e.preventDefault();const panel=btn.parentElement.querySelector('.js-menu-panel');if(OPEN_MENU&&OPEN_MENU!==panel){OPEN_MENU.classList.add('hidden');}panel.classList.toggle('hidden');OPEN_MENU=panel.classList.contains('hidden')?null:panel;return;}if(OPEN_MENU&&!inside){OPEN_MENU.classList.add('hidden');OPEN_MENU=null;}});
+
+    /* ---------- Comments ---------- */
+    function oneCommentHTML(postId,c,level=0){const STEP=14;const indent=Math.max(level-1,0)*STEP;const replyCount=(Array.isArray(c.replies)?c.replies.length:(c.replies_count||0))||0;const hasChildren=replyCount>0;return `
     <li id="c-${c.id}" class="rounded-lg">
     <div class="flex">
-        ${level > 0 ? `<div style="width:${indent}px"></div>` : ``}
-        ${level > 0 ? `<div class="relative mr-3" style="width:${STEP}px"><span class="absolute left-1/2 -translate-x-1/2 top-0 bottom-0 border-l border-[var(--indigo-dark)]/50"></span></div>` : ``}
+        ${level>0?`<div style="width:${indent}px"></div>`:``}
+        ${level>0?`<div class="relative mr-3" style="width:${STEP}px"><span class="absolute left-1/2 -translate-x-1/2 top-0 bottom-0 border-l border-[var(--indigo-dark)]/50"></span></div>`:``}
         <div class="flex-1 relative">
-        ${level > 0 ? `<span class="absolute -left-3 top-4 w-3 border-t border-[var(--indigo-dark)]/50"></span>` : ``}
+        ${level>0?`<span class="absolute -left-3 top-4 w-3 border-t border-[var(--indigo-dark)]/50"></span>`:``}
         <div class="text-sm text-[var(--yellow)] flex items-center gap-2">
             <span class="font-bebas text-base sm:text-lg leading-none tracking-wide">${esc(c.author)}</span>
-            <span class="body-font"> · ${esc(fmtDate(c.created_iso || c.created))}</span>
+            <span class="body-font"> · ${esc(fmtDate(c.created_iso||c.created))}</span>
         </div>
-        <div class="mt-1 body-font whitespace-pre-line text-justify">${esc(c.content)}</div>
+        <div class="mt-1 body-font whitespace-pre-line text-justify break-words hyphens-auto">${esc(c.content)}</div>
         <div class="mt-2 flex items-center gap-4 body-font">
-            ${window.IS_AUTH ? `<a href="#" class="js-reply-btn text-sm underline underline-offset-2 opacity-50 hover:opacity-70" data-post="${postId}" data-id="${c.id}">Reply</a>` : ``}
-            ${hasChildren ? `<a href="#" class="js-replies-toggle text-sm underline underline-offset-2 opacity-50 hover:opacity-70" data-id="${c.id}" data-count="${replyCount}">View replies (${replyCount})</a>` : ``}
+            ${window.IS_AUTH?`<a href="#" class="js-reply-btn text-sm underline underline-offset-2 opacity-50 hover:opacity-70" data-post="${postId}" data-id="${c.id}">Reply</a>`:``}
+            ${hasChildren?`<a href="#" class="js-replies-toggle text-sm underline underline-offset-2 opacity-50 hover:opacity-70" data-id="${c.id}" data-count="${replyCount}">View replies (${replyCount})</a>`:``}
         </div>
-        <div class="js-replies space-y-4 mt-4 ${hasChildren ? 'hidden' : ''}"></div>
+        <div class="js-replies space-y-4 mt-4 ${hasChildren?'hidden':''}"></div>
         </div>
     </div>
     </li>`;}
-    function renderTree(postId, items, container, level=0){for(const c of items){container.insertAdjacentHTML('beforeend', oneCommentHTML(postId,c,level)); const sub = document.getElementById(`c-${c.id}`).querySelector('.js-replies'); if(sub && c.replies && c.replies.length){renderTree(postId, c.replies, sub, level+1);}}}
-    async function loadComments(postId){const list=el(`c-list-${postId}`); if(!list) return; list.innerHTML=''; try{const url=`{% url 'forum:comment_list' 0 %}`.replace('/0/','/'+postId+'/')+`?t=${Date.now()}`; const res=await fetch(url,{headers:{'X-Requested-With':'XMLHttpRequest','Cache-Control':'no-cache'},cache:'no-store'}); if(!res.ok) throw 0; const data=await res.json(); if(!data.ok) throw 0; renderTree(postId, data.items, list, 0); const cnt=document.getElementById(`c-count-${postId}`); if(cnt) cnt.textContent=data.count; const cntLg=document.getElementById(`c-count-${postId}-lg`); if(cntLg) cntLg.textContent=data.count;}catch{ showToast('Failed to load comments'); }}
-    document.querySelectorAll('.js-toggle-comments').forEach(btn=>{btn.addEventListener('click', async ()=>{const postId=btn.dataset.post; const wrap=el(`c-wrap-${postId}`); if(!wrap) return; const opening=wrap.classList.contains('hidden'); wrap.classList.toggle('hidden'); if(opening){ await loadComments(postId); } });});
+    function renderTree(postId,items,container,level=0){for(const c of items){container.insertAdjacentHTML('beforeend',oneCommentHTML(postId,c,level));const sub=el(`c-${c.id}`)?.querySelector('.js-replies');if(sub&&c.replies&&c.replies.length){renderTree(postId,c.replies,sub,level+1);}}}
+    async function loadComments(postId){const list=el(`c-list-${postId}`);if(!list)return;list.innerHTML='';try{const url=COMMENT_LIST_TPL.replace('/0/','/'+postId+'/')+`?t=${Date.now()}`;const res=await fetch(url,{headers:{'X-Requested-With':'XMLHttpRequest','Cache-Control':'no-cache'},cache:'no-store'});if(!res.ok)throw 0;const data=await res.json();if(!data.ok)throw 0;renderTree(postId,data.items,list,0);const cnt=el(`c-count-${postId}`);if(cnt)cnt.textContent=data.count;}catch{showToast('Failed to load comments');}}
+    document.addEventListener('click',async(e)=>{const btn=e.target.closest('.js-toggle-comments');if(!btn)return;const postId=btn.dataset.post;const wrap=el(`c-wrap-${postId}`);if(!wrap)return;const opening=wrap.classList.contains('hidden');wrap.classList.toggle('hidden');if(opening){await loadComments(postId);}});
 
-    /* Compose (single-open) */
-    function composeHTML(actionUrl, postId, parentId){return `
+    /* Compose */
+    function composeHTML(actionUrl,postId,parentId){return `
     <form class="js-compose mt-3 flex flex-col gap-2" data-post="${postId}" ${parentId?`data-parent="${parentId}"`:''} action="${actionUrl}" method="post">
     ${(document.querySelector('input[name=csrfmiddlewaretoken]')||{outerHTML:''}).outerHTML}
-    <textarea name="content" rows="4" class="w-full rounded-xl border border-[var(--indigo-dark)]
-            bg-[var(--indigo-dark)] text-[var(--white)] p-3 focus:outline-none body-font"
-            placeholder="Write a reply..." required></textarea>
+    <textarea name="content" rows="4" class="w-full rounded-xl border border-[var(--indigo-dark)] bg-[var(--indigo-dark)] text-[var(--white)] p-3 focus:outline-none body-font" placeholder="Write a reply..." required></textarea>
     <div class="flex justify-end gap-2">
         <button class="px-4 py-2 rounded bg-[var(--yellow)] text-[var(--indigo-dark)] js-compose-send">Reply</button>
         <button type="button" class="px-4 py-2 rounded border border-[var(--indigo-dark)] js-compose-cancel">Cancel</button>
     </div>
-</form>`;}
-let OPEN_COMPOSE=null; function closeCompose(){ if(OPEN_COMPOSE){ OPEN_COMPOSE.remove(); OPEN_COMPOSE=null; } }
-function openCompose(container, actionUrl, postId, parentId=null){closeCompose(); container.insertAdjacentHTML('beforeend', composeHTML(actionUrl, postId, parentId)); OPEN_COMPOSE = container.querySelector('form.js-compose:last-of-type'); setTimeout(()=>OPEN_COMPOSE?.querySelector('textarea')?.focus(),0);}
-document.addEventListener('click',(e)=>{const pr=e.target.closest('.js-post-reply'); if(!pr) return; e.preventDefault(); const postId=pr.dataset.post; const holder=el(`c-compose-${postId}`); const actionUrl=`{% url 'forum:comment_add' 0 %}`.replace('/0/','/'+postId+'/'); openCompose(holder, actionUrl, postId, null);});
-document.addEventListener('click',(e)=>{const rep = e.target.closest('.js-reply-btn'); if(!rep) return; e.preventDefault(); const postId   = rep.dataset.post; const parentId = rep.dataset.id; const li       = document.getElementById(`c-${parentId}`); if(!li) return; const sub    = li.querySelector('.js-replies'); const toggle = li.querySelector('.js-replies-toggle'); if(sub && sub.classList.contains('hidden')){ sub.classList.remove('hidden'); if (toggle) { const count = parseInt(toggle.dataset.count || '0', 10); toggle.textContent = `Hide replies (${count})`; } } const actionUrl = `{% url 'forum:comment_add' 0 %}`.replace('/0/','/'+postId+'/'); openCompose(sub || li, actionUrl, postId, parentId);});
-document.addEventListener('click',(e)=>{ if(e.target.closest('.js-compose-cancel')){ e.preventDefault(); closeCompose(); }});
-document.addEventListener('click', async (e)=>{const btn=e.target.closest('.js-compose-send'); if(!btn) return; e.preventDefault(); const form=e.target.closest('form.js-compose'); if(!form) return; const postId=form.dataset.post, parentId=form.dataset.parent||null, csrf=csrfFrom(form); const fd=new FormData(form); if(parentId) fd.append('parent', parentId); try{const res=await fetch(form.action,{method:'POST',headers:{'X-Requested-With':'XMLHttpRequest','X-CSRFToken':csrf},body:fd}); if(!res.ok) throw 0; const data=await res.json(); if(!data.ok) throw 0; if(parentId){const parentLi=el(`c-${parentId}`), sub=parentLi.querySelector('.js-replies'), toggle=parentLi.querySelector('.js-replies-toggle'); sub.classList.remove('hidden'); sub.insertAdjacentHTML('beforeend', oneCommentHTML(postId,data.item,1)); const newCount=(toggle?parseInt(toggle.dataset.count||'0',10):0)+1; if(toggle){ toggle.dataset.count=String(newCount); toggle.textContent=`Hide replies (${newCount})`; } else { const controls=parentLi.querySelector('.mt-2.flex.items-center.gap-4.body-font'); if(controls){ controls.insertAdjacentHTML('beforeend', `<a href="#" class="js-replies-toggle text-sm underline underline-offset-2 opacity-50 hover:opacity-70" data-id="${parentId}" data-count="${newCount}">Hide replies (${newCount})</a>`); } } } else { const list=el(`c-list-${postId}`); list.insertAdjacentHTML('afterbegin', oneCommentHTML(postId,data.item,0)); } const cnt=document.getElementById(`c-count-${postId}`); if(cnt) cnt.textContent=(parseInt(cnt.textContent||'0',10)+1); const cntLg=document.getElementById(`c-count-${postId}-lg`); if(cntLg) cntLg.textContent=(parseInt(cntLg.textContent||'0',10)+1); closeCompose(); }catch{ showToast('Failed to send'); }});
-document.addEventListener('click',(e)=>{const tog=e.target.closest('.js-replies-toggle'); if(!tog) return; e.preventDefault(); const id=tog.dataset.id, li=el(`c-${id}`), sub=li?.querySelector('.js-replies'); if(!sub) return; const count=parseInt(tog.dataset.count||'0',10); const willShow=sub.classList.contains('hidden'); sub.classList.toggle('hidden'); tog.textContent = willShow ? `Hide replies (${count})` : `View replies (${count})`;});
+    </form>`;}
+    let OPEN_COMPOSE=null;function closeCompose(){if(OPEN_COMPOSE){OPEN_COMPOSE.remove();OPEN_COMPOSE=null;}}
+    function openCompose(container,actionUrl,postId,parentId=null){closeCompose();container.insertAdjacentHTML('beforeend',composeHTML(actionUrl,postId,parentId));OPEN_COMPOSE=container.querySelector('form.js-compose:last-of-type');setTimeout(()=>OPEN_COMPOSE?.querySelector('textarea')?.focus(),0);}
+    document.addEventListener('click',(e)=>{const pr=e.target.closest('.js-post-reply');if(!pr)return;e.preventDefault();const postId=pr.dataset.post;const holder=el(`c-compose-${postId}`);const actionUrl=COMMENT_ADD_TPL.replace('/0/','/'+postId+'/');openCompose(holder,actionUrl,postId,null);});
+    document.addEventListener('click',(e)=>{const rep=e.target.closest('.js-reply-btn');if(!rep)return;e.preventDefault();const postId=rep.dataset.post;const parentId=rep.dataset.id;const li=el(`c-${parentId}`);if(!li)return;const sub=li.querySelector('.js-replies');const toggle=li.querySelector('.js-replies-toggle');if(sub&&sub.classList.contains('hidden')){sub.classList.remove('hidden');if(toggle){const count=parseInt(toggle.dataset.count||'0',10);toggle.textContent=`Hide replies (${count})`;}}const actionUrl=COMMENT_ADD_TPL.replace('/0/','/'+postId+'/');openCompose(sub||li,actionUrl,postId,parentId);});
+    document.addEventListener('click',(e)=>{if(e.target.closest('.js-compose-cancel')){e.preventDefault();closeCompose();}});
+    document.addEventListener('click',async(e)=>{const btn=e.target.closest('.js-compose-send');if(!btn)return;e.preventDefault();const form=e.target.closest('form.js-compose');if(!form)return;const postId=form.dataset.post,parentId=form.dataset.parent||null,csrf=csrfFrom(form);const fd=new FormData(form);if(parentId)fd.append('parent',parentId);try{const res=await fetch(form.action,{method:'POST',headers:{'X-Requested-With':'XMLHttpRequest','X-CSRFToken':csrf},body:fd});if(!res.ok)throw 0;const data=await res.json();if(!data.ok)throw 0;if(parentId){const parentLi=el(`c-${parentId}`),sub=parentLi.querySelector('.js-replies'),toggle=parentLi.querySelector('.js-replies-toggle');sub.classList.remove('hidden');sub.insertAdjacentHTML('beforeend',oneCommentHTML(postId,data.item,1));const newCount=(toggle?parseInt(toggle.dataset.count||'0',10):0)+1;if(toggle){toggle.dataset.count=String(newCount);toggle.textContent=`Hide replies (${newCount})`;}else{const controls=parentLi.querySelector('.mt-2.flex.items-center.gap-4.body-font');if(controls){controls.insertAdjacentHTML('beforeend',`<a href="#" class="js-replies-toggle text-sm underline underline-offset-2 opacity-50 hover:opacity-70" data-id="${parentId}" data-count="${newCount}">Hide replies (${newCount})</a>`);}}}else{const list=el(`c-list-${postId}`);list.insertAdjacentHTML('afterbegin',oneCommentHTML(postId,data.item,0));}const cnt=el(`c-count-${postId}`);if(cnt)cnt.textContent=(parseInt(cnt.textContent||'0',10)+1);closeCompose();}catch{showToast('Failed to send');}});
+    document.addEventListener('click',(e)=>{const tog=e.target.closest('.js-replies-toggle');if(!tog)return;e.preventDefault();const id=tog.dataset.id,li=el(`c-${id}`),sub=li?.querySelector('.js-replies');if(!sub)return;const count=parseInt(tog.dataset.count||'0',10);const willShow=sub.classList.contains('hidden');sub.classList.toggle('hidden');tog.textContent=willShow?`Hide replies (${count})`:`View replies (${count})`;});
 
-/* Inline edit */
-document.addEventListener('click',(e)=>{const pEdit=e.target.closest('.js-post-edit'); if(!pEdit) return; const id=pEdit.dataset.id, contentEl=document.getElementById('post-content-'+id); if(!contentEl) return; const dropdown=pEdit.closest('.js-menu-panel'); if(dropdown){ dropdown.classList.add('hidden'); OPEN_MENU=null; } if(document.getElementById('post-edit-form-'+id)) return; const csrfHTML=(document.querySelector('input[name=csrfmiddlewaretoken]')||{outerHTML:''}).outerHTML; contentEl.insertAdjacentHTML('afterend', `<form id="post-edit-form-${id}" class="mt-3 flex flex-col gap-2 js-post-edit-form" data-id="${id}">${csrfHTML}<textarea rows="4" class="w-full rounded-xl border border-[var(--indigo-dark)] bg-[var(--indigo-dark)] text-[var(--white)] p-3 focus:outline-none body-font">${contentEl.textContent.trim()}</textarea><div class="flex gap-2 justify-end"><button class="px-3 py-1.5 rounded bg-[var(--yellow)] text-[var(--indigo-dark)] js-post-save">Save</button><button type="button" class="px-3 py-1.5 rounded border border-[var(--indigo-dark)] js-post-cancel">Cancel</button></div></form>`);});
-document.addEventListener('click', async (e)=>{if(e.target.closest('.js-post-cancel')){ e.preventDefault(); e.target.closest('form.js-post-edit-form')?.remove(); return; } const save=e.target.closest('.js-post-save'); if(!save) return; e.preventDefault(); const form=e.target.closest('form.js-post-edit-form'); const id=form.dataset.id; const ta=form.querySelector('textarea'); const csrf=csrfFrom(form); try{const url=`{% url 'forum:edit_post' 0 %}`.replace('/0/','/'+id+'/'); const res=await fetch(url,{method:'POST',headers:{'X-Requested-With':'XMLHttpRequest','X-CSRFToken':csrf,'Content-Type':'application/x-www-form-urlencoded'},body:new URLSearchParams({content:ta.value})}); if(!res.ok) throw 0; const data=await res.json(); if(!data.ok) throw 0; document.getElementById('post-content-'+id).textContent=data.content; form.remove(); showToast('Post updated'); }catch{ showToast('Failed to update'); }});
+    /* ---------- Inline edit ---------- */
+    document.addEventListener('click',(e)=>{const pEdit=e.target.closest('.js-post-edit');if(!pEdit)return;const id=pEdit.dataset.id,contentEl=el('post-content-'+id);if(!contentEl)return;const dropdown=pEdit.closest('.js-menu-panel');if(dropdown){dropdown.classList.add('hidden');OPEN_MENU=null;}if(el('post-edit-form-'+id))return;const csrfHTML=(document.querySelector('input[name=csrfmiddlewaretoken]')||{outerHTML:''}).outerHTML;contentEl.insertAdjacentHTML('afterend',`<form id="post-edit-form-${id}" class="mt-3 flex flex-col gap-2 js-post-edit-form" data-id="${id}">${csrfHTML}<textarea rows="4" class="w-full rounded-xl border border-[var(--indigo-dark)] bg-[var(--indigo-dark)] text-[var(--white)] p-3 focus:outline-none body-font">${contentEl.textContent.trim()}</textarea><div class="flex gap-2 justify-end"><button class="px-3 py-1.5 rounded bg-[var(--yellow)] text-[var(--indigo-dark)] js-post-save">Save</button><button type="button" class="px-3 py-1.5 rounded border border-[var(--indigo-dark)] js-post-cancel">Cancel</button></div></form>`);});
+    document.addEventListener('click',async(e)=>{if(e.target.closest('.js-post-cancel')){e.preventDefault();e.target.closest('form.js-post-edit-form')?.remove();return;}const save=e.target.closest('.js-post-save');if(!save)return;e.preventDefault();const form=e.target.closest('form.js-post-edit-form');const id=form.dataset.id;const ta=form.querySelector('textarea');const csrf=csrfFrom(form);try{const url=EDIT_TPL.replace('/0/','/'+id+'/');const res=await fetch(url,{method:'POST',headers:{'X-Requested-With':'XMLHttpRequest','X-CSRFToken':csrf,'Content-Type':'application/x-www-form-urlencoded'},body:new URLSearchParams({content:ta.value})});if(!res.ok)throw 0;const data=await res.json();if(!data.ok)throw 0;el('post-content-'+id).textContent=data.content;form.remove();showToast('Post updated');}catch{showToast('Failed to update');}});
+
+    /* ---------- Pagination (AJAX) ---------- */
+    async function fetchAndSwap(url){try{const res=await fetch(url,{headers:{'X-Requested-With':'XMLHttpRequest'}});if(!res.ok)throw 0;const html=await res.text();const doc=new DOMParser().parseFromString(html,'text/html');const postsNew=doc.querySelector('#forum-posts');const pagerNew=doc.querySelector('#pagerNav');if(postsNew){el('forum-posts').innerHTML=postsNew.innerHTML;}if(pagerNew&&el('pagerNav')){el('pagerNav').innerHTML=pagerNew.innerHTML;}window.scrollTo({top:0,behavior:'smooth'});}catch{location.href=url;}}
+    document.addEventListener('click',(e)=>{const pgBtn=e.target.closest('.js-page');if(!pgBtn)return;e.preventDefault();const page=pgBtn.dataset.page;if(!page)return;const form=el('pagerForm');if(!form){return;}const params=new URLSearchParams(new FormData(form));params.set('page',page);const url=`{% url 'forum:post_list' %}?${params.toString()}`;fetchAndSwap(url);});
+
+    /* ---------- Filter (AJAX) ---------- */
+    const filterForm=document.getElementById('filterForm');
+    if(filterForm){filterForm.addEventListener('submit',(e)=>{e.preventDefault();const params=new URLSearchParams(new FormData(filterForm));const url=`{% url 'forum:post_list' %}?${params.toString()}`;fetchAndSwap(url);});}
+
+    /* ---------- AJAX Create Post ---------- */
+    function renderNewPostHTML(d){
+    const when=fmtDate(d.created_iso);
+    const canEdit=!!d.can_edit; // backend harus kirim ini
+    return `
+    <article id="post-${d.id}" class="relative rounded-2xl bg-[var(--indigo-light)] border border-[var(--indigo-light)] p-3 sm:p-6" style="opacity:0;transform:translateY(-6px);">
+    <div class="flex items-start gap-3 sm:gap-4">
+        <div class="w-10 h-10 sm:w-14 sm:h-14 rounded-full bg-[var(--indigo-light)] flex items-center justify-center text-lg sm:text-2xl ring-1 ring-[rgb(245_245_245/0.25)]">👤</div>
+        <div class="flex-1 min-w-0">
+        <div class="heading-font text-sm sm:text-lg text-[var(--yellow)] leading-none truncate">${esc((d.author||'').toUpperCase())}</div>
+        <p id="post-content-${d.id}" class="mt-2 body-font text-[15px] sm:text-base text-[var(--white)]/90 leading-[1.7] text-justify whitespace-pre-line break-words hyphens-auto">${esc(d.content)}</p>
+        </div>
+    </div>
+
+    <div class="mt-5 sm:mt-6">
+        <div class="flex items-center gap-2 sm:gap-4 justify-between flex-wrap">
+        <span class="inline-flex items-center gap-2 sm:gap-3 rounded-full px-2.5 sm:px-4 py-1.5 bg-[var(--white)] text-[var(--indigo-dark)] ring-1 ring-[rgb(0_0_0/0.08)] shadow-sm select-none shrink-0">
+            <form action="${UPVOTE_TPL.replace('/0/','/'+d.id+'/')}" method="post" class="inline-flex js-vote" data-post-id="${d.id}" data-role="up">
+            ${(document.querySelector('input[name=csrfmiddlewaretoken]')||{outerHTML:''}).outerHTML}
+            <button type="button" class="js-vote-btn group inline-flex items-center justify-center h-7 w-7 rounded" aria-label="Upvote">
+                <svg class="icon-solid hidden" viewBox="0 0 20 20" width="20" height="20" fill="currentColor"><path d="M10 19a3.966 3.966 0 01-3.96-3.962V10.98H2.838a1.731 1.731 0 01-1.605-1.073 1.734 1.734 0 01.377-1.895L9.364.254a.925.925 0 011.272 0l7.754 7.759c.498.499.646 1.242.376 1.894-.27.652-.9 1.073-1.605 1.073h-3.202v4.058A3.965 3.965 0 019.999 19H10z"/></svg>
+                <svg class="icon-outline text-[rgb(0_0_0/0.45)] group-hover:text-[var(--indigo-dark)]" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7 7h-4v6a3 3 0 0 1-6 0V10H5l7-7z"/></svg>
+            </button>
+            </form>
+            <span class="body-font text-sm sm:text-base js-score" id="score-${d.id}">0</span>
+            <form action="${DOWNVOTE_TPL.replace('/0/','/'+d.id+'/')}" method="post" class="inline-flex js-vote" data-post-id="${d.id}" data-role="down">
+            ${(document.querySelector('input[name=csrfmiddlewaretoken]')||{outerHTML:''}).outerHTML}
+            <button type="button" class="js-vote-btn group inline-flex items-center justify-center h-7 w-7 rounded" aria-label="Downvote">
+                <svg class="icon-solid hidden" viewBox="0 0 20 20" width="20" height="20" fill="currentColor"><path d="M10 1a3.966 3.966 0 013.96 3.962V9.02h3.202c.706 0 1.335.42 1.605 1.073.27.652.122 1.396-.377 1.895l-7.754 7.759a.925.925 0 01-1.272 0l-7.754-7.76a1.734 1.734 0 01-.376-1.894c.27-.652.9-1.073 1.605-1.073h3.202V4.962A3.965 3.965 0 0110 1z"/></svg>
+                <svg class="icon-outline text-[rgb(0_0_0/0.45)] group-hover:text-[var(--indigo-dark)]" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21l-7-7h4V8a3 3 0 0 1 6 0v6h4l-7 7z"/></svg>
+            </button>
+            </form>
+        </span>
+
+        <div class="flex items-center gap-2 sm:gap-3 ml-auto shrink-0">
+            <div class="text-xs sm:text-sm text-[var(--yellow)] whitespace-nowrap body-font">${esc(when)}</div>
+
+            ${ (window.IS_AUTH && canEdit) ? `
+            <div class="relative">
+            <button type="button" class="js-post-menu inline-flex h-9 w-9 sm:h-10 sm:w-10 items-center justify-center rounded-full text-[var(--yellow)] hover:bg-[var(--yellow)] hover:text-[var(--indigo-dark)] transition" aria-haspopup="menu" aria-expanded="false" data-id="${d.id}">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                    <circle cx="12" cy="5"  r="2" />
+                    <circle cx="12" cy="12" r="2" />
+                    <circle cx="12" cy="19" r="2" />
+                    </svg>
+                <span class="sr-only">Open menu</span>
+            </button>
+            <div class="js-menu-panel hidden absolute right-0 bottom-12 z-10 min-w-[140px] rounded-xl border border-[var(--indigo-dark)] bg-[var(--indigo)] shadow-lg overflow-hidden">
+                <button class="js-post-edit w-full text-left px-4 py-2 hover:bg-[var(--indigo-dark)]" data-id="${d.id}">Edit</button>
+                <button class="js-menu-delete w-full text-left px-4 py-2 text-red-300 hover:bg-red-500/10" data-id="${d.id}">Delete</button>
+            </div>
+            <form id="del-form-${d.id}" action="${DEL_TPL.replace('/0/','/'+d.id+'/')}" method="post" class="hidden js-delete">
+                ${(document.querySelector('input[name=csrfmiddlewaretoken]')||{outerHTML:''}).outerHTML}
+            </form>
+            </div>`: ``}
+        </div>
+        </div>
+
+        <div class="mt-5 pt-5 border-t border-[var(--white)]">
+        <button type="button" class="js-toggle-comments -ml-1 inline-flex items-center gap-2 text-sm px-3 py-2 rounded-md hover:bg-[var(--indigo)] body-font" data-post="${d.id}">
+            <svg aria-hidden="true" viewBox="0 0 20 20" width="18" height="18" class="opacity-80 align-middle"><path fill="currentColor" d="M10 1a9 9 0 00-9 9c0 1.947.79 3.58 1.935 4.957L.231 17.661A.784.784 0 00.785 19H10a9 9 0 009-9 9 9 0 00-9-9z"></path></svg>
+            <span class="font-medium">Comments (<span id="c-count-${d.id}">0</span>)</span>
+        </button>
+        </div>
+    </div>
+
+    <section class="mt-3 sm:mt-4">
+        <div id="c-wrap-${d.id}" class="hidden space-y-4">
+        <div class="flex items-center gap-3">
+            ${window.IS_AUTH ? `<a href="#" class="js-post-reply text-sm underline underline-offset-2 opacity-70 hover:opacity-100" data-post="${d.id}">Reply</a>` : ``}
+            <span class="text-xs opacity-60 body-font">to this post.</span>
+        </div>
+        <div id="c-compose-${d.id}"></div>
+        <ul id="c-list-${d.id}" class="space-y-4"></ul>
+        </div>
+    </section>
+    </article>`;
+    }
+
+    (function(){
+    const form=el('createPostForm'); if(!form) return;
+    form.addEventListener('submit',async(e)=>{
+        e.preventDefault();
+        const btn=form.querySelector('button[type="submit"]');
+        const fd=new FormData(form);
+        const csrf=csrfFrom(form);
+        try{
+        if(btn){btn.disabled=true;btn.style.opacity='0.7';}
+        const res=await fetch(form.action,{method:'POST',headers:{'X-CSRFToken':csrf,'X-Requested-With':'XMLHttpRequest','Accept':'application/json'},body:fd});
+        if(!res.ok) throw 0;
+        const data=await res.json();
+        if(!data.ok) throw 0;
+
+        form.reset(); closeModal();
+
+        const wrap=el('forum-posts');
+        if(wrap){
+            wrap.insertAdjacentHTML('afterbegin',renderNewPostHTML(data));
+            requestAnimationFrame(()=>{const elNew=el(`post-${data.id}`);if(elNew){elNew.style.transition='opacity .22s ease, transform .22s ease';elNew.style.opacity='1';elNew.style.transform='none';}});
+            const items=wrap.querySelectorAll('article'); if(items.length>10){ items[items.length-1].remove(); }
+        }
+        showToast('Post created');
+        }catch{
+        showToast('Gagal membuat post');
+        }finally{
+        if(btn){btn.disabled=false;btn.style.opacity='';}
+        }
+    });
+    })();
 </script>
 {% endblock %}

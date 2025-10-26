@@ -60,6 +60,46 @@
     {% endfor %}
   </div>
 
+<!-- Pagination -->
+{% if memberships.paginator.num_pages > 1 %}
+  <div class="flex justify-center mt-10 space-x-2">
+
+    <!-- Tombol Sebelumnya -->
+    {% if memberships.has_previous %}
+      <a href="?page={{ memberships.previous_page_number }}"
+         class="px-3 py-2 bg-gray-600 text-white rounded-full hover:bg-[var(--yellow)] hover:text-[var(--indigo-dark)] transition">
+         &lt;
+      </a>
+    {% else %}
+      <span class="px-3 py-2 bg-gray-700 text-gray-400 rounded-full">&lt;</span>
+    {% endif %}
+
+    <!-- Nomor Halaman -->
+    {% for num in memberships.paginator.page_range %}
+      {% if memberships.number == num %}
+        <span class="px-3 py-2 bg-[var(--yellow)] text-[var(--indigo-dark)] rounded-full font-bold">{{ num }}</span>
+      {% else %}
+        <a href="?page={{ num }}"
+           class="px-3 py-2 bg-gray-600 text-white rounded-full hover:bg-[var(--yellow)] hover:text-[var(--indigo-dark)] transition">
+           {{ num }}
+        </a>
+      {% endif %}
+    {% endfor %}
+
+    <!-- Tombol Berikutnya -->
+    {% if memberships.has_next %}
+      <a href="?page={{ memberships.next_page_number }}"
+         class="px-3 py-2 bg-gray-600 text-white rounded-full hover:bg-[var(--yellow)] hover:text-[var(--indigo-dark)] transition">
+         &gt;
+      </a>
+    {% else %}
+      <span class="px-3 py-2 bg-gray-700 text-gray-400 rounded-full">&gt;</span>
+    {% endif %}
+
+  </div>
+{% endif %}
+
+
   <!-- Tombol Kembali -->
   <div class="flex justify-center mt-12">
     <a href="{% url 'community:home' %}" 
