@@ -1,6 +1,8 @@
 {% extends 'base.html' %}
 {% load static %}
 
+
+{% block content %}
 <div class="min-h-screen bg-[var(--indigo)] text-[var(--white)]">
 
   {% if is_member %}
@@ -20,3 +22,5 @@
 </div>
 
 {% include 'booking/_booking_ajax_scripts.html' %}
+
+{% endblock content %}
