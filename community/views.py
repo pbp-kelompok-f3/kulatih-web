@@ -187,7 +187,6 @@ def edit_message(request, id, msg_id):
         form = MessageForm(request.POST, instance=message)
         if form.is_valid():
             form.save()
-            messages.success(request, "Pesan berhasil diperbarui.")
             return redirect('community:my_group', id=id)
     else:
         form = MessageForm(instance=message)
