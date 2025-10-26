@@ -39,61 +39,64 @@
   </div>
 
   <script src="https://unpkg.com/aos@2.3.4/dist/aos.js"></script>
-  <script>
-    document.addEventListener("DOMContentLoaded", function () {
-      const loader = document.getElementById("loader");
-      const content = document.getElementById("content");
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+  const loader = document.getElementById("loader");
+  const content = document.getElementById("content");
 
-      if (content) content.style.display = "none";
+  if (content) content.style.display = "none";
 
-      function initAOS() {
-        if (typeof AOS !== "undefined") {
-          AOS.init({
-            duration: 1000,
-            once: true,
-            offset: 100,
-            easing: "ease-out-cubic",
-            delay: 50,
-          });
-        }
-      }
+  function initAOS() {
+    if (typeof AOS !== "undefined") {
+      AOS.init({
+        duration: 1000,
+        once: true,
+        offset: 100,
+        easing: "ease-out-cubic",
+        delay: 50,
+      });
+    }
+  }
 
-      function hideLoader() {
-        if (!loader || loader.style.display === "none") return;
-        loader.style.transition = "opacity 0.6s ease";
-        loader.style.opacity = 0;
-        setTimeout(() => {
-          loader.style.display = "none";
-          content.style.display = "block";
-          initAOS();
-        }, 600);
-      }
+  function hideLoader() {
+    if (!loader || loader.style.display === "none") return;
+    loader.style.transition = "opacity 0.6s ease";
+    loader.style.opacity = 0;
+    setTimeout(() => {
+      loader.style.display = "none";
+      content.style.display = "block";
+      initAOS();
+    }, 600);
+  }
 
-      window.addEventListener("load", hideLoader);
-      setTimeout(hideLoader, 2000);
-    });
+  window.addEventListener("load", hideLoader);
+  setTimeout(hideLoader, 2000);
+  window.addEventListener("pageshow", function(event) {
+    if (event.persisted) {
+      if (loader) loader.style.display = "none";
+      if (content) content.style.display = "block";
+    }
+  });
+});
+document.addEventListener("click", function (e) {
+  const loader = document.getElementById("loader");
+  const content = document.getElementById("content");
+  const excluded = e.target.closest(".delete-btn, .js-post-reply, .js-reply-btn, .js-replies-toggle, .js-compose, .js-toggle-comments, [data-review-open]");
 
-    document.addEventListener("click", function (e) {
-      const loader = document.getElementById("loader");
-      const content = document.getElementById("content");
+  if (
+    e.target.tagName === "A" &&
+    e.target.href &&
+    !e.target.target &&
+    !excluded
+  ) {
+    if (loader && content) {
+      loader.style.display = "flex";
+      loader.style.opacity = 1;
+      content.style.display = "none";
+    }
+  }
+});
+</script>
 
-      if (
-        e.target.tagName === "A" &&
-        e.target.href &&
-        !e.target.target &&
-        !e.target.classList.contains("js-post-reply") &&
-        !e.target.classList.contains("js-reply-btn") &&
-        !e.target.classList.contains("js-replies-toggle") &&
-        !e.target.closest(".js-compose") &&
-        !e.target.closest(".js-toggle-comments")
-      ) {
-        if (loader && content) {
-          loader.style.display = "flex";
-          loader.style.opacity = 1;
-          content.style.display = "none";
-        }
-      }
-    });
-  </script>
 </body>
 </html>

@@ -13,8 +13,8 @@
     <div class="w-full mb-10">
       <div
         class="w-full p-2 rounded-2xl border-2 border-[rgba(255,255,255,0.25)] 
-               bg-[rgba(255,255,255,0.05)] backdrop-blur-sm 
-               shadow-[inset_0_0_10px_rgba(255,255,255,0.08)] flex gap-3">
+                bg-[rgba(255,255,255,0.05)] backdrop-blur-sm 
+                shadow-[inset_0_0_10px_rgba(255,255,255,0.08)] flex gap-3">
         <button id="btn-upcoming"
           class="flex-1 py-3 font-semibold text-sm rounded-lg transition-all duration-200 
                 bg-[var(--yellow)] text-[var(--indigo-dark)] shadow-inner 
@@ -63,9 +63,9 @@
 
         <!-- Coach Info -->
         <div class="flex items-center gap-4 mb-4">
-          <img src="{{ b.coach.user.profile.avatar.url|default:'/static/images/default-user.png' }}" 
-               alt="coach photo"
-               class="w-16 h-16 rounded-full border border-[rgba(255,255,255,0.3)] object-cover">
+          <img src="{{ b.coach.profile_photo|default:'https://icon-library.com/images/default-profile-icon/default-profile-icon-24.jpg' }}" 
+              alt="coach photo"
+              class="w-16 h-16 rounded-full border border-[rgba(255,255,255,0.3)] object-cover">
           <div>
             <p class="text-xs opacity-60">COACH</p>
             <p class="heading-font text-lg font-bold text-[var(--white)]">
@@ -89,8 +89,8 @@
             Reschedule
           </button>
           <a href="#" 
-             class="ajax-cancel-btn heading-font px-4 py-1.5 bg-[#b43d3d] hover:bg-[#9b3535] text-white rounded-md text-sm transition-all"
-             data-url="{% url 'booking:ajax_cancel' b.id %}">
+              class="ajax-cancel-btn heading-font px-4 py-1.5 bg-[#b43d3d] hover:bg-[#9b3535] text-white rounded-md text-sm transition-all"
+              data-url="{% url 'booking:ajax_cancel' b.id %}">
             Cancel
           </a>
         </div>
@@ -131,7 +131,7 @@
         <h2 class="heading-font text-2xl mb-2">NO BOOKINGS YET</h2>
         <p class="opacity-60">You haven't booked any coaches.</p>
         <a href="{% url 'users:coach_list' %}" 
-           class="mt-6 inline-block px-6 py-2 bg-[var(--yellow)] text-[var(--indigo-dark)] font-semibold rounded-md hover:bg-yellow-400 transition-all">Find a Coach</a>
+            class="mt-6 inline-block px-6 py-2 bg-[var(--yellow)] text-[var(--indigo-dark)] font-semibold rounded-md hover:bg-yellow-400 transition-all">Find a Coach</a>
       </div>
     {% endif %}
 
@@ -151,7 +151,6 @@
 
 {% include 'booking/_booking_ajax_scripts.html' %}
 
-{# RF: Auto-switch ke "View your review" saat halaman dibuka (tanpa ubah UI temanmu) #}
 <script>
 document.addEventListener('DOMContentLoaded', async function () {
   const btns = document.querySelectorAll('[data-review-open]');

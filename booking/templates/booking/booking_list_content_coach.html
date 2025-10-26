@@ -13,8 +13,8 @@
     <div class="w-full mb-10">
       <div
         class="w-full p-2 rounded-2xl border-2 border-[rgba(255,255,255,0.25)] 
-               bg-[rgba(255,255,255,0.05)] backdrop-blur-sm 
-               shadow-[inset_0_0_10px_rgba(255,255,255,0.08)] flex gap-3">
+                bg-[rgba(255,255,255,0.05)] backdrop-blur-sm 
+                shadow-[inset_0_0_10px_rgba(255,255,255,0.08)] flex gap-3">
         <button id="btn-upcoming"
           class="flex-1 py-3 font-semibold text-sm rounded-lg transition-all duration-200 
                 bg-[var(--yellow)] text-[var(--indigo-dark)] shadow-inner 
@@ -63,9 +63,9 @@
 
         <!-- Member Info -->
         <div class="flex items-center gap-4 mb-4">
-          <img src="{{ b.member.user.profile.avatar.url|default:'/static/images/default-user.png' }}" 
-               alt="member photo"
-               class="w-16 h-16 rounded-full border border-[rgba(255,255,255,0.3)] object-cover">
+          <img src="{{ b.member.profile_photo|default:'https://icon-library.com/images/default-profile-icon/default-profile-icon-24.jpg' }}" 
+              alt="member photo"
+              class="w-16 h-16 rounded-full border border-[rgba(255,255,255,0.3)] object-cover">
           <div>
             <p class="text-xs opacity-60">MEMBER</p>
             <p class="heading-font text-lg font-bold text-[var(--white)]">
@@ -84,14 +84,14 @@
         <div class="flex flex-wrap gap-2 mt-auto pt-3 border-t border-[rgba(255,255,255,0.1)]">
           {% if b.status == 'rescheduled' %}
             <a href="#" class="ajax-accept-res-btn heading-font px-4 py-1.5 bg-green-700 hover:bg-green-800 rounded-md text-sm text-white transition-all"
-               data-url="{% url 'booking:ajax_accept_reschedule' b.id %}">Accept</a>
+                data-url="{% url 'booking:ajax_accept_reschedule' b.id %}">Accept</a>
             <a href="#" class="ajax-reject-res-btn heading-font px-4 py-1.5 bg-[#b43d3d] hover:bg-[#9b3535] rounded-md text-sm text-white transition-all"
-               data-url="{% url 'booking:ajax_reject_reschedule' b.id %}">Reject</a>
+                data-url="{% url 'booking:ajax_reject_reschedule' b.id %}">Reject</a>
           {% elif b.status == 'pending' %}
             <a href="#" class="ajax-confirm-btn heading-font px-4 py-1.5 bg-[var(--indigo-dark)] hover:bg-[var(--indigo)] text-white rounded-md text-sm transition-all"
-               data-url="{% url 'booking:ajax_confirm_booking' b.id %}">Confirm</a>
+                data-url="{% url 'booking:ajax_confirm_booking' b.id %}">Confirm</a>
             <a href="#" class="ajax-cancel-btn heading-font px-4 py-1.5 bg-[#b43d3d] hover:bg-[#9b3535] text-white rounded-md text-sm transition-all"
-               data-url="{% url 'booking:ajax_cancel' b.id %}">Cancel</a>
+                data-url="{% url 'booking:ajax_cancel' b.id %}">Cancel</a>
           {% endif %}
         </div>
       </article>
