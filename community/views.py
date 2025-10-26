@@ -101,16 +101,29 @@ def join_community(request, id):
 # MY COMMUNITY LIST (daftar komunitas yang di join)
 @login_required
 def my_community_list(request):
+    q = request.GET.get('q', '').strip()  # ambil input dari search bar
+
     memberships = Membership.objects.filter(
         user=request.user
     ).select_related('community').order_by('joined_at')
 
+    # filter berdasarkan pencarian (hanya dalam komunitas yang dijoin user)
+    if q:
+        memberships = memberships.filter(
+            Q(community__name__icontains=q) |
+            Q(community__short_description__icontains=q)
+        )
+
     # aktifkan pagination
-    paginator = Paginator(memberships, 6)  
+    paginator = Paginator(memberships, 6)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
 
-    return render(request, 'community/my_list.html', {'memberships': page_obj})
+    return render(request, 'community/my_list.html', {
+        'memberships': page_obj,
+        'q': q,  # biar search bar tetap menampilkan query terakhir
+    })
+
 
 
 
