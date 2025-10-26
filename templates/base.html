@@ -8,33 +8,81 @@
 
   <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Be+Vietnam+Pro:wght@400;700&display=swap" rel="stylesheet">
   <script src="https://cdn.tailwindcss.com"></script>
-
   <link rel="stylesheet" href="{% static 'css/global.css' %}" />
-
   <link href="https://unpkg.com/aos@2.3.4/dist/aos.css" rel="stylesheet">
+  <style>
+    /* fallback hidden class */
+    #loader.hidden {
+      display: none !important;
+    }
+  </style>
 </head>
 
-<body class="bg-[#0d0b26] text-white font-bevietnam">
-  {% include 'navbar.html' %}
-  {% block content %}{% endblock content %}
-  {% include 'toast.html' %}
-  {% include 'modal.html' %}
-  {% include 'footer.html' %}
+<body class="bg-[#0d0b26] text-white font-bevietnam relative">
 
-  <script src="https://unpkg.com/aos@2.3.4/dist/aos.js"></script>
-  <script>
-    window.addEventListener('load', function() {
+  <!-- Loader Animatif -->
+  <div id="loader" class="fixed inset-0 bg-[#0d0b26]/90 z-50 flex flex-col items-center justify-center">
+    <div class="relative w-16 h-16">
+      <div class="absolute inset-0 rounded-full border-4 border-yellow-400 animate-ping"></div>
+      <div class="absolute inset-0 rounded-full border-4 border-yellow-500"></div>
+      <div class="absolute inset-0 flex items-center justify-center">
+        <div class="w-6 h-6 bg-yellow-400 rounded-full animate-bounce"></div>
+      </div>
+    </div>
+    <p class="mt-4 text-yellow-400 font-semibold text-lg animate-pulse">Loading...</p>
+  </div>
+
+  <!-- Konten utama -->
+  <div id="content" style="display:none;">
+    {% include 'navbar.html' %}
+    {% block content %}{% endblock content %}
+    {% include 'toast.html' %}
+    {% include 'modal.html' %}
+    {% include 'footer.html' %}
+  </div>
+
+<script src="https://unpkg.com/aos@2.3.4/dist/aos.js"></script>
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    const loader = document.getElementById("loader");
+    const content = document.getElementById("content");
+    content.style.display = "none";
+    function hideLoader() {
+      if (!loader || loader.style.display === "none") return;
+      loader.style.transition = "opacity 0.5s ease";
+      loader.style.opacity = 0;
+      setTimeout(() => loader.style.display = "none", 500);
+      content.style.display = "block";
+    }
+    window.addEventListener("load", hideLoader);
+    setTimeout(hideLoader, 2000);
+  });
+  document.addEventListener("click", function (e) {
+    if (e.target.tagName === "A" && e.target.href && !e.target.target) {
+      const loader = document.getElementById("loader");
+      const content = document.getElementById("content");
+      if (loader && content) {
+        loader.style.display = "flex";
+        loader.style.opacity = 1;
+        content.style.display = "none";
+      }
+    }
+  });
+  window.addEventListener("load", function () {
+    if (typeof AOS !== "undefined") {
       AOS.init({
         duration: 800,
         once: true,
         offset: 100,
-        easing: 'ease-out-cubic',
-        delay: 50
+        easing: "ease-out-cubic",
+        delay: 50,
       });
-      setTimeout(() => {
-        window.scrollTo(0, 0);
-      }, 100);
-    });
-  </script>
+    }
+  });
+</script>
+
+
+
+
 </body>
 </html>
