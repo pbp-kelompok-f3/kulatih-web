@@ -30,7 +30,6 @@
     <p class="mt-4 text-yellow-400 font-semibold text-lg animate-pulse">Loading...</p>
   </div>
 
-  <!-- MAIN CONTENT -->
   <div data-aos="fade-down" id="content" style="display:none;">
     {% include 'navbar.html' %}
     {% block content %}{% endblock content %}
@@ -74,12 +73,10 @@
       setTimeout(hideLoader, 2000);
     });
 
-    /* ========== FIXED SECTION: prevent loader on internal JS links ========== */
     document.addEventListener("click", function (e) {
       const loader = document.getElementById("loader");
       const content = document.getElementById("content");
 
-      // allow loader only for true page navigations
       if (
         e.target.tagName === "A" &&
         e.target.href &&

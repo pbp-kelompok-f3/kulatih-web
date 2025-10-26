@@ -13,6 +13,17 @@ from .models import ForumPost, Vote, Comment
 def _is_ajax(request):
     return request.headers.get("X-Requested-With") == "XMLHttpRequest"
 
+def _display_name(user):
+    """Return display name if available, else empty string."""
+    # kalau kamu punya Profile.display_name, boleh coba-catch di sini:
+    # try:
+    #     name = (user.profile.display_name or "").strip()
+    # except Exception:
+    #     name = ""
+    # fallback ke first_name + last_name bawaan Django
+    full = (user.get_full_name() or "").strip()
+    return full or ""
+
 def _vote_payload(post, user):
     score = post.votes.aggregate(total=Sum("value"))["total"] or 0
     user_vote = 0
@@ -28,7 +39,11 @@ def _vote_payload(post, user):
 def _node_from_comment(c, user_id=None):
     return {
         "id": c.id,
-        "author": c.display_name(),
+        # field baru untuk frontend:
+        "author_name": _display_name(c.author),
+        "author_username": c.author.username,
+        # backward-compat (dipakai di kode lama, tapi aman dibiarkan):
+        "author": c.display_name(),  # kalau ada method ini di model Comment
         "author_id": c.author_id,
         "content": c.content,
         "created_iso": timezone.localtime(c.created_at).isoformat(),
@@ -37,7 +52,7 @@ def _node_from_comment(c, user_id=None):
         "replies": [],
         "replies_count": 0,
         "is_owner": bool(user_id and c.author_id == user_id),
-    }
+    }  # :contentReference[oaicite:0]{index=0}
 
 def _build_comment_tree(post, user):
     all_comments = list(
@@ -86,7 +101,6 @@ def post_list(request):
     if mine and request.user.is_authenticated:
         qs = qs.filter(author=request.user)
 
-    # evaluasi sekarang supaya count pasti akurat
     posts = list(qs)
     for p in posts:
         p.local_created = timezone.localtime(p.created_at)
@@ -104,14 +118,13 @@ def post_list(request):
             "is_filtered": is_filtered,
             "filtered_count": filtered_count,
         },
-    )
+    )  # :contentReference[oaicite:1]{index=1}
 
 @login_required
 @require_POST
 def create_post(request):
     content = (request.POST.get("content") or "").strip()
     if not content:
-        # kalau AJAX, balas JSON error
         if request.headers.get("X-Requested-With") == "XMLHttpRequest":
             return JsonResponse({"ok": False, "error": "Content is required."}, status=400)
         messages.error(request, "Content is required.")
@@ -119,16 +132,17 @@ def create_post(request):
 
     post = ForumPost.objects.create(author=request.user, content=content)
 
-    # kalau AJAX, balas JSON sukses
     if request.headers.get("X-Requested-With") == "XMLHttpRequest":
         return JsonResponse({
             "ok": True,
             "id": post.id,
-            "author": request.user.username,
+            "author_name": _display_name(request.user),
+            "author_username": request.user.username,
             "content": post.content,
             "created_iso": timezone.localtime(post.created_at).isoformat(),
             "score": 0,
             "comments": 0,
+            "can_edit": True,  # biar kebab menu muncul untuk author
         })
 
     messages.success(request, "Post created.")
@@ -217,7 +231,7 @@ def comment_add(request, post_id):
     c = Comment.objects.create(
         post=post,
         author=request.user,
-        name=request.user.get_username(),
+        name=request.user.get_username(),  # boleh biarkan
         content=content,
         parent=parent,
     )
