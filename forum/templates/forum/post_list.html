@@ -83,17 +83,17 @@
                 <div class="w-10 h-10 sm:w-14 sm:h-14 rounded-full bg-[var(--indigo-light)] flex items-center justify-center text-lg sm:text-2xl ring-1 ring-[rgb(245_245_245/0.25)] hover:ring-[rgb(245_245_245/0.4)]">👤</div>
                 </div>
 
-<div class="flex-1 min-w-0 text-left">  <!-- paksa kiri di wrapper juga -->
-  <div class="heading-font text-xl sm:text-2xl text-[var(--yellow)] leading-none truncate">
-    {{ post.author.username|upper }}
-  </div>
+        <div class="flex-1 min-w-0 text-left">  <!-- paksa kiri di wrapper juga -->
+        <div class="heading-font text-xl sm:text-2xl text-[var(--yellow)] leading-none truncate">
+            {{ post.author.username|upper }}
+        </div>
 
-  <p id="post-content-{{ post.id }}"
-     class="mt-2 body-font text-left text-[15px] sm:text-base text-[var(--white)]/90
-            leading-[1.7] whitespace-pre-wrap break-all sm:break-words max-w-full hyphens-auto">
-    {{ post.content }}
-  </p>
-</div>
+        <p id="post-content-{{ post.id }}"
+            class="mt-2 body-font text-left text-[15px] sm:text-base text-[var(--white)]/90
+                    leading-[1.7] whitespace-pre-wrap break-all sm:break-words max-w-full hyphens-auto">
+            {{ post.content }}
+        </p>
+        </div>
 
             </div>
 
