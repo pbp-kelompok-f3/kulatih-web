@@ -6,11 +6,11 @@
 {% endblock meta %}
 
 {% block content %}
-<section class="bg-[var(--indigo)] text-[var(--white)] px-8 md:px-20 py-12 font-bevietnam">
+<section class="bg-[var(--indigo)] text-[var(--white)] px-8 md:px-20 pt-12 font-bevietnam">
   <div class="max-w-6xl mx-auto">
     <div class="flex flex-col md:flex-row items-center gap-10">
       <!-- Left: avatar -->
-      <div class="w-56 h-56 bg-[var(--indigo-dark)] rounded-2xl overflow-hidden shadow-lg flex-shrink-0 mx-auto md:mx-0">
+      <div class="w-56 h-56 bg-[var(--indigo-dark)] rounded-2xl overflow-hidden shadow-lg flex-shrink-0 mx-auto md:mx-0 border border-[rgba(255,255,255,0.1)] shadow-lg">
         {% if profile.profile_photo %}
           <img id="member-photo" src="{{ profile.profile_photo }}" alt="{{ user.username }}" class="w-full h-full object-cover">
         {% else %}
@@ -20,10 +20,10 @@
       
       <!-- Right: header -->
       <div class="flex-1 text-center md:text-left">
-        <div class="text-lg tracking-wider text-gray-300 mb-2">
+        <div class="text-lg tracking-wider text-[var(--yellow)] mb-2">
           Member Profile
         </div>
-        <h1 id="member-fullname" class="text-5xl font-bold leading-none mb-2">{{ user.get_full_name }}</h1>
+        <h1 id="member-fullname" class="text-5xl font-bevietnam font-bold leading-none mb-2">{{ user.get_full_name }}</h1>
         <div class="text-lg text-gray-400 mb-4">
           @{{ user.username }} <span class="text-white">· Member since {{ user.date_joined|date:"F Y" }}</span>
         </div>
@@ -37,8 +37,8 @@
     </div>
 
     <!-- Description / info card -->
-    <div class="bg-[var(--indigo-light)] rounded-2xl p-8 text-left mt-12 shadow-lg">
-      <h2 class="text-2xl font-semibold mb-2">Description</h2>
+    <div class="bg-[var(--indigo-dark)] rounded-2xl p-8 text-left mt-12 shadow-lg border border-[rgba(255,255,255,0.1)]">
+      <h2 class="text-4xl font-semibold mb-2 text-[var(--yellow)]">Description</h2>
       <p id="member-description" class="text-[var(--white)] leading-relaxed mb-6">
         {{ profile.description|default:"This member has not added a description." }}
         <p id="member-description" class="text-[var(--white)] leading-relaxed mb-6">
@@ -53,23 +53,17 @@
             </div>
 
             <!-- Column 2: Values -->
-            <div class="text-[rgba(245,245,245,.9)] space-y-2">
+            <div class="text-[var(--white)] space-y-2">
                 <div id="member-city" id="member-city">{{ profile.city|default:"Not specified" }}</div>
                 <div id="member-email" id="member-email">{{ user.email }}</div>
                 <div id="member-phone" id="member-phone">{{ profile.phone|default:"-" }}</div>
             </div>
         </div>
-
-        <!-- Column 2: Values -->
-        <div class="text-[rgba(245,245,245,.9)] space-y-2">
-          <div id="member-city">{{ profile.city|default:"Not specified" }}</div>
-          <div id="member-email">{{ user.email }}</div>
-          <div id="member-phone">{{ profile.phone|default:"-" }}</div>
-        </div>
       </div>
     </div>
   </div>
 </section>
+
 {% include "modal_member_edit.html" %}
 {% include "booking/booking_list_content_user.html" %}
 {% endblock content %}
