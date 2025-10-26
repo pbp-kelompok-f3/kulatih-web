@@ -20,9 +20,7 @@ from .forms import (
 from booking.models import Booking
 
 
-# =========================
 # AUTH / REGISTRATION
-# =========================
 
 @transaction.atomic
 def register_member(request):
@@ -90,10 +88,7 @@ def logout_user(request):
     logout(request)
     return redirect('main:show_main')
 
-
-# =========================
 # PROFILE
-# =========================
 
 @login_required(login_url='/account/login/')
 def show_profile(request):
@@ -105,20 +100,28 @@ def show_profile(request):
     if hasattr(user, 'member'):
         profile = user.member
         bookings = Booking.objects.filter(member=user.member).order_by('-date', '-start_time')
+        user_form = UserEditForm(instance=user)
+        profile_form = MemberEditForm(instance=profile)
         context.update({
             'profile': profile,
             'bookings': bookings,
             'today': today,
+            'user_form': user_form,
+            'profile_form': profile_form,
         })
         return render(request, 'profile_member.html', context)
     
     elif hasattr(user, 'coach'):
         profile = user.coach
         bookings = Booking.objects.filter(coach=user.coach).order_by('-date', '-start_time')
+        user_form = UserEditForm(instance=user)
+        profile_form = CoachEditForm(instance=profile)
         context.update({
             'profile': profile,
             'bookings': bookings,
             'today': today,
+            'user_form': user_form,
+            'profile_form': profile_form,
         })
         return render(request, 'profile_coach.html', context)
     
@@ -191,8 +194,6 @@ def edit_profile(request):
     }
     
     # This will render the profile page with the forms
-    # You need to decide which template to render here.
-    # Assuming you want to show the modal on the user's profile page.
     if hasattr(request.user, 'member'):
         template = 'profile_member.html'
         profile = request.user.member
@@ -203,7 +204,7 @@ def edit_profile(request):
     context['profile'] = profile
     return render(request, f'users/{template}', context)
 
-# Details (Able to be viewed by all user)
+# DETAILS (Able to be viewed by all user)
 
 def member_details(request, id):
     member = get_object_or_404(Member, pk=id)
