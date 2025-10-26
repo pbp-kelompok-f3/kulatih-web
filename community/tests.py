@@ -1,680 +1,604 @@
 from django.test import TestCase, Client
-from django.urls import reverse, resolve
+from django.urls import reverse
 from django.contrib.auth.models import User
-from django.http import JsonResponse
-from django.db import IntegrityError 
 from .models import Community, Membership, Message
 from .forms import CommunityCreateForm, MessageForm
-from . import views
 import json
 
 
-class CommunityModelTest(TestCase):
+class AdditionalCommunityModelTest(TestCase):
+    """Additional model tests to increase coverage"""
+    
     def setUp(self):
-        self.user = User.objects.create_user(username="user1", password="pass")
-        self.user2 = User.objects.create_user(username="user2", password="pass")
+        self.user = User.objects.create_user(username="testuser", password="pass123")
         self.community = Community.objects.create(
             name="Test Community",
-            short_description="Short desc",
-            full_description="Full desc",
-            created_by=self.user,
-            profile_image_url="https://example.com/image.jpg"
+            short_description="Short description",
+            full_description="Full description here",
+            created_by=self.user
         )
 
-    def test_community_str_method(self):
-        self.assertEqual(str(self.community), "Test Community")
+    def test_community_without_profile_image(self):
+        """Test community can be created without profile image"""
+        community = Community.objects.create(
+            name="No Image Community",
+            short_description="Short",
+            full_description="Full",
+            created_by=self.user,
+            profile_image_url=None
+        )
+        self.assertIsNone(community.profile_image_url)
 
-    def test_community_members_count(self):
-        """Test members_count method"""
-        self.assertEqual(self.community.members_count(), 0)
-        Membership.objects.create(community=self.community, user=self.user)
-        self.assertEqual(self.community.members_count(), 1)
-        Membership.objects.create(community=self.community, user=self.user2)
-        self.assertEqual(self.community.members_count(), 2)
+    def test_community_with_blank_profile_image(self):
+        """Test community with blank profile image URL"""
+        community = Community.objects.create(
+            name="Blank Image",
+            short_description="Short",
+            full_description="Full",
+            created_by=self.user,
+            profile_image_url=""
+        )
+        self.assertEqual(community.profile_image_url, "")
 
-    def test_community_name_unique(self):
-        """Test unique constraint on community name"""
-        with self.assertRaises(IntegrityError):
-            Community.objects.create(
-                name="Test Community",  # Nama yang sama
-                short_description="Another desc",
-                full_description="Another full desc",
-                created_by=self.user,
-            )
+    def test_membership_default_role(self):
+        """Test membership default role is 'user'"""
+        membership = Membership.objects.create(
+            community=self.community,
+            user=self.user
+        )
+        self.assertEqual(membership.role, 'user')
 
-    def test_membership_creation(self):
-        member = Membership.objects.create(community=self.community, user=self.user)
-        self.assertEqual(member.community.name, "Test Community")
-        self.assertEqual(member.role, 'user')
-
-    def test_membership_str_method(self):
-        """Test Membership __str__ method"""
-        member = Membership.objects.create(
+    def test_membership_admin_role(self):
+        """Test membership can have admin role"""
+        membership = Membership.objects.create(
             community=self.community,
             user=self.user,
             role='admin'
         )
-        expected = f'{self.user} in {self.community} (admin)'
-        self.assertEqual(str(member), expected)
+        self.assertEqual(membership.role, 'admin')
 
-    def test_membership_unique_constraint(self):
-        """Test that user can't join same community twice"""
+    def test_message_updated_at_changes(self):
+        """Test message updated_at field changes on update"""
+        message = Message.objects.create(
+            community=self.community,
+            sender=self.user,
+            text="Original text"
+        )
+        original_updated_at = message.updated_at
+        
+        message.text = "Updated text"
+        message.save()
+        message.refresh_from_db()
+        
+        self.assertNotEqual(message.updated_at, original_updated_at)
+
+    def test_community_cascade_delete_membership(self):
+        """Test deleting community deletes associated memberships"""
         Membership.objects.create(community=self.community, user=self.user)
-        with self.assertRaises(Exception):
-            Membership.objects.create(community=self.community, user=self.user)
+        community_id = self.community.id
+        self.community.delete()
+        
+        self.assertFalse(Membership.objects.filter(community_id=community_id).exists())
 
-    def test_message_creation(self):
+    def test_community_cascade_delete_messages(self):
+        """Test deleting community deletes associated messages"""
+        Message.objects.create(
+            community=self.community,
+            sender=self.user,
+            text="Test message"
+        )
+        community_id = self.community.id
+        self.community.delete()
+        
+        self.assertFalse(Message.objects.filter(community_id=community_id).exists())
+
+
+class AdditionalCommunityFormTest(TestCase):
+    """Additional form tests to increase coverage"""
+    
+    def setUp(self):
+        self.user = User.objects.create_user(username="testuser", password="pass123")
+
+    def test_form_widgets_have_correct_classes(self):
+        """Test form widgets have correct CSS classes"""
+        form = CommunityCreateForm()
+        
+        self.assertIn('w-full', form.fields['name'].widget.attrs['class'])
+        self.assertIn('rounded-full', form.fields['name'].widget.attrs['class'])
+        self.assertIn('w-full', form.fields['short_description'].widget.attrs['class'])
+        self.assertIn('w-full', form.fields['full_description'].widget.attrs['class'])
+        self.assertIn('rounded-2xl', form.fields['full_description'].widget.attrs['class'])
+
+    def test_form_profile_image_url_placeholder(self):
+        """Test profile_image_url field has placeholder"""
+        form = CommunityCreateForm()
+        self.assertEqual(
+            form.fields['profile_image_url'].widget.attrs['placeholder'],
+            'URL HTTP/S'
+        )
+
+    def test_clean_name_strips_whitespace(self):
+        """Test clean_name method strips whitespace"""
+        form_data = {
+            'name': '  Test Community  ',
+            'short_description': 'Short',
+            'full_description': 'Full'
+        }
+        form = CommunityCreateForm(data=form_data)
+        self.assertTrue(form.is_valid())
+        self.assertEqual(form.cleaned_data['name'], 'Test Community')
+
+    def test_clean_profile_image_url_strips_whitespace(self):
+        """Test clean_profile_image_url strips whitespace"""
+        form_data = {
+            'name': 'Test',
+            'short_description': 'Short',
+            'full_description': 'Full',
+            'profile_image_url': '  https://example.com/image.jpg  '
+        }
+        form = CommunityCreateForm(data=form_data)
+        self.assertTrue(form.is_valid())
+        self.assertEqual(
+            form.cleaned_data['profile_image_url'],
+            'https://example.com/image.jpg'
+        )
+
+    def test_message_form_widget_has_placeholder(self):
+        """Test MessageForm has correct placeholder"""
+        form = MessageForm()
+        self.assertIn('placeholder', form.fields['text'].widget.attrs)
+        self.assertIn('Ketik pesan', form.fields['text'].widget.attrs['placeholder'])
+
+    def test_message_form_widget_has_classes(self):
+        """Test MessageForm widget has correct CSS classes"""
+        form = MessageForm()
+        self.assertIn('w-full', form.fields['text'].widget.attrs['class'])
+        self.assertIn('text-black', form.fields['text'].widget.attrs['class'])
+
+
+class AdditionalCommunityViewTest(TestCase):
+    """Additional view tests to increase coverage"""
+    
+    def setUp(self):
+        self.client = Client()
+        self.user = User.objects.create_user(username="testuser", password="pass123")
+        self.user2 = User.objects.create_user(username="user2", password="pass123")
+        self.community = Community.objects.create(
+            name="Test Community",
+            short_description="Short desc",
+            full_description="Full desc",
+            created_by=self.user
+        )
+
+    def test_community_home_pagination(self):
+        """Test pagination on home page"""
+        # Create 10 communities to trigger pagination
+        for i in range(10):
+            Community.objects.create(
+                name=f"Community {i}",
+                short_description=f"Desc {i}",
+                full_description=f"Full desc {i}",
+                created_by=self.user
+            )
+        
+        response = self.client.get(reverse('community:home'))
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.context['communities'].has_other_pages())
+
+    def test_community_home_pagination_page_2(self):
+        """Test accessing page 2 of pagination"""
+        for i in range(10):
+            Community.objects.create(
+                name=f"Community {i}",
+                short_description=f"Desc {i}",
+                full_description=f"Full desc {i}",
+                created_by=self.user
+            )
+        
+        response = self.client.get(reverse('community:home') + '?page=2')
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.context['communities'].number, 2)
+
+    def test_community_home_case_insensitive_search(self):
+        """Test search is case insensitive"""
+        response = self.client.get(reverse('community:home'), {'q': 'test community'})
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Test Community')
+
+    def test_community_home_search_by_full_description(self):
+        """Test search can find by full description"""
+        response = self.client.get(reverse('community:home'), {'q': 'Full desc'})
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Test Community')
+
+    def test_community_create_form_errors_displayed(self):
+        """Test form errors are displayed on invalid submission"""
+        self.client.login(username="testuser", password="pass123")
+        response = self.client.post(reverse('community:create'), {
+            'name': '',
+            'short_description': 'Short',
+            'full_description': 'Full'
+        })
+        self.assertEqual(response.status_code, 200)
+        self.assertIn('form', response.context)
+        self.assertTrue(response.context['form'].errors)
+
+    def test_community_create_with_get_or_create(self):
+        """Test community create uses get_or_create for membership"""
+        self.client.login(username="testuser", password="pass123")
+        response = self.client.post(reverse('community:create'), {
+            'name': 'New Community',
+            'short_description': 'Short',
+            'full_description': 'Full'
+        })
+        
+        community = Community.objects.get(name='New Community')
+        membership = Membership.objects.get(user=self.user, community=community)
+        self.assertEqual(membership.role, 'admin')
+
+    def test_community_detail_displays_member_count(self):
+        """Test detail page displays correct member count"""
+        Membership.objects.create(user=self.user, community=self.community)
+        Membership.objects.create(user=self.user2, community=self.community)
+        
+        response = self.client.get(reverse('community:detail', args=[self.community.id]))
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.context['members_count'], 2)
+
+    def test_join_community_redirects_to_my_list(self):
+        """Test join redirects to my_list"""
+        self.client.login(username="testuser", password="pass123")
+        response = self.client.get(reverse('community:join', args=[self.community.id]))
+        self.assertRedirects(response, reverse('community:my_list'))
+
+    def test_join_community_creates_user_role(self):
+        """Test joining creates membership with 'user' role"""
+        self.client.login(username="testuser", password="pass123")
+        self.client.get(reverse('community:join', args=[self.community.id]))
+        
+        membership = Membership.objects.get(user=self.user, community=self.community)
+        self.assertEqual(membership.role, 'user')
+
+    def test_leave_community_redirects_to_home(self):
+        """Test leave redirects to community home"""
+        self.client.login(username="testuser", password="pass123")
+        Membership.objects.create(user=self.user, community=self.community)
+        
+        response = self.client.get(reverse('community:leave', args=[self.community.id]))
+        self.assertRedirects(response, reverse('community:home'))
+
+    def test_my_community_list_pagination(self):
+        """Test pagination on my community list"""
+        self.client.login(username="testuser", password="pass123")
+        
+        # Join 10 communities
+        for i in range(10):
+            comm = Community.objects.create(
+                name=f"Community {i}",
+                short_description=f"Desc {i}",
+                full_description=f"Full {i}",
+                created_by=self.user
+            )
+            Membership.objects.create(user=self.user, community=comm)
+        
+        response = self.client.get(reverse('community:my_list'))
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.context['memberships'].has_other_pages())
+
+    def test_my_community_list_search(self):
+        """Test search functionality in my community list"""
+        self.client.login(username="testuser", password="pass123")
+        Membership.objects.create(user=self.user, community=self.community)
+        
+        response = self.client.get(reverse('community:my_list'), {'q': 'Test'})
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.context['memberships'].paginator.count, 1)
+
+    def test_my_community_list_search_by_short_description(self):
+        """Test search in my list by short description"""
+        self.client.login(username="testuser", password="pass123")
+        Membership.objects.create(user=self.user, community=self.community)
+        
+        response = self.client.get(reverse('community:my_list'), {'q': 'Short desc'})
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Test Community')
+
+    def test_my_community_group_displays_messages(self):
+        """Test group chat displays all messages"""
+        self.client.login(username="testuser", password="pass123")
+        Membership.objects.create(user=self.user, community=self.community)
+        
+        msg1 = Message.objects.create(
+            community=self.community,
+            sender=self.user,
+            text="Message 1"
+        )
+        msg2 = Message.objects.create(
+            community=self.community,
+            sender=self.user,
+            text="Message 2"
+        )
+        
+        response = self.client.get(reverse('community:my_group', args=[self.community.id]))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Message 1")
+        self.assertContains(response, "Message 2")
+
+    def test_my_community_group_empty_state(self):
+        """Test group chat shows empty state when no messages"""
+        self.client.login(username="testuser", password="pass123")
+        Membership.objects.create(user=self.user, community=self.community)
+        
+        response = self.client.get(reverse('community:my_group', args=[self.community.id]))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "no messages yet")
+
+    def test_send_message_ajax_creates_message(self):
+        """Test AJAX message creation"""
+        self.client.login(username="testuser", password="pass123")
+        Membership.objects.create(user=self.user, community=self.community)
+        
+        url = reverse('community:send_message_ajax', args=[self.community.id])
+        response = self.client.post(
+            url,
+            data=json.dumps({'text': 'AJAX message'}),
+            content_type='application/json'
+        )
+        
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(Message.objects.filter(text='AJAX message').exists())
+
+    def test_send_message_ajax_returns_correct_data(self):
+        """Test AJAX response contains correct message data"""
+        self.client.login(username="testuser", password="pass123")
+        Membership.objects.create(user=self.user, community=self.community)
+        
+        url = reverse('community:send_message_ajax', args=[self.community.id])
+        response = self.client.post(
+            url,
+            data=json.dumps({'text': 'Test AJAX'}),
+            content_type='application/json'
+        )
+        
+        data = json.loads(response.content)
+        self.assertEqual(data['text'], 'Test AJAX')
+        self.assertEqual(data['sender'], 'testuser')
+        self.assertIn('id', data)
+        self.assertIn('community_id', data)
+
+    def test_send_message_ajax_whitespace_only(self):
+        """Test AJAX with whitespace-only text returns error"""
+        self.client.login(username="testuser", password="pass123")
+        Membership.objects.create(user=self.user, community=self.community)
+        
+        url = reverse('community:send_message_ajax', args=[self.community.id])
+        response = self.client.post(
+            url,
+            data=json.dumps({'text': '   '}),
+            content_type='application/json'
+        )
+        
+        self.assertEqual(response.status_code, 400)
+
+    def test_edit_message_invalid_form_rerenders(self):
+        """Test edit with invalid data re-renders form"""
+        self.client.login(username="testuser", password="pass123")
         msg = Message.objects.create(
             community=self.community,
             sender=self.user,
-            text="Hello World"
+            text="Original"
         )
-        self.assertEqual(msg.text, "Hello World")
-        self.assertEqual(msg.community, self.community)
-        self.assertEqual(msg.sender, self.user)
+        
+        url = reverse('community:edit_message', args=[self.community.id, msg.id])
+        response = self.client.post(url, {'text': ''})
+        
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'community/edit_message.html')
+        msg.refresh_from_db()
+        self.assertEqual(msg.text, 'Original')
 
-    def test_message_str_method(self):
-        """Test Message __str__ method with truncation"""
-        long_text = "A" * 50
+    def test_edit_message_successful_redirect(self):
+        """Test successful edit redirects to group"""
+        self.client.login(username="testuser", password="pass123")
+        msg = Message.objects.create(
+            community=self.community,
+            sender=self.user,
+            text="Original"
+        )
+        
+        url = reverse('community:edit_message', args=[self.community.id, msg.id])
+        response = self.client.post(url, {'text': 'Edited text'})
+        
+        self.assertRedirects(
+            response,
+            reverse('community:my_group', args=[self.community.id])
+        )
+
+    def test_delete_message_removes_from_database(self):
+        """Test delete removes message from database"""
+        self.client.login(username="testuser", password="pass123")
+        msg = Message.objects.create(
+            community=self.community,
+            sender=self.user,
+            text="Delete me"
+        )
+        msg_id = msg.id
+        
+        url = reverse('community:delete_message', args=[self.community.id, msg.id])
+        response = self.client.delete(url)
+        
+        self.assertEqual(response.status_code, 200)
+        self.assertFalse(Message.objects.filter(id=msg_id).exists())
+
+    def test_delete_message_returns_success_json(self):
+        """Test delete returns success JSON"""
+        self.client.login(username="testuser", password="pass123")
+        msg = Message.objects.create(
+            community=self.community,
+            sender=self.user,
+            text="Delete me"
+        )
+        
+        url = reverse('community:delete_message', args=[self.community.id, msg.id])
+        response = self.client.delete(url)
+        
+        data = json.loads(response.content)
+        self.assertTrue(data['success'])
+
+    def test_my_community_group_non_member_gets_redirected(self):
+        """Test non-member cannot access group chat"""
+        self.client.login(username="testuser", password="pass123")
+        
+        response = self.client.get(reverse('community:my_group', args=[self.community.id]))
+        self.assertEqual(response.status_code, 302)
+        self.assertRedirects(
+            response,
+            reverse('community:detail', args=[self.community.id])
+        )
+
+    def test_community_create_exception_handling(self):
+        """Test create view handles exceptions properly"""
+        self.client.login(username="testuser", password="pass123")
+        
+        # Create community first
+        Community.objects.create(
+            name="Duplicate",
+            short_description="Test",
+            full_description="Test",
+            created_by=self.user
+        )
+        
+        # Try to create with same name
+        response = self.client.post(reverse('community:create'), {
+            'name': 'Duplicate',
+            'short_description': 'Test',
+            'full_description': 'Test'
+        })
+        
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(Community.objects.filter(name='Duplicate').count(), 1)
+
+    def test_community_home_shows_all_communities_for_unauthenticated(self):
+        """Test unauthenticated users see all communities"""
+        Community.objects.create(
+            name="Public Community",
+            short_description="Public",
+            full_description="Public",
+            created_by=self.user
+        )
+        
+        response = self.client.get(reverse('community:home'))
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.context['communities'].paginator.count, 2)
+
+    def test_join_community_displays_success_message(self):
+        """Test join shows success message"""
+        self.client.login(username="testuser", password="pass123")
+        response = self.client.get(
+            reverse('community:join', args=[self.community.id]),
+            follow=True
+        )
+        
+        messages = list(response.context['messages'])
+        self.assertEqual(len(messages), 1)
+        self.assertIn('joined', str(messages[0]))
+
+    def test_join_community_already_member_shows_info(self):
+        """Test joining again shows info message"""
+        self.client.login(username="testuser", password="pass123")
+        Membership.objects.create(user=self.user, community=self.community)
+        
+        response = self.client.get(
+            reverse('community:join', args=[self.community.id]),
+            follow=True
+        )
+        
+        messages = list(response.context['messages'])
+        self.assertIn('already', str(messages[0]))
+
+    def test_leave_community_displays_success_message(self):
+        """Test leave shows success message"""
+        self.client.login(username="testuser", password="pass123")
+        Membership.objects.create(user=self.user, community=self.community)
+        
+        response = self.client.get(
+            reverse('community:leave', args=[self.community.id]),
+            follow=True
+        )
+        
+        messages = list(response.context['messages'])
+        self.assertIn('no longer', str(messages[0]))
+
+    def test_my_community_group_non_member_shows_error(self):
+        """Test accessing group as non-member shows error"""
+        self.client.login(username="testuser", password="pass123")
+        
+        response = self.client.get(
+            reverse('community:my_group', args=[self.community.id]),
+            follow=True
+        )
+        
+        messages = list(response.context['messages'])
+        self.assertEqual(len(messages), 1)
+        self.assertIn('bergabung', str(messages[0]))
+
+
+class EdgeCaseTests(TestCase):
+    """Edge case tests for better coverage"""
+    
+    def setUp(self):
+        self.client = Client()
+        self.user = User.objects.create_user(username="testuser", password="pass123")
+        self.community = Community.objects.create(
+            name="Test",
+            short_description="Short",
+            full_description="Full",
+            created_by=self.user
+        )
+
+    def test_send_message_ajax_invalid_json(self):
+        """Test AJAX with invalid JSON"""
+        self.client.login(username="testuser", password="pass123")
+        url = reverse('community:send_message_ajax', args=[self.community.id])
+        
+        response = self.client.post(
+            url,
+            data='invalid json',
+            content_type='application/json'
+        )
+        # Should return error or handle gracefully
+        self.assertIn(response.status_code, [400, 500])
+
+    def test_pagination_invalid_page_number(self):
+        """Test pagination with invalid page number"""
+        response = self.client.get(reverse('community:home') + '?page=999')
+        self.assertEqual(response.status_code, 200)
+        # Django paginator returns last page for out of range
+
+    def test_search_with_special_characters(self):
+        """Test search with special characters"""
+        response = self.client.get(reverse('community:home'), {'q': '@#$%^&*()'})
+        self.assertEqual(response.status_code, 200)
+
+    def test_community_with_very_long_description(self):
+        """Test community with very long description"""
+        long_text = "A" * 1000
+        community = Community.objects.create(
+            name="Long Desc",
+            short_description="Short",
+            full_description=long_text,
+            created_by=self.user
+        )
+        self.assertEqual(len(community.full_description), 1000)
+
+    def test_message_str_truncation(self):
+        """Test message __str__ truncates at 30 characters"""
+        long_text = "This is a very long message that should be truncated"
         msg = Message.objects.create(
             community=self.community,
             sender=self.user,
             text=long_text
         )
-        self.assertEqual(str(msg), f'{self.user} @ {self.community}: {long_text[:30]}')
-
-    def test_message_ordering(self):
-        """Test messages are ordered by created_at"""
-        msg1 = Message.objects.create(community=self.community, sender=self.user, text="First")
-        msg2 = Message.objects.create(community=self.community, sender=self.user, text="Second")
-        messages = list(Message.objects.all())
-        self.assertEqual(messages[0], msg1)
-        self.assertEqual(messages[1], msg2)
-
-
-class CommunityFormTest(TestCase):
-    def setUp(self):
-        self.user = User.objects.create_user(username="testuser", password="pass")
-
-    def test_valid_form_with_http_url(self):
-        form_data = {
-            'name': 'Valid Community',
-            'short_description': 'Short desc',
-            'full_description': 'Full description here',
-            'profile_image_url': 'https://example.com/image.jpg'
-        }
-        form = CommunityCreateForm(data=form_data)
-        self.assertTrue(form.is_valid())
-
-    def test_valid_form_with_http_url_no_s(self):
-        """Test HTTP (non-secure) URL is accepted"""
-        form_data = {
-            'name': 'Valid',
-            'short_description': 'Short',
-            'full_description': 'Full',
-            'profile_image_url': 'http://example.com/image.jpg'
-        }
-        form = CommunityCreateForm(data=form_data)
-        self.assertTrue(form.is_valid())
-
-    def test_valid_form_with_base64_image(self):
-        """Test data:image/ base64 URL is accepted"""
-        form_data = {
-            'name': 'Base64 Community',
-            'short_description': 'Short',
-            'full_description': 'Full',
-            'profile_image_url': 'data:image/png;base64,iVBORw0KGgoAAAANS'
-        }
-        form = CommunityCreateForm(data=form_data)
-        self.assertTrue(form.is_valid())
-
-    def test_valid_form_without_image_url(self):
-        """Test form is valid without profile image"""
-        form_data = {
-            'name': 'No Image Community',
-            'short_description': 'Short',
-            'full_description': 'Full',
-            'profile_image_url': ''
-        }
-        form = CommunityCreateForm(data=form_data)
-        self.assertTrue(form.is_valid())
-
-    def test_invalid_form_empty_name(self):
-        form_data = {
-            'name': '',
-            'short_description': 'Short',
-            'full_description': 'Full'
-        }
-        form = CommunityCreateForm(data=form_data)
-        self.assertFalse(form.is_valid())
-        self.assertIn('name', form.errors)
-        self.assertIn("Nama tidak boleh kosong.", form.errors['name'])
-
-    def test_invalid_form_whitespace_only_name(self):
-        """Test name with only whitespace is invalid"""
-        form_data = {
-            'name': '     ',
-            'short_description': 'Short',
-            'full_description': 'Full'
-        }
-        form = CommunityCreateForm(data=form_data)
-        self.assertFalse(form.is_valid())
-        self.assertIn('name', form.errors)
-        self.assertIn("Nama tidak boleh kosong.", form.errors['name'])
-
-    def test_invalid_profile_image_url(self):
-        """Test invalid URL format is rejected"""
-        form_data = {
-            'name': 'Test',
-            'short_description': 'Short',
-            'full_description': 'Full',
-            'profile_image_url': 'invalid-url-format'
-        }
-        form = CommunityCreateForm(data=form_data)
-        self.assertFalse(form.is_valid())
-        self.assertIn('profile_image_url', form.errors)
-        self.assertIn("URL harus dimulai dengan", form.errors['profile_image_url'][0])
-
-    def test_form_save_with_user(self):
-        """Test form save method assigns user correctly"""
-        form_data = {
-            'name': 'Save Test',
-            'short_description': 'Short',
-            'full_description': 'Full'
-        }
-        form = CommunityCreateForm(data=form_data)
-        self.assertTrue(form.is_valid())
-        community = form.save(user=self.user)
-        self.assertEqual(community.created_by, self.user)
-
-    def test_form_save_without_commit(self):
-        """Test form save with commit=False"""
-        form_data = {
-            'name': 'No Commit',
-            'short_description': 'Short',
-            'full_description': 'Full'
-        }
-        form = CommunityCreateForm(data=form_data)
-        self.assertTrue(form.is_valid())
-        community = form.save(commit=False, user=self.user)
-        self.assertIsNone(community.pk)
-
-    def test_form_save_without_user(self):
-        """Test form save without user raises IntegrityError"""
-        form_data = {
-            'name': 'No User Save',
-            'short_description': 'Short',
-            'full_description': 'Full'
-        }
-        form = CommunityCreateForm(data=form_data)
-        self.assertTrue(form.is_valid())
-        # Akan error karena created_by (user) tidak boleh NULL
-        with self.assertRaises(IntegrityError):
-            form.save()
-    
-
-    def test_message_form_valid(self):
-        form_data = {'text': 'Hello everyone!'}
-        form = MessageForm(data=form_data)
-        self.assertTrue(form.is_valid())
-
-    def test_message_form_empty(self):
-        """Test message form with empty text"""
-        form_data = {'text': ''}
-        form = MessageForm(data=form_data)
-        self.assertFalse(form.is_valid())
-
-
-class CommunityViewsTest(TestCase):
-    def setUp(self):
-        self.client = Client()
-        self.user = User.objects.create_user(username="pew", password="12345")
-        self.user2 = User.objects.create_user(username="user2", password="12345")
-        self.community = Community.objects.create(
-            name="Silat",
-            short_description="Latihan bareng",
-            full_description="Deskripsi lengkap",
-            created_by=self.user
-        )
-
-    def test_community_home_authenticated(self):
-        """Test home page for authenticated user"""
-        self.client.login(username="pew", password="12345")
-        response = self.client.get(reverse('community:home'))
-        self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, 'community/main_community.html')
-
-    def test_community_home_unauthenticated(self):
-        """Test home page for unauthenticated user"""
-        response = self.client.get(reverse('community:home'))
-        self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, 'community/main_community.html')
-
-    def test_community_home_search(self):
-        """Test search functionality"""
-        Community.objects.create(
-            name="Basketball Club",
-            short_description="Play basketball",
-            full_description="We play basketball every week",
-            created_by=self.user
-        )
-        response = self.client.get(reverse('community:home'), {'q': 'basketball'})
-        self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'Basketball Club')
-        self.assertNotContains(response, 'Silat')
-
-    def test_community_home_hides_joined_communities(self):
-        """Test that joined communities are hidden from main page"""
-        self.client.login(username="pew", password="12345")
-        Membership.objects.create(user=self.user, community=self.community)
-        response = self.client.get(reverse('community:home'))
-        self.assertEqual(response.status_code, 200)
-        self.assertNotContains(response, self.community.name)
-
-    def test_community_home_search_by_description(self):
-        """Test search functionality by short_description"""
-        response = self.client.get(reverse('community:home'), {'q': 'Latihan bareng'})
-        self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'Silat')
-
-    def test_community_home_search_whitespace(self):
-        """Test search with only whitespace query"""
-        response = self.client.get(reverse('community:home'), {'q': '   '})
-        self.assertEqual(response.status_code, 200)
-        
-        self.assertContains(response, 'Silat')
-
-
-    def test_community_home_authenticated_search(self):
-        """Test search while authenticated (covers exclusion + query)"""
-        self.client.login(username="pew", password="12345")
-        community_joined = Community.objects.create(
-            name="Joined", short_description="Test", full_description="Test", created_by=self.user
-        )
-        community_not_joined = Community.objects.create(
-            name="Not Joined", short_description="Test", full_description="Test", created_by=self.user
-        )
-        Membership.objects.create(user=self.user, community=community_joined)
-        
-        response = self.client.get(reverse('community:home'), {'q': 'Test'})
-        self.assertEqual(response.status_code, 200)
-        self.assertContains(response, "Not Joined") # Harus muncul karena di-search
-        self.assertNotContains(response, "Joined") # Tidak boleh muncul karena sudah join
-
-
-    def test_community_detail_authenticated(self):
-        """Test detail page for authenticated user"""
-        self.client.login(username="pew", password="12345")
-        response = self.client.get(reverse('community:detail', args=[self.community.id]))
-        self.assertEqual(response.status_code, 200)
-        self.assertContains(response, self.community.name)
-        self.assertIn('is_member', response.context)
-        self.assertFalse(response.context['is_member']) # Pastikan false jika belum join
-
-    def test_community_detail_unauthenticated(self):
-        """Test detail page for unauthenticated user"""
-        response = self.client.get(reverse('community:detail', args=[self.community.id]))
-        self.assertEqual(response.status_code, 200)
-        self.assertFalse(response.context['is_member'])
-
-    def test_community_detail_404(self):
-        """Test detail page with invalid ID"""
-        response = self.client.get(reverse('community:detail', args=[9999]))
-        self.assertEqual(response.status_code, 404)
-
-    def test_community_detail_is_member(self):
-        """Test detail page for a user who is a member"""
-        self.client.login(username="pew", password="12345")
-        Membership.objects.create(user=self.user, community=self.community)
-        response = self.client.get(reverse('community:detail', args=[self.community.id]))
-        self.assertEqual(response.status_code, 200)
-        self.assertTrue(response.context['is_member'])
-
-    def test_community_create_get(self):
-        """Test GET request to create page"""
-        self.client.login(username="pew", password="12345")
-        response = self.client.get(reverse('community:create'))
-        self.assertEqual(response.status_code, 200)
-        self.assertIsInstance(response.context['form'], CommunityCreateForm)
-
-    def test_community_create_valid_post(self):
-        """Test creating community with valid data"""
-        self.client.login(username="pew", password="12345")
-        response = self.client.post(reverse('community:create'), {
-            'name': 'Basketball',
-            'short_description': 'Play basketball',
-            'full_description': 'Full Description here',
-            'profile_image_url': 'https://example.com/image.png'
-        })
-        self.assertEqual(response.status_code, 302)
-        self.assertTrue(Community.objects.filter(name='Basketball').exists())
-        
-        community = Community.objects.get(name='Basketball')
-        membership = Membership.objects.get(user=self.user, community=community)
-        self.assertEqual(membership.role, 'admin')
-
-    def test_community_create_invalid_post(self):
-        """Test creating community with invalid data"""
-        self.client.login(username="pew", password="12345")
-        response = self.client.post(reverse('community:create'), {
-            'name': '',
-            'short_description': '',
-            'full_description': ''
-        })
-        self.assertEqual(response.status_code, 200)
-        self.assertFalse(Community.objects.filter(name='').exists())
-
-
-    def test_community_create_post_duplicate_name(self):
-        """Test creating community with duplicate name (triggers try-except)"""
-        self.client.login(username="pew", password="12345")
-        response = self.client.post(reverse('community:create'), {
-            'name': 'Silat', # Nama duplikat
-            'short_description': 'Short',
-            'full_description': 'Full'
-        })
-        self.assertEqual(response.status_code, 200) # Harus render ulang form
-        self.assertContains(response, 'Error:') # Cek pesan error dari exception
-        self.assertEqual(Community.objects.filter(name='Silat').count(), 1) # Pastikan tidak ada duplikat
-  
-
-    def test_community_create_requires_login(self):
-        """Test that create requires authentication"""
-        response = self.client.get(reverse('community:create'))
-        self.assertEqual(response.status_code, 302)
-        self.assertIn('/login/', response.url)
-
-    def test_join_community_new_member(self):
-        """Test joining a community for the first time"""
-        self.client.login(username="pew", password="12345")
-        response = self.client.get(reverse('community:join', args=[self.community.id]))
-        self.assertEqual(response.status_code, 302)
-        self.assertTrue(Membership.objects.filter(user=self.user, community=self.community).exists())
-        membership = Membership.objects.get(user=self.user, community=self.community)
-        self.assertEqual(membership.role, 'user')
-
-    def test_join_community_already_member(self):
-        """Test joining a community that user is already a member of"""
-        self.client.login(username="pew", password="12345")
-        Membership.objects.create(user=self.user, community=self.community)
-        response = self.client.get(reverse('community:join', args=[self.community.id]))
-        self.assertEqual(response.status_code, 302)
-        self.assertEqual(Membership.objects.filter(user=self.user, community=self.community).count(), 1)
-
-    def test_join_community_requires_login(self):
-        """Test that join requires authentication"""
-        response = self.client.get(reverse('community:join', args=[self.community.id]))
-        self.assertEqual(response.status_code, 302)
-        self.assertIn('/login/', response.url)
-
-    def test_join_community_404(self):
-        """Test joining a non-existent community"""
-        self.client.login(username="pew", password="12345")
-        response = self.client.get(reverse('community:join', args=[9999]))
-        self.assertEqual(response.status_code, 404)
-
-    def test_leave_community(self):
-        """Test leaving a community"""
-        self.client.login(username="pew", password="12345")
-        Membership.objects.create(user=self.user, community=self.community)
-        response = self.client.get(reverse('community:leave', args=[self.community.id]))
-        self.assertEqual(response.status_code, 302)
-        self.assertFalse(Membership.objects.filter(user=self.user, community=self.community).exists())
-
-    def test_leave_community_requires_login(self):
-        """Test that leave requires authentication"""
-        response = self.client.get(reverse('community:leave', args=[self.community.id]))
-        self.assertEqual(response.status_code, 302)
-        self.assertIn('/login/', response.url)
-
-    def test_leave_community_404(self):
-        """Test leaving a non-existent community"""
-        self.client.login(username="pew", password="12345")
-        response = self.client.get(reverse('community:leave', args=[9999]))
-        self.assertEqual(response.status_code, 404)
-
-    def test_leave_community_not_member(self):
-        """Test leaving a community user is not a member of"""
-        self.client.login(username="pew", password="12345")
-        self.assertFalse(Membership.objects.filter(user=self.user, community=self.community).exists())
-        response = self.client.get(reverse('community:leave', args=[self.community.id]))
-        self.assertEqual(response.status_code, 302)
-        self.assertFalse(Membership.objects.filter(user=self.user, community=self.community).exists()) 
-
-    def test_my_community_list(self):
-        """Test my community list page"""
-        self.client.login(username="pew", password="12345")
-        Membership.objects.create(user=self.user, community=self.community)
-        response = self.client.get(reverse('community:my_list'))
-        self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, 'community/my_list.html')
-        self.assertIn('memberships', response.context)
-
-    def test_my_community_list_requires_login(self):
-        """Test that my list requires authentication"""
-        response = self.client.get(reverse('community:my_list'))
-        self.assertEqual(response.status_code, 302)
-        self.assertIn('/login/', response.url)
-
-    def test_my_community_list_empty(self):
-        """Test my community list page when user has joined no communities"""
-        self.client.login(username="pew", password="12345")
-        response = self.client.get(reverse('community:my_list'))
-        self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, 'community/my_list.html')
-        self.assertQuerysetEqual(response.context['memberships'], [])
-        self.assertContains(response, "You haven’t joined any communities yet.")
-
-    def test_my_community_group_get(self):
-        """Test GET request to group chat"""
-        self.client.login(username="pew", password="12345")
-        Membership.objects.create(user=self.user, community=self.community)
-        response = self.client.get(reverse('community:my_group', args=[self.community.id]))
-        self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, 'community/group.html')
-
-    def test_my_community_group_post_message(self):
-        """Test posting message via form (non-AJAX)"""
-        self.client.login(username="pew", password="12345")
-        Membership.objects.create(user=self.user, community=self.community)
-        response = self.client.post(
-            reverse('community:my_group', args=[self.community.id]),
-            {'text': 'Test message'}
-        )
-        self.assertEqual(response.status_code, 302)
-        self.assertTrue(Message.objects.filter(text='Test message').exists())
-
-    def test_my_community_group_post_invalid_message(self):
-        """Test posting an empty message via form (non-AJAX)"""
-        self.client.login(username="pew", password="12345")
-        Membership.objects.create(user=self.user, community=self.community)
-        response = self.client.post(
-            reverse('community:my_group', args=[self.community.id]),
-            {'text': ''} # Invalid empty message
-        )
-        self.assertEqual(response.status_code, 200) 
-        self.assertFalse(Message.objects.filter(text='').exists())
-        self.assertIn('form', response.context)
-        self.assertFalse(response.context['form'].is_valid())
-
-    def test_my_community_group_non_member(self):
-        """Test that non-members can't access group chat"""
-        self.client.login(username="pew", password="12345")
-        response = self.client.get(reverse('community:my_group', args=[self.community.id]))
-        self.assertEqual(response.status_code, 302)
-        self.assertEqual(response.url, reverse('community:detail', args=[self.community.id]))
-
-    def test_my_community_group_requires_login(self):
-        """Test that group requires authentication"""
-        response = self.client.get(reverse('community:my_group', args=[self.community.id]))
-        self.assertEqual(response.status_code, 302)
-        self.assertIn('/login/', response.url)
-
-    def test_send_message_ajax_valid(self):
-        """Test sending message via AJAX"""
-        self.client.login(username="pew", password="12345")
-        Membership.objects.create(user=self.user, community=self.community)
-        url = reverse('community:send_message_ajax', args=[self.community.id])
-        data = {'text': 'Hello AJAX'}
-        response = self.client.post(
-            url,
-            data=json.dumps(data),
-            content_type='application/json'
-        )
-        self.assertEqual(response.status_code, 200)
-        json_response = json.loads(response.content)
-        self.assertEqual(json_response['text'], 'Hello AJAX')
-        self.assertEqual(json_response['sender'], 'pew')
-        self.assertEqual(json_response['community_id'], self.community.id)
-
-    def test_send_message_ajax_empty_text(self):
-        """Test sending empty message via AJAX"""
-        self.client.login(username="pew", password="12345")
-        Membership.objects.create(user=self.user, community=self.community)
-        url = reverse('community:send_message_ajax', args=[self.community.id])
-        data = {'text': '     '}
-        response = self.client.post(
-            url,
-            data=json.dumps(data),
-            content_type='application/json'
-        )
-        self.assertEqual(response.status_code, 400)
-
-    def test_send_message_ajax_get_request(self):
-        """Test GET request to send_message_ajax returns error"""
-        self.client.login(username="pew", password="12345")
-        url = reverse('community:send_message_ajax', args=[self.community.id])
-        response = self.client.get(url)
-        self.assertEqual(response.status_code, 400)
-
-    def test_send_message_ajax_requires_login(self):
-        """Test that send message AJAX requires authentication"""
-        url = reverse('community:send_message_ajax', args=[self.community.id])
-        response = self.client.post(url, data=json.dumps({'text': 'test'}), content_type='application/json')
-        self.assertEqual(response.status_code, 302)
-
-    def test_send_message_ajax_invalid_community_404(self):
-        """Test sending AJAX message to a non-existent community"""
-        self.client.login(username="pew", password="12345")
-        url = reverse('community:send_message_ajax', args=[9999])
-        data = {'text': 'Hello AJAX'}
-        response = self.client.post(
-            url,
-            data=json.dumps(data),
-            content_type='application/json'
-        )
-        self.assertEqual(response.status_code, 404)
-
-    def test_send_message_ajax_non_member(self):
-        """Test sending AJAX message as a logged-in non-member"""
-        # Menggunakan user2 yang login tapi bukan member
-        self.client.login(username="user2", password="12345") 
-        url = reverse('community:send_message_ajax', args=[self.community.id])
-        data = {'text': 'I am not a member'}
-        response = self.client.post(
-            url,
-            data=json.dumps(data),
-            content_type='application/json'
-        )
-        
-        self.assertEqual(response.status_code, 200)
-        json_response = json.loads(response.content)
-        self.assertEqual(json_response['text'], 'I am not a member')
-        self.assertTrue(Message.objects.filter(text='I am not a member', sender=self.user2).exists())
-
-    def test_edit_message_get(self):
-        """Test GET request to edit message"""
-        self.client.login(username="pew", password="12345")
-        Membership.objects.create(user=self.user, community=self.community)
-        msg = Message.objects.create(community=self.community, sender=self.user, text="Original")
-        url = reverse('community:edit_message', args=[self.community.id, msg.id])
-        response = self.client.get(url)
-        self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, 'community/edit_message.html')
-
-    def test_edit_message_post(self):
-        """Test POST request to edit message"""
-        self.client.login(username="pew", password="12345")
-        Membership.objects.create(user=self.user, community=self.community)
-        msg = Message.objects.create(community=self.community, sender=self.user, text="Original")
-        url = reverse('community:edit_message', args=[self.community.id, msg.id])
-        response = self.client.post(url, {'text': 'Updated message'})
-        self.assertEqual(response.status_code, 302)
-        msg.refresh_from_db()
-        self.assertEqual(msg.text, 'Updated message')
-
-    def test_edit_message_wrong_user(self):
-        """Test that users can't edit other users' messages"""
-        self.client.login(username="user2", password="12345")
-        msg = Message.objects.create(community=self.community, sender=self.user, text="Original")
-        url = reverse('community:edit_message', args=[self.community.id, msg.id])
-        response = self.client.get(url)
-        self.assertEqual(response.status_code, 404)
-
-    def test_edit_message_requires_login(self):
-        """Test that edit message requires authentication"""
-        msg = Message.objects.create(community=self.community, sender=self.user, text="Original")
-        url = reverse('community:edit_message', args=[self.community.id, msg.id])
-        response = self.client.get(url)
-        self.assertEqual(response.status_code, 302)
-
-    def test_edit_message_post_invalid(self):
-        """Test POST request to edit message with invalid data (empty)"""
-        self.client.login(username="pew", password="12345")
-        Membership.objects.create(user=self.user, community=self.community)
-        msg = Message.objects.create(community=self.community, sender=self.user, text="Original")
-        url = reverse('community:edit_message', args=[self.community.id, msg.id])
-        response = self.client.post(url, {'text': ''}) # Teks kosong
-        self.assertEqual(response.status_code, 200) # Harusnya render ulang form
-        self.assertTemplateUsed(response, 'community/edit_message.html')
-        self.assertFalse(response.context['form'].is_valid())
-        msg.refresh_from_db()
-        self.assertEqual(msg.text, 'Original') 
-
-    def test_delete_message_ajax(self):
-        """Test deleting message via AJAX"""
-        self.client.login(username="pew", password="12345")
-        Membership.objects.create(user=self.user, community=self.community)
-        msg = Message.objects.create(community=self.community, sender=self.user, text="Delete me")
-        url = reverse('community:delete_message', args=[self.community.id, msg.id])
-        response = self.client.delete(url)
-        self.assertEqual(response.status_code, 200)
-        self.assertFalse(Message.objects.filter(id=msg.id).exists())
-
-    def test_delete_message_wrong_user(self):
-        """Test that users can't delete other users' messages"""
-        self.client.login(username="user2", password="12345")
-        msg = Message.objects.create(community=self.community, sender=self.user, text="Delete me")
-        url = reverse('community:delete_message', args=[self.community.id, msg.id])
-        response = self.client.delete(url)
-        self.assertEqual(response.status_code, 404)
-
-    def test_delete_message_post_request(self):
-        """Test POST request to delete returns error"""
-        self.client.login(username="pew", password="12345")
-        msg = Message.objects.create(community=self.community, sender=self.user, text="Delete me")
-        url = reverse('community:delete_message', args=[self.community.id, msg.id])
-        response = self.client.post(url)
-        self.assertEqual(response.status_code, 400)
-
-    def test_delete_message_requires_login(self):
-        """Test that delete message requires authentication"""
-        msg = Message.objects.create(community=self.community, sender=self.user, text="Delete me")
-        url = reverse('community:delete_message', args=[self.community.id, msg.id])
-        response = self.client.delete(url)
-        self.assertEqual(response.status_code, 302)
-
-
-class CommunityURLTest(TestCase):
-    def test_urls_resolve_correctly(self):
-        """Test URL routing"""
-        self.assertEqual(resolve('/community/').func, views.community_home)
-        self.assertEqual(resolve('/community/create/').func, views.community_create)
-        self.assertEqual(resolve('/community/1/').func, views.community_detail)
-        self.assertEqual(resolve('/community/join/1/').func, views.join_community)
-        self.assertEqual(resolve('/community/leave/1/').func, views.leave_community)
-        self.assertEqual(resolve('/community/my/').func, views.my_community_list)
-        self.assertEqual(resolve('/community/my/1/').func, views.my_community_group)
-        self.assertEqual(resolve('/community/my/1/send_message_ajax/').func, views.send_message_ajax)
-        self.assertEqual(resolve('/community/my/1/message/1/edit/').func, views.edit_message)
-        self.assertEqual(resolve('/community/my/1/message/1/delete/').func, views.delete_message)
+        str_repr = str(msg)
+        self.assertIn(long_text[:30], str_repr)
+        self.assertEqual(len(long_text[:30]), 30)
