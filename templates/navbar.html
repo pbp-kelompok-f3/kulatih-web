@@ -1,175 +1,96 @@
-<nav class="flex items-center justify-between w-full h-20 px-4 sm:px-10 lg:px-20 bg-[var(--indigo-dark)] border-b border-gray-800 font-bebas relative md:sticky md:top-0 md:z-50 shadow-lg transition-all duration-300">
+<nav data-aos="fade-down"
+  data-aos-duration="1000"
+  data-aos-easing="ease-out-cubic"
+  class="flex items-center justify-between w-full h-20 px-4 sm:px-10 lg:px-20 bg-[var(--indigo-dark)] border-b border-gray-800 font-bebas relative md:sticky md:top-0 z-[9999] shadow-lg transition-all duration-300">
     <div class="flex items-center">
         <h1 class="text-4xl">
             <a href="{% url 'main:show_main' %}" class="text-white">KU</a><a href="{% url 'main:show_main' %}" class="text-yellow-400">LATIH</a>
         </h1>
     </div>
     <div class="hidden md:flex absolute left-1/2 transform -translate-x-1/2">
-        <div class="flex items-center gap-x-8 text-white tracking-wide text-2xl z-10">
+        <div class="flex items-center gap-x-8 text-white tracking-wide text-2xl z-50">
             <a href="{% url 'users:coach_list' %}" class="hover:text-yellow-400">COACH</a>
             <a href="{% url 'forum:post_list' %}" class="hover:text-yellow-400">FORUM</a>
             <a href="{% url 'community:home' %}" class="hover:text-yellow-400">COMMUNITY</a>
             <a href="{% url 'tournaments:tournament_view' %}" class="hover:text-yellow-400">TOURNAMENTS</a>
         </div>
     </div>
-    <div class="flex items-center space-x-3">
+    <div class="z-50 flex items-center space-x-3">
+
         {% if user.is_authenticated %}
-            <div class="relative">
-                <button 
-                    id="profile-button" 
-                    class="hidden md:block w-12 h-12 rounded-full overflow-hidden  focus:outline-none focus:ring-2 focus:ring-[var(--yellow)] focus:ring-offset-2 focus:ring-offset-gray-800"
-                >
-                    {% if user.member.profile_photo %}
-                        <img id="profile-photo" src="{{ user.member.profile_photo }}" alt="Profile" class="w-full h-full object-cover">
-                    {% elif user.coach.profile_photo %}
-                        <img id="profile-photo" src="{{ user.coach.profile_photo }}" alt="Profile" class="w-full h-full object-cover">
-                    {% else %}
-                        <img id="profile-photo" src="https://icon-library.com/images/default-profile-icon/default-profile-icon-24.jpg" alt="Profile" class="w-full h-full object-cover">
-                    {% endif %}
-                </button>
-                    <div 
-                    id="profile-menu"
-                    class="absolute right-0 z-10 mt-3 w-48 bg-[#242244] rounded-lg shadow-lg 
-                            py-1 font-bevietnam border border-gray-700 
-                            overflow-hidden max-h-0 opacity-0 scale-95 
-                            transition-all duration-500 ease-[cubic-bezier(0.77,0,0.175,1)] 
-                            origin-top hidden"
-                    >
+        <div class="z-50 relative">
+            <button id="profile-button"
+                    class="hidden md:block w-12 h-12 rounded-full overflow-hidden focus:outline-none focus:ring-2 focus:ring-[var(--yellow)] focus:ring-offset-2 focus:ring-offset-gray-800">
+                {% if user.member.profile_photo %}
+                    <img id="profile-photo" src="{{ user.member.profile_photo }}" alt="Profile" class="w-full h-full object-cover">
+                {% elif user.coach.profile_photo %}
+                    <img id="profile-photo" src="{{ user.coach.profile_photo }}" alt="Profile" class="w-full h-full object-cover">
+                {% else %}
+                    <img id="profile-photo" src="https://icon-library.com/images/default-profile-icon/default-profile-icon-24.jpg" alt="Profile" class="w-full h-full object-cover">
+                {% endif %}
+            </button>
+            <div id="profile-menu"
+                 class="fixed right-6 top-20 z-[999] w-48 bg-[#242244] rounded-lg shadow-lg py-1 font-bevietnam border border-gray-700 overflow-hidden max-h-0 opacity-0 scale-95 transition-all duration-500 ease-[cubic-bezier(0.77,0,0.175,1)] origin-top hidden">
                 <div class="px-4 py-2 text-sm text-white border-b border-gray-700">
                     <strong id="profile-fullname" class="block truncate">{{ user.first_name }} {{ user.last_name }}</strong>
                     @{{ user.username }}
                 </div>
                 <a href="{% url 'users:show_profile' %}" class="block px-4 py-2 text-sm text-white hover:bg-[#2e2b5a] transition-colors duration-200">My Profile</a>
                 <a href="{% url 'users:show_profile' %}?action=edit" class="block px-4 py-2 text-sm text-white hover:bg-[#2e2b5a] transition-colors duration-200">Edit Profile</a>
-                <a href="#" class="block px-4 py-2 text-sm text-white hover:bg-[#2e2b5a] border-b border-gray-700 transition-colors duration-200">My Bookings</a>
+                <a href="{% url 'booking:list' %}" class="block px-4 py-2 text-sm text-white hover:bg-[#2e2b5a] border-b border-gray-700 transition-colors duration-200">My Bookings</a>
                 <form method="post" action="{% url 'users:logout' %}">
                     {% csrf_token %}
-                    <button type="submit" class="block w-full text-left px-4 py-2 text-sm text-white hover:bg-[#2e2b5a] transition-colors duration-200">
-                    Log out
-                    </button>
+                    <button type="submit" class="block w-full text-left px-4 py-2 text-sm text-white hover:bg-[#2e2b5a] transition-colors duration-200">Log out</button>
                 </form>
-                </div>
             </div>
+        </div>
         {% else %}
-            <div class="hidden md:block space-x-3">
-                <a href="{% url 'users:login' %}" class="bg-[var(--yellow)] px-4 py-2 border-black rounded-lg text-black transition font-bevietnam font-medium">Log In</a>
-            </div>
+        <div class="hidden md:block space-x-3">
+            <a href="{% url 'users:login' %}" class="bg-[var(--yellow)] px-4 py-2 border-black rounded-lg text-black transition font-bevietnam font-medium">Log In</a>
+        </div>
         {% endif %}
-
         <button id="menu-btn" class="md:hidden text-white focus:outline-none">
             <svg class="w-8 h-8" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16"/>
             </svg>
         </button>
     </div>
-
-    <div 
-        id="mobile-menu" 
-        class="hidden md:hidden absolute z-50 top-full left-0 w-full bg-[#242244] border-t border-gray-700 
-            overflow-hidden transition-all duration-700 ease-[cubic-bezier(0.77,0,0.175,1)] 
-            max-h-0 shadow-[0_8px_20px_rgba(0,0,0,0.4)] transform-gpu"
-    >
+    <div id="mobile-menu"
+         class="fixed top-20 left-0 w-full z-[999] bg-[#242244] border-t border-gray-700 overflow-hidden transition-all duration-700 ease-[cubic-bezier(0.77,0,0.175,1)] max-h-0 shadow-[0_8px_20px_rgba(0,0,0,0.4)] transform-gpu hidden">
         <div class="text-white flex flex-col p-4 space-y-2 text-lg font-medium">
-
             {% if user.is_authenticated %}
-                <a href="{% url 'users:show_profile' %}" 
-                class="block w-full px-4 py-2 rounded-md hover:text-yellow-400 hover:bg-[#191831] 
-                        transition-all duration-500 ease-in-out transform hover:translate-x-1 hover:scale-[1.02]">
-                    My Profile
-                </a>
-                <a href="{% url 'users:show_profile' %}?action=edit" 
-                class="block w-full px-4 py-2 rounded-md hover:text-yellow-400 hover:bg-[#191831] 
-                        transition-all duration-500 ease-in-out transform hover:translate-x-1 hover:scale-[1.02]">
-                    Edit Profile
-                </a>
-
+                <a href="{% url 'users:show_profile' %}" class="block w-full px-4 py-2 rounded-md hover:text-yellow-400 hover:bg-[#191831] transition-all duration-500 ease-in-out transform hover:translate-x-1 hover:scale-[1.02]">My Profile</a>
+                <a href="{% url 'users:show_profile' %}?action=edit" class="block w-full px-4 py-2 rounded-md hover:text-yellow-400 hover:bg-[#191831] transition-all duration-500 ease-in-out transform hover:translate-x-1 hover:scale-[1.02]">Edit Profile</a>
                 <div class="border-t border-gray-700 my-2"></div>
-
-                <a href="{% url 'users:coach_list' %}" 
-                class="block w-full px-4 py-2 rounded-md hover:text-yellow-400 hover:bg-[#191831] 
-                        transition-all duration-500 ease-in-out transform hover:translate-x-1 hover:scale-[1.02]">
-                    COACH
-                </a>
-                <a href="{% url 'forum:post_list' %}" 
-                class="block w-full px-4 py-2 rounded-md hover:text-yellow-400 hover:bg-[#191831] 
-                        transition-all duration-500 ease-in-out transform hover:translate-x-1 hover:scale-[1.02]">
-                    FORUM
-                </a>
-                <a href="{% url 'community:home' %}" 
-                class="block w-full px-4 py-2 rounded-md hover:text-yellow-400 hover:bg-[#191831] 
-                        transition-all duration-500 ease-in-out transform hover:translate-x-1 hover:scale-[1.02]">
-                    COMMUNITY
-                </a>
-                <a href="{% url 'tournaments:tournament_view' %}" 
-                class="block w-full px-4 py-2 rounded-md hover:text-yellow-400 hover:bg-[#191831] 
-                        transition-all duration-500 ease-in-out transform hover:translate-x-1 hover:scale-[1.02]">
-                    TOURNAMENT
-                </a>
-
+                <a href="{% url 'users:coach_list' %}" class="block w-full px-4 py-2 rounded-md hover:text-yellow-400 hover:bg-[#191831] transition-all duration-500 ease-in-out transform hover:translate-x-1 hover:scale-[1.02]">COACH</a>
+                <a href="{% url 'forum:post_list' %}" class="block w-full px-4 py-2 rounded-md hover:text-yellow-400 hover:bg-[#191831] transition-all duration-500 ease-in-out transform hover:translate-x-1 hover:scale-[1.02]">FORUM</a>
+                <a href="{% url 'community:home' %}" class="block w-full px-4 py-2 rounded-md hover:text-yellow-400 hover:bg-[#191831] transition-all duration-500 ease-in-out transform hover:translate-x-1 hover:scale-[1.02]">COMMUNITY</a>
+                <a href="{% url 'tournaments:tournament_view' %}" class="block w-full px-4 py-2 rounded-md hover:text-yellow-400 hover:bg-[#191831] transition-all duration-500 ease-in-out transform hover:translate-x-1 hover:scale-[1.02]">TOURNAMENTS</a>
                 <div class="border-t border-gray-700 my-2"></div>
-
                 <form method="post" action="{% url 'users:logout' %}">
                     {% csrf_token %}
-                    <button type="submit" 
-                            class="block w-full text-left px-4 py-2 rounded-md hover:text-yellow-400 hover:bg-[#191831] 
-                                transition-all duration-500 ease-in-out transform hover:translate-x-1 hover:scale-[1.02]">
-                        Log Out
-                    </button>
+                    <button type="submit" class="block w-full text-left px-4 py-2 rounded-md hover:text-yellow-400 hover:bg-[#191831] transition-all duration-500 ease-in-out transform hover:translate-x-1 hover:scale-[1.02]">Log Out</button>
                 </form>
-
             {% else %}
-                <a href="{% url 'users:login' %}" 
-                class="block w-full px-4 py-2 rounded-md hover:text-yellow-400 hover:bg-[#191831] 
-                        transition-all duration-500 ease-in-out transform hover:translate-x-1 hover:scale-[1.02]">
-                    LOG IN
-                </a>
-                <a href="{% url 'users:register_member' %}" 
-                class="block w-full px-4 py-2 rounded-md hover:text-yellow-400 hover:bg-[#191831] 
-                        transition-all duration-500 ease-in-out transform hover:translate-x-1 hover:scale-[1.02]">
-                    REGISTER
-                </a>
-
+                <a href="{% url 'users:login' %}" class="block w-full px-4 py-2 rounded-md hover:text-yellow-400 hover:bg-[#191831] transition-all duration-500 ease-in-out transform hover:translate-x-1 hover:scale-[1.02]">LOG IN</a>
+                <a href="{% url 'users:register_member' %}" class="block w-full px-4 py-2 rounded-md hover:text-yellow-400 hover:bg-[#191831] transition-all duration-500 ease-in-out transform hover:translate-x-1 hover:scale-[1.02]">REGISTER</a>
                 <div class="border-t border-gray-700 my-2"></div>
-
-                <a href="{% url 'users:coach_list' %}" 
-                class="block w-full px-4 py-2 rounded-md hover:text-yellow-400 hover:bg-[#191831] 
-                        transition-all duration-500 ease-in-out transform hover:translate-x-1 hover:scale-[1.02]">
-                    COACH
-                </a>
-                <a href="{% url 'forum:post_list' %}" 
-                class="block w-full px-4 py-2 rounded-md hover:text-yellow-400 hover:bg-[#191831] 
-                        transition-all duration-500 ease-in-out transform hover:translate-x-1 hover:scale-[1.02]">
-                    FORUM
-                </a>
-                <a href="{% url 'community:home' %}" 
-                class="block w-full px-4 py-2 rounded-md hover:text-yellow-400 hover:bg-[#191831] 
-                        transition-all duration-500 ease-in-out transform hover:translate-x-1 hover:scale-[1.02]">
-                    COMMUNITY
-                </a>
-                <a href="{% url 'tournaments:tournament_view' %}" 
-                class="block w-full px-4 py-2 rounded-md hover:text-yellow-400 hover:bg-[#191831] 
-                        transition-all duration-500 ease-in-out transform hover:translate-x-1 hover:scale-[1.02]">
-                    TOURNAMENT
-                </a>
+                <a href="{% url 'users:coach_list' %}" class="block w-full px-4 py-2 rounded-md hover:text-yellow-400 hover:bg-[#191831] transition-all duration-500 ease-in-out transform hover:translate-x-1 hover:scale-[1.02]">COACH</a>
+                <a href="{% url 'forum:post_list' %}" class="block w-full px-4 py-2 rounded-md hover:text-yellow-400 hover:bg-[#191831] transition-all duration-500 ease-in-out transform hover:translate-x-1 hover:scale-[1.02]">FORUM</a>
+                <a href="{% url 'community:home' %}" class="block w-full px-4 py-2 rounded-md hover:text-yellow-400 hover:bg-[#191831] transition-all duration-500 ease-in-out transform hover:translate-x-1 hover:scale-[1.02]">COMMUNITY</a>
+                <a href="{% url 'tournaments:tournament_view' %}" class="block w-full px-4 py-2 rounded-md hover:text-yellow-400 hover:bg-[#191831] transition-all duration-500 ease-in-out transform hover:translate-x-1 hover:scale-[1.02]">TOURNAMENTS</a>
             {% endif %}
         </div>
     </div>
 
-    </div>
-    </div>
-
-
 </nav>
 
 <script>
-
 const menuBtn = document.getElementById('menu-btn');
 const mobileMenu = document.getElementById('mobile-menu');
-
 if (menuBtn && mobileMenu) {
     menuBtn.addEventListener('click', () => {
         const isOpen = !mobileMenu.classList.contains('hidden');
-
         if (isOpen) {
             mobileMenu.style.maxHeight = '0';
             setTimeout(() => mobileMenu.classList.add('hidden'), 300);
@@ -184,18 +105,15 @@ if (menuBtn && mobileMenu) {
 
 const profileBtn = document.getElementById('profile-button');
 const profileMenu = document.getElementById('profile-menu');
-
 if (profileBtn && profileMenu) {
   profileBtn.addEventListener('click', () => {
     const isOpen = !profileMenu.classList.contains('hidden');
-
     if (isOpen) {
       profileMenu.style.maxHeight = '0';
       profileMenu.style.opacity = '0';
       profileMenu.style.transform = 'scale(0.95) translateY(-10px)';
       setTimeout(() => profileMenu.classList.add('hidden'), 400);
     } else {
-      // Buka animasi
       profileMenu.classList.remove('hidden');
       setTimeout(() => {
         profileMenu.style.maxHeight = profileMenu.scrollHeight + 'px';
@@ -215,6 +133,11 @@ if (profileBtn && profileMenu) {
   });
 }
 
+AOS.init({
+  duration: 1000,
+  once: true,
+  offset: 100,
+  easing: "ease-out-cubic",
+  delay: 50,
+});
 </script>
-
-

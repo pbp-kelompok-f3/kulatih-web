@@ -1,10 +1,11 @@
 {% extends "base.html" %}
 {% load static %}
 
-{% block meta %}<title>My Profile - KuLatih</title>{% endblock meta %}
+{% block meta %}
+<title>My Profile - KuLatih</title>
+{% endblock meta %}
 
 {% block content %}
-<section class="bg-[var(--indigo)] text-[var(--white)] px-8 md:px-20 py-12 font-bevietnam">
 <section class="bg-[var(--indigo)] text-[var(--white)] px-8 md:px-20 py-12 font-bevietnam">
   <div class="max-w-6xl mx-auto">
     <div class="flex flex-col md:flex-row items-center gap-10">
@@ -19,34 +20,28 @@
       
       <!-- Right: header -->
       <div class="flex-1 text-center md:text-left">
-        <div class="text-lg font-bevietnam tracking-wider text-gray-300 mb-2">
+        <div class="text-lg tracking-wider text-gray-300 mb-2">
           Member Profile
         </div>
-        <h1 id="member-fullname" id="member-fullname" class="text-5xl font-bevietnam font-bold leading-none mb-2">{{ user.get_full_name }}</h1>
+        <h1 id="member-fullname" class="text-5xl font-bold leading-none mb-2">{{ user.get_full_name }}</h1>
         <div class="text-lg text-gray-400 mb-4">
           @{{ user.username }} <span class="text-white">· Member since {{ user.date_joined|date:"F Y" }}</span>
         </div>
 
         {% if user.is_authenticated %}
             <button id="edit-profile-btn" class="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-[var(--yellow)] text-[var(--indigo-dark)] font-medium shadow-md hover:opacity-90">
-            <button id="edit-profile-btn" class="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-[var(--yellow)] text-[var(--indigo-dark)] font-medium shadow-md hover:opacity-90">
                 ✎ Edit Profile
-            </button>
             </button>
         {% endif %}
       </div>
     </div>
 
-      </div>
-    </div>
-
     <!-- Description / info card -->
     <div class="bg-[var(--indigo-light)] rounded-2xl p-8 text-left mt-12 shadow-lg">
-        <h2 class="text-2xl font-semibold font-bevietnam mb-2">Description</h2>
-        <p id="member-description" class="text-[var(--white)] leading-relaxed mb-6">
+      <h2 class="text-2xl font-semibold mb-2">Description</h2>
+      <p id="member-description" class="text-[var(--white)] leading-relaxed mb-6">
         {{ profile.description|default:"This member has not added a description." }}
         <p id="member-description" class="text-[var(--white)] leading-relaxed mb-6">
-        {{ profile.description|default:"This member has not added a description." }}
         </p>
         
         <div class="flex gap-x-8 text-sm">
@@ -64,12 +59,17 @@
                 <div id="member-phone" id="member-phone">{{ profile.phone|default:"-" }}</div>
             </div>
         </div>
+
+        <!-- Column 2: Values -->
+        <div class="text-[rgba(245,245,245,.9)] space-y-2">
+          <div id="member-city">{{ profile.city|default:"Not specified" }}</div>
+          <div id="member-email">{{ user.email }}</div>
+          <div id="member-phone">{{ profile.phone|default:"-" }}</div>
+        </div>
+      </div>
     </div>
   </div>
 </section>
-
-{% include "booking/booking_list_content_user.html"%}
-
 {% include "modal_member_edit.html" %}
-
+{% include "booking/booking_list_content_user.html" %}
 {% endblock content %}
