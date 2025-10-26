@@ -12,7 +12,14 @@ from .forms import TournamentForm
 
 def tournament_view(request):
     tournaments = Tournament.objects.filter(flagTournaments=True)
-    is_coach = hasattr(request.user, 'coach')
+    if hasattr(request.user, 'coach'):
+        request.session['role'] = 'coach'
+    elif hasattr(request.user, 'member'):
+        request.session['role'] = 'member'
+    else:
+        request.session['role'] = 'guest'
+
+    is_coach = request.session.get('role') == 'coach'
 
     if request.headers.get('x-requested-with') == 'XMLHttpRequest':
         data = []
@@ -38,6 +45,7 @@ def tournament_view(request):
         'tournaments': tournaments,
         'is_coach': is_coach,
     })
+
 
 
 @login_required(login_url=reverse_lazy('users:login'))
