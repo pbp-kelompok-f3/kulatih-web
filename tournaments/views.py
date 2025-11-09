@@ -4,7 +4,7 @@ from django.contrib.auth.decorators import login_required
 from django.views.decorators.csrf import csrf_exempt
 from django.urls import reverse_lazy
 import json
-
+from datetime import datetime
 from .models import Tournament
 from users.models import Coach, Member
 from .forms import TournamentForm
@@ -195,13 +195,24 @@ def edit_tournament_ajax(request, tournament_id):
         })
 
     elif request.method == "POST":
-        data = json.loads(request.body.decode("utf-8"))
-        tournament.namaTournaments = data.get("namaTournaments", tournament.namaTournaments)
-        tournament.lokasiTournaments = data.get("lokasiTournaments", tournament.lokasiTournaments)
-        tournament.tanggalTournaments = data.get("tanggalTournaments", tournament.tanggalTournaments)
-        tournament.deskripsiTournaments = data.get("deskripsiTournaments", tournament.deskripsiTournaments)
-        tournament.posterTournaments = data.get("posterTournaments", tournament.posterTournaments)
-        tournament.save()
-        return JsonResponse({"message": "Tournament updated successfully!"})
+        try:
+            data = json.loads(request.body.decode("utf-8"))
+
+            tournament.namaTournaments = data.get("namaTournaments", tournament.namaTournaments)
+            tournament.lokasiTournaments = data.get("lokasiTournaments", tournament.lokasiTournaments)
+            tournament.deskripsiTournaments = data.get("deskripsiTournaments", tournament.deskripsiTournaments)
+            tournament.posterTournaments = data.get("posterTournaments", tournament.posterTournaments)
+            tanggal_str = data.get("tanggalTournaments")
+            if tanggal_str:
+                try:
+                    tournament.tanggalTournaments = datetime.strptime(tanggal_str, "%Y-%m-%d").date()
+                except ValueError:
+                    return JsonResponse({"error": "Format tanggal tidak valid. Gunakan YYYY-MM-DD."}, status=400)
+
+            tournament.save()
+            return JsonResponse({"message": "Tournament updated successfully!"})
+
+        except json.JSONDecodeError:
+            return JsonResponse({"error": "Invalid JSON data."}, status=400)
 
     return JsonResponse({"error": "Invalid request method"}, status=405)
