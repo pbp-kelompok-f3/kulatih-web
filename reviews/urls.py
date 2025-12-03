@@ -10,4 +10,5 @@ urlpatterns = [
     path("update/<int:review_id>/", views.update_review_json, name="update_review_json"),
     path("delete/<int:review_id>/", views.delete_review_json, name="delete_review_json"),
     path("page/<int:review_id>/", views.review_detail_page, name="review_detail_page"),
+    path('json/<int:review_id>/', views.review_detail_json, name='review_detail_json'),
 ]
