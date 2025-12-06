@@ -220,6 +220,7 @@ def edit_tournament_ajax(request, tournament_id):
 @login_required
 def tournament_view_flutter(request):
     tournaments = Tournament.objects.filter(flagTournaments=True)
+
     if hasattr(request.user, 'coach'):
         role = "coach"
     elif hasattr(request.user, 'member'):
@@ -228,12 +229,24 @@ def tournament_view_flutter(request):
         role = "guest"
 
     result = []
+
     for t in tournaments:
         pembuat_username = (
             t.pembuatTournaments.user.username
             if hasattr(t.pembuatTournaments, 'user')
             else "Unknown"
         )
+
+        participants = []
+        for m in t.pesertaTournaments.all():
+            participants.append({
+                "member": {
+                    "id": str(m.id),
+                    "username": m.user.username,
+                    "city": m.city,
+                    "photo": m.profile_photo or "/static/images/empty.png",
+                }
+            })
 
         result.append({
             "id": str(t.idTournaments),
@@ -244,6 +257,9 @@ def tournament_view_flutter(request):
             "poster": t.posterTournaments or "/static/images/empty.png",
             "deskripsi": t.deskripsiTournaments,
             "pembuat": pembuat_username,
+
+            "participants": participants,
+            "participant_count": len(participants)
         })
 
     return JsonResponse({
