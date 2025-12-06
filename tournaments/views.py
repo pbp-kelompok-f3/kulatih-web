@@ -8,6 +8,8 @@ from datetime import datetime
 from .models import Tournament
 from users.models import Coach, Member
 from .forms import TournamentForm
+import requests
+from django.http import HttpResponse
 
 
 def tournament_view(request):
@@ -217,7 +219,6 @@ def edit_tournament_ajax(request, tournament_id):
 
     return JsonResponse({"error": "Invalid request method"}, status=405)
 
-@login_required
 def tournament_view_flutter(request):
     tournaments = Tournament.objects.filter(flagTournaments=True)
 
@@ -453,3 +454,20 @@ def assign_tournament_flutter(request, tournament_id):
     }, status=200)
 
 
+def proxy_image_tournament(request):
+    image_url = request.GET.get('url')
+    if not image_url:
+        return HttpResponse('No URL provided', status=400)
+    
+    try:
+        # Fetch image from external source
+        response = requests.get(image_url, timeout=10)
+        response.raise_for_status()
+        
+        # Return the image with proper content type
+        return HttpResponse(
+            response.content,
+            content_type=response.headers.get('Content-Type', 'image/jpeg')
+        )
+    except requests.RequestException as e:
+        return HttpResponse(f'Error fetching image: {str(e)}', status=500)
