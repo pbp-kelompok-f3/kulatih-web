@@ -6,6 +6,8 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 from django.views.decorators.cache import never_cache
 from django.views.decorators.http import require_POST
+from django.core.paginator import Paginator
+import json
 
 from .models import ForumPost, Vote, Comment
 
@@ -237,3 +239,186 @@ def comment_add(request, post_id):
     )
     node = _node_from_comment(c, request.user.id)
     return JsonResponse({"ok": True, "item": node})
+
+def post_list_json(request):
+    q = (request.GET.get("q") or "").strip()
+    mine = request.GET.get("mine") == "1"
+
+    qs = (
+        ForumPost.objects.select_related("author")
+        .prefetch_related("votes")
+        .annotate(active_comments=Count("comments", filter=Q(comments__is_active=True)))
+        .order_by("-created_at")
+    )
+
+    if q:
+        qs = qs.filter(Q(content__icontains=q) | Q(author__username__icontains=q))
+
+    if mine and request.user.is_authenticated:
+        qs = qs.filter(author=request.user)
+
+    posts = []
+    for p in qs:
+        score = p.votes.aggregate(total=Sum("value"))["total"] or 0
+        user_vote = 0
+        if request.user.is_authenticated:
+            user_vote = (
+                p.votes.filter(user=request.user)
+                .values_list("value", flat=True)
+                .first()
+                or 0
+            )
+
+        posts.append({
+            "id": p.id,
+            "author": p.author.username,
+            "author_id": p.author.id,
+            "content": p.content,
+            "created": timezone.localtime(p.created_at).isoformat(),
+            "score": score,
+            "comments": p.active_comments,
+            "user_vote": user_vote,
+        })
+
+    return JsonResponse({"ok": True, "count": len(posts), "items": posts})
+
+
+@login_required
+def create_post_json(request):
+    if request.method != "POST":
+        return JsonResponse({"ok": False, "error": "method not allowed"}, status=405)
+
+    body = json.loads(request.body)
+    content = (body.get("content") or "").strip()
+
+    if not content:
+        return JsonResponse({"ok": False, "error": "content required"}, status=400)
+
+    post = ForumPost.objects.create(author=request.user, content=content)
+
+    return JsonResponse({
+        "ok": True,
+        "id": post.id,
+        "content": post.content,
+        "author": request.user.username,
+        "created": timezone.localtime(post.created_at).isoformat(),
+        "score": 0,
+        "comments": 0,
+        "can_edit": True
+    })
+
+@login_required
+def upvote_json(request, post_id):
+    if request.method != "POST":
+        return JsonResponse({"ok": False, "error": "method not allowed"}, status=405)
+
+    post = get_object_or_404(ForumPost, id=post_id)
+
+    vote, created = Vote.objects.get_or_create(
+        post=post,
+        user=request.user,
+        defaults={"value": Vote.UP}
+    )
+
+    if not created:
+        if vote.value == Vote.UP:
+            vote.delete()
+        else:
+            vote.value = Vote.UP
+            vote.save(update_fields=["value"])
+
+    return JsonResponse(_vote_payload(post, request.user))
+
+
+@login_required
+def downvote_json(request, post_id):
+    if request.method != "POST":
+        return JsonResponse({"ok": False, "error": "method not allowed"}, status=405)
+
+    post = get_object_or_404(ForumPost, id=post_id)
+
+    vote, created = Vote.objects.get_or_create(
+        post=post,
+        user=request.user,
+        defaults={"value": Vote.DOWN}
+    )
+
+    if not created:
+        if vote.value == Vote.DOWN:
+            vote.delete()
+        else:
+            vote.value = Vote.DOWN
+            vote.save(update_fields=["value"])
+
+    return JsonResponse(_vote_payload(post, request.user))
+
+@login_required
+def delete_post_json(request, post_id):
+    if request.method != "DELETE":
+        return JsonResponse({"ok": False, "error": "method not allowed"}, status=405)
+
+    post = get_object_or_404(ForumPost, id=post_id)
+
+    if request.user.id != post.author_id and not request.user.is_staff:
+        return JsonResponse({"ok": False, "error": "forbidden"}, status=403)
+
+    post.delete()
+    return JsonResponse({"ok": True, "id": post_id})
+
+@login_required
+def edit_post_json(request, post_id):
+    if request.method != "PUT":
+        return JsonResponse({"ok": False, "error": "method not allowed"}, status=405)
+
+    post = get_object_or_404(ForumPost, id=post_id)
+
+    if not (request.user == post.author or request.user.is_staff):
+        return JsonResponse({"ok": False, "error": "forbidden"}, status=403)
+
+    body = json.loads(request.body)
+    content = (body.get("content") or "").strip()
+
+    if not content:
+        return JsonResponse({"ok": False, "error": "empty content"}, status=400)
+
+    post.content = content
+    post.save(update_fields=["content"])
+
+    return JsonResponse({"ok": True, "id": post.id, "content": post.content})
+
+def comment_list_json(request, post_id):
+    post = get_object_or_404(ForumPost, id=post_id)
+    roots, total = _build_comment_tree(post, request.user)
+
+    return JsonResponse({"ok": True, "count": total, "items": roots})
+
+@login_required
+def comment_add_json(request, post_id):
+    if request.method != "POST":
+        return JsonResponse({"ok": False, "error": "method not allowed"}, status=405)
+
+    post = get_object_or_404(ForumPost, id=post_id)
+    body = json.loads(request.body)
+
+    content = (body.get("content") or "").strip()
+    parent_id = body.get("parent")
+
+    if not content:
+        return JsonResponse({"ok": False, "error": "empty content"}, status=400)
+
+    parent = None
+    if parent_id:
+        parent = get_object_or_404(Comment, id=parent_id, post=post, is_active=True)
+
+    c = Comment.objects.create(
+        post=post,
+        author=request.user,
+        name=request.user.username,
+        content=content,
+        parent=parent,
+    )
+
+    node = _node_from_comment(c, request.user.id)
+
+    return JsonResponse({"ok": True, "item": node})
+
