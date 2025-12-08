@@ -8,6 +8,7 @@ from django.views.decorators.cache import never_cache
 from django.views.decorators.http import require_POST
 from django.core.paginator import Paginator
 import json
+from django.views.decorators.csrf import csrf_exempt
 
 from .models import ForumPost, Vote, Comment
 
@@ -288,7 +289,7 @@ def post_list_json(request):
 
     return JsonResponse({"ok": True, "count": len(posts), "items": posts})
 
-
+@csrf_exempt
 @login_required
 def create_post_json(request):
     if request.method != "POST":
