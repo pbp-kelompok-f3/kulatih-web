@@ -51,6 +51,22 @@
   </form>
 </section>
 
+<!-- Delete Message Modal -->
+<div id="deleteMessageModal" class="fixed inset-0 bg-black/60 flex hidden justify-center items-center z-50">
+  <div class="bg-[#1e1b3a] p-6 rounded-xl w-full max-w-sm text-center animate-fadeIn">
+    <h2 class="text-xl font-bold text-white mb-2">DELETE MESSAGE?</h2>
+    <p class="text-gray-300 mb-6">This action cannot be undone.</p>
+    <div class="flex justify-center gap-4">
+      <button id="cancelDeleteMessage" class="px-4 py-2 bg-transparent border border-gray-500 rounded-lg text-white hover:bg-gray-700 transition">
+        Cancel
+      </button>
+      <button id="confirmDeleteMessage" class="px-4 py-2 bg-yellow-400 text-black font-semibold rounded-lg hover:bg-yellow-500 transition">
+        Delete
+      </button>
+    </div>
+  </div>
+</div>
+
 <!-- AJAX Script -->
 <script>
 document.querySelector('#message-form').addEventListener('submit', async function(e) {
@@ -69,59 +85,67 @@ document.querySelector('#message-form').addEventListener('submit', async functio
 
   const data = await response.json();
   if (data.text) {
-  const chatBox = document.querySelector('#messages');
-
-  const emptyMsg = chatBox.querySelector('p.text-gray-400');
-  if (emptyMsg) emptyMsg.remove();
-
-  // Tambahkan pesan baru
-  chatBox.innerHTML += `
-    <div class="flex flex-col items-end message-container" data-id="${data.id}">
-      <div class="text-xs text-[var(--white)] mb-1">${data.sender}</div>
-      <div class="relative bg-[var(--yellow)] text-[var(--indigo-dark)] px-5 py-3 rounded-2xl max-w-[70%] text-right font-medium">
-        ${data.text}
-      </div>
-      <div class="flex justify-end gap-3 text-xs text-gray-400 mt-1">
-        <a href="/community/my/${data.community_id}/message/${data.id}/edit/" class="hover:underline">edit</a>
-        <a href="#" class="delete-btn hover:underline" data-id="${data.id}">delete</a>
-      </div>
-    </div>
-  `;
-  document.querySelector('#message-input').value = '';
-  chatBox.scrollTop = chatBox.scrollHeight;
-}
-});
-
-// DELETE Message via AJAX
-document.addEventListener('click', async e => {
-  if (e.target.classList.contains('delete-btn')) {
-    e.preventDefault();
-    const msgId = e.target.dataset.id;
-    const msgContainer = e.target.closest('.message-container');
     const chatBox = document.querySelector('#messages');
+    const emptyMsg = chatBox.querySelector('p.text-gray-400');
+    if (emptyMsg) emptyMsg.remove();
 
-    const response = await fetch(`/community/my/{{ community.id }}/message/${msgId}/delete/`, {
-      method: 'DELETE',
-      headers: {'X-CSRFToken': '{{ csrf_token }}'},
-    });
-
-    const data = await response.json();
-    if (data.success) {
-      msgContainer.remove();
-
-      // Cek apakah semua pesan sudah dihapus
-      const remaining = chatBox.querySelectorAll('.message-container');
-      if (remaining.length === 0) {
-        chatBox.innerHTML = `
-          <p class="text-center text-gray-400 italic">
-            no messages yet, be the first to say hi!
-          </p>
-        `;
-      }
-    }
+    chatBox.innerHTML += `
+      <div class="flex flex-col items-end message-container" data-id="${data.id}">
+        <div class="text-xs text-[var(--white)] mb-1">${data.sender}</div>
+        <div class="relative bg-[var(--yellow)] text-[var(--indigo-dark)] px-5 py-3 rounded-2xl max-w-[70%] text-right font-medium">
+          ${data.text}
+        </div>
+        <div class="flex justify-end gap-3 text-xs text-gray-400 mt-1">
+          <a href="/community/my/${data.community_id}/message/${data.id}/edit/" class="hover:underline">edit</a>
+          <a href="#" class="delete-btn hover:underline" data-id="${data.id}">delete</a>
+        </div>
+      </div>
+    `;
+    document.querySelector('#message-input').value = '';
+    chatBox.scrollTop = chatBox.scrollHeight;
   }
 });
 
+// DELETE Message via Modal
+let messageToDeleteId = null;
+
+document.addEventListener('click', e => {
+  if (e.target.classList.contains('delete-btn')) {
+    e.preventDefault();
+    messageToDeleteId = e.target.dataset.id;
+    document.getElementById('deleteMessageModal').classList.remove('hidden');
+  }
+});
+
+document.getElementById('cancelDeleteMessage').addEventListener('click', () => {
+  messageToDeleteId = null;
+  document.getElementById('deleteMessageModal').classList.add('hidden');
+});
+
+document.getElementById('confirmDeleteMessage').addEventListener('click', async () => {
+  if (!messageToDeleteId) return;
+
+  const msgContainer = document.querySelector(`.message-container[data-id="${messageToDeleteId}"]`);
+  const chatBox = document.querySelector('#messages');
+
+  const response = await fetch(`/community/my/{{ community.id }}/message/${messageToDeleteId}/delete/`, {
+    method: 'DELETE',
+    headers: {'X-CSRFToken': '{{ csrf_token }}'},
+  });
+
+  const data = await response.json();
+  if (data.success) {
+    msgContainer.remove();
+    if (chatBox.querySelectorAll('.message-container').length === 0) {
+      chatBox.innerHTML = `<p class="text-center text-gray-400 italic">
+        no messages yet, be the first to say hi!
+      </p>`;
+    }
+  }
+
+  messageToDeleteId = null;
+  document.getElementById('deleteMessageModal').classList.add('hidden');
+});
 </script>
 
 {% endblock %}

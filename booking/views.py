@@ -6,6 +6,7 @@ from django.http import JsonResponse
 from django.views.decorators.http import require_POST
 from django.contrib.auth.decorators import login_required
 from django.db import models
+import json
 
 
 from .models import Booking
@@ -304,95 +305,225 @@ def ajax_confirm_booking(request, booking_id):
     except Booking.DoesNotExist:
         return JsonResponse({"ok": False, "error": "Booking not found"}, status=404)
 
-def serialize_booking(b):
-    return {
-        "id": b.id,
-        "coach_name": b.coach.user.get_full_name(),
-        "coach_image": b.coach.profile_picture.url if hasattr(b.coach, "profile_picture") else "",
-        "sport": b.coach.sport.name if hasattr(b.coach, "sport") else "",
-        "location": b.location,
-        "date": b.date.strftime("%Y-%m-%d"),
-        "start_time": b.start_time.strftime("%H:%M"),
-        "end_time": b.end_time.strftime("%H:%M"),
-        "status": b.status,
-    }
-    
+
 @login_required
-def api_booking_list(request):
-    auto_complete_bookings()
+def booking_list_json(request):
+    auto_complete_bookings()  # update otomatis
 
     user = request.user
+    now = timezone.localtime()
+
     if hasattr(user, "coach"):
-        qs = Booking.objects.filter(coach=user.coach)
+        bookings = Booking.objects.filter(coach=user.coach)
+        role = "coach"
+        user_id = user.coach.id
+    elif hasattr(user, "member"):
+        bookings = Booking.objects.filter(member=user.member)
+        role = "member"
+        user_id = user.member.id
     else:
-        qs = Booking.objects.filter(member=user.member)
+        return JsonResponse({"ok": False, "error": "Invalid user role"}, status=400)
 
-    data = [serialize_booking(b) for b in qs]
-    return JsonResponse({"bookings": data})
+    bookings = bookings.order_by("-date", "-start_time")
 
-@csrf_exempt
+    data = []
+    for b in bookings:
+        data.append({
+            "id": b.id,
+            "date": b.date.isoformat(),
+            "start_time": b.start_time.strftime("%H:%M"),
+            "end_time": b.end_time.strftime("%H:%M"),
+            "location": b.location,
+            "status": b.status,
+
+            # Coach info
+            "coach_name": b.coach.user.get_full_name(),
+            "coach_id": str(b.coach.id),
+
+            # Member info
+            "member_name": b.member.user.get_full_name(),
+            "member_id": str(b.member.id),
+
+            "is_past": b.date < now.date() or (b.date == now.date() and b.end_time < now.time()),
+        })
+
+    return JsonResponse({
+        "ok": True,
+        "role": role,
+        "user_id": str(user_id),
+        "count": len(data),
+        "items": data
+    })
+
+
 @login_required
-def api_create_booking(request):
+def create_booking_json(request, coach_id):
     if request.method != "POST":
-        return JsonResponse({"error": "POST only"}, status=400)
+        return JsonResponse({"ok": False, "error": "method not allowed"}, status=405)
 
-    import json
-    payload = json.loads(request.body)
+    if hasattr(request.user, "coach"):
+        return JsonResponse({"ok": False, "error": "Coach cannot create booking"}, status=403)
 
-    coach_id = payload.get("coach_id")
-    date_str = payload.get("date")
-    location = payload.get("location")
+    if not hasattr(request.user, "member"):
+        return JsonResponse({"ok": False, "error": "Only members can book"}, status=403)
 
-    coach = Coach.objects.get(id=coach_id)
+    body = json.loads(request.body)
+    location = body.get("location")
+    datetime_str = body.get("datetime")
+
+    if not (location and datetime_str):
+        return JsonResponse({"ok": False, "error": "Missing fields"}, status=400)
+
+    coach = get_object_or_404(Coach, id=coach_id)
     member = request.user.member
 
-    dt = timezone.make_aware(datetime.strptime(date_str, "%Y-%m-%dT%H:%M"))
-    date = dt.date()
-    start = dt.time()
-    end = (dt + timedelta(hours=1)).time()
+    try:
+        dt = timezone.make_aware(datetime.strptime(datetime_str, "%Y-%m-%dT%H:%M"))
+        date = dt.date()
+        start_time = dt.time()
+        end_time = (dt + timedelta(hours=1)).time()
+    except:
+        return JsonResponse({"ok": False, "error": "Invalid datetime format"}, status=400)
 
-    if Booking.is_conflict(coach, date, start, end):
-        return JsonResponse({"error": "Coach unavailable"}, status=400)
+    if dt < timezone.now():
+        return JsonResponse({"ok": False, "error": "Cannot book in the past"}, status=400)
+
+    if Booking.is_conflict(coach, date, start_time, end_time):
+        return JsonResponse({"ok": False, "error": "Coach unavailable at that time"}, status=409)
 
     b = Booking.objects.create(
-        coach=coach,
         member=member,
+        coach=coach,
         date=date,
-        start_time=start,
-        end_time=end,
+        start_time=start_time,
+        end_time=end_time,
         location=location,
         status="pending",
     )
 
-    return JsonResponse({"ok": True, "booking": serialize_booking(b)})
+    return JsonResponse({"ok": True, "id": b.id})
 
-@csrf_exempt
 @login_required
-def api_cancel_booking(request, booking_id):
+def edit_booking_json(request, booking_id):
+    if request.method != "PUT":
+        return JsonResponse({"ok": False, "error": "method not allowed"}, status=405)
+
+    body = json.loads(request.body)
+    booking = get_object_or_404(Booking, id=booking_id)
+
+    if request.user.member != booking.member:
+        return JsonResponse({"ok": False, "error": "Forbidden"}, status=403)
+
+    location = body.get("location")
+    datetime_str = body.get("datetime")
+    status = body.get("status", booking.status)
+
+    if not (location and datetime_str):
+        return JsonResponse({"ok": False, "error": "Missing fields"}, status=400)
+
     try:
-        b = Booking.objects.get(id=booking_id)
-        b.status = "cancelled"
-        b.save()
-        return JsonResponse({"ok": True})
-    except Booking.DoesNotExist:
-        return JsonResponse({"error": "Not found"}, status=404)
+        dt = timezone.make_aware(datetime.strptime(datetime_str, "%Y-%m-%dT%H:%M"))
+        date = dt.date()
+        start_time = dt.time()
+        end_time = (dt + timedelta(hours=1)).time()
+    except:
+        return JsonResponse({"ok": False, "error": "Invalid datetime format"}, status=400)
 
-@csrf_exempt
+    if Booking.is_conflict(booking.coach, date, start_time, end_time, exclude_booking_id=booking_id):
+        return JsonResponse({"ok": False, "error": "Schedule conflict"}, status=409)
+
+    booking.location = location
+    booking.date = date
+    booking.start_time = start_time
+    booking.end_time = end_time
+    booking.status = status
+    booking.save()
+
+    return JsonResponse({"ok": True})
+
 @login_required
-def api_reschedule_booking(request, booking_id):
-    import json
-    data = json.loads(request.body)
+def cancel_booking_json(request, booking_id):
+    if request.method != "POST":
+        return JsonResponse({"ok": False, "error": "method not allowed"}, status=405)
 
-    new_dt = datetime.strptime(data.get("date"), "%Y-%m-%dT%H:%M")
+    b = get_object_or_404(Booking, id=booking_id)
+    b.status = "cancelled"
+    b.save()
+
+    return JsonResponse({"ok": True})
+
+@login_required
+def reschedule_json(request, booking_id):
+    if request.method != "POST":
+        return JsonResponse({"ok": False, "error": "method not allowed"}, status=405)
+
+    b = get_object_or_404(Booking, id=booking_id)
+
+    body = json.loads(request.body)
+    dt_str = body.get("datetime")
+
+    if not dt_str:
+        return JsonResponse({"ok": False, "error": "Missing datetime"}, status=400)
+
+    try:
+        new_dt = datetime.strptime(dt_str, "%Y-%m-%dT%H:%M")
+        new_dt = timezone.make_aware(new_dt)
+    except:
+        return JsonResponse({"ok": False, "error": "Invalid datetime"}, status=400)
+
     new_date = new_dt.date()
     new_start = new_dt.time()
     new_end = (new_dt + timedelta(hours=1)).time()
 
     try:
-        b = Booking.objects.get(id=booking_id)
         b.reschedule(new_date, new_start, new_end)
         return JsonResponse({"ok": True})
-    except Booking.DoesNotExist:
-        return JsonResponse({"error": "Not found"}, status=404)
-    except Exception as e:
-        return JsonResponse({"error": str(e)}, status=400)
+    except ValueError as e:
+        return JsonResponse({"ok": False, "error": str(e)}, status=400)
+
+@login_required
+def accept_reschedule_json(request, booking_id):
+    if request.method != "POST":
+        return JsonResponse({"ok": False, "error": "method not allowed"}, status=405)
+
+    b = get_object_or_404(Booking, id=booking_id)
+
+    if b.status != "rescheduled":
+        return JsonResponse({"ok": False, "error": "Not rescheduled"}, status=400)
+
+    b.status = "confirmed"
+    b.save()
+
+    return JsonResponse({"ok": True})
+
+@login_required
+def reject_reschedule_json(request, booking_id):
+    if request.method != "POST":
+        return JsonResponse({"ok": False, "error": "method not allowed"}, status=405)
+
+    b = get_object_or_404(Booking, id=booking_id)
+
+    if b.status != "rescheduled":
+        return JsonResponse({"ok": False, "error": "Not rescheduled"}, status=400)
+
+    b.status = "cancelled"
+    b.save()
+
+    return JsonResponse({"ok": True})
+
+
+@login_required
+def confirm_booking_json(request, booking_id):
+    if request.method != "POST":
+        return JsonResponse({"ok": False, "error": "method not allowed"}, status=405)
+
+    b = get_object_or_404(Booking, id=booking_id)
+
+    if b.status != "pending":
+        return JsonResponse({"ok": False, "error": "Already confirmed"}, status=400)
+
+    b.status = "confirmed"
+    b.save()
+
+    return JsonResponse({"ok": True})
+

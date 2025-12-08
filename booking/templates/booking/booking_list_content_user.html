@@ -63,9 +63,9 @@
 
         <!-- Coach Info -->
         <div class="flex items-center gap-4 mb-4">
-          <img src="{{ b.coach.user.profile.avatar.url|default:'/static/images/default-user.png' }}" 
-               alt="coach photo"
-               class="w-16 h-16 rounded-full border border-[rgba(255,255,255,0.3)] object-cover">
+          <img src="{{ b.coach.profile_photo|default:'https://icon-library.com/images/default-profile-icon/default-profile-icon-24.jpg' }}" 
+              alt="coach photo"
+              class="w-16 h-16 rounded-full border border-[rgba(255,255,255,0.3)] object-cover">
           <div>
             <p class="text-xs opacity-60">COACH</p>
             <p class="heading-font text-lg font-bold text-[var(--white)]">

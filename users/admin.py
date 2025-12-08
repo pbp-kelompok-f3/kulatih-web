@@ -13,6 +13,13 @@ class MemberInline(admin.StackedInline):
     verbose_name_plural = 'Member Profile'
     fk_name = 'user'
     fields = ('profile_photo', 'city', 'phone', 'description')
+    readonly_fields = ('profile_photo', 'city', 'phone', 'description')
+    
+    def has_add_permission(self, request, obj=None):
+        return False
+    
+    def has_delete_permission(self, request, obj=None):
+        return False
 
 # Define an inline admin for the Coach profile
 class CoachInline(admin.StackedInline):
@@ -21,6 +28,13 @@ class CoachInline(admin.StackedInline):
     verbose_name_plural = 'Coach Profile'
     fk_name = 'user'
     fields = ('profile_photo', 'sport', 'city', 'phone', 'hourly_fee', 'description')
+    readonly_fields = ('profile_photo', 'sport', 'city', 'phone', 'hourly_fee', 'description')
+    
+    def has_add_permission(self, request, obj=None):
+        return False
+    
+    def has_delete_permission(self, request, obj=None):
+        return False
 
 # Define a new User admin that includes the profile inlines
 class CustomUserAdmin(BaseUserAdmin):
@@ -45,22 +59,48 @@ class CustomUserAdmin(BaseUserAdmin):
 # Re-register the User model with our custom admin
 admin.site.register(User, CustomUserAdmin)
 
-# Register Member and Coach models separately for their own list views
+# Register Member and Coach models separately for their own list views (READ-ONLY)
 @admin.register(Member)
 class MemberAdmin(admin.ModelAdmin):
     list_display = ('user', 'get_full_name', 'city', 'phone')
     search_fields = ('user__username', 'user__first_name', 'user__last_name', 'city')
+    readonly_fields = ('user', 'profile_photo', 'city', 'phone', 'description')
     
     @admin.display(description='Full Name')
     def get_full_name(self, obj):
         return obj.user.get_full_name()
+    
+    def has_add_permission(self, request):
+        """Remove add permission"""
+        return False
+    
+    def has_change_permission(self, request, obj=None):
+        """Remove edit permission"""
+        return False
+    
+    def has_delete_permission(self, request, obj=None):
+        """Remove delete permission"""
+        return False
 
 @admin.register(Coach)
 class CoachAdmin(admin.ModelAdmin):
     list_display = ('user', 'get_full_name', 'sport', 'city', 'hourly_fee')
     search_fields = ('user__username', 'user__first_name', 'user__last_name', 'sport', 'city')
     list_filter = ('sport', 'city')
+    readonly_fields = ('user', 'profile_photo', 'sport', 'city', 'phone', 'hourly_fee', 'description')
 
     @admin.display(description='Full Name')
     def get_full_name(self, obj):
         return obj.user.get_full_name()
+    
+    def has_add_permission(self, request):
+        """Remove add permission"""
+        return False
+    
+    def has_change_permission(self, request, obj=None):
+        """Remove edit permission"""
+        return False
+    
+    def has_delete_permission(self, request, obj=None):
+        """Remove delete permission"""
+        return False

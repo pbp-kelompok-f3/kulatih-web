@@ -6,9 +6,19 @@
 <section class="min-h-screen bg-[var(--indigo)] text-[var(--white)] px-8 md:px-20 py-12 font-bevietnam">
 
   <!-- Header -->
-  <div class="bg-[var(--yellow)] text-[var(--indigo-dark)] py-6 px-8 rounded-2xl text-center shadow-md mb-12">
-    <h1 class="text-5xl font-bebas tracking-wide">MY COMMUNITY</h1>
-  </div>
+<div class="bg-[var(--yellow)] text-[var(--indigo-dark)] py-6 px-8 rounded-2xl text-center shadow-md mb-8">
+  <h1 class="text-5xl font-bebas tracking-wide">MY COMMUNITY</h1>
+</div>
+
+<!-- Search bar (community yang sudah di join) -->
+<form method="get" action="." class="flex items-center w-full bg-[var(--indigo-light)] rounded-full shadow-lg overflow-hidden mb-12">
+  <input type="text" name="q" value="{{ q }}" placeholder="Search communities you have joined"
+         class="flex-1 bg-transparent px-6 py-3 text-[var(--white)] placeholder-gray-400 focus:outline-none">
+  <button type="submit" class="px-5 text-[var(--yellow)] hover:text-[var(--white)] transition">
+    <i class="fa fa-search"></i>
+  </button>
+</form>
+
 
   <!-- Daftar Komunitas -->
   <div class="flex flex-col gap-6">
