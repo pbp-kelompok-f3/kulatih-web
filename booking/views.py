@@ -303,3 +303,96 @@ def ajax_confirm_booking(request, booking_id):
         return JsonResponse({"ok": False, "error": "Already confirmed"})
     except Booking.DoesNotExist:
         return JsonResponse({"ok": False, "error": "Booking not found"}, status=404)
+
+def serialize_booking(b):
+    return {
+        "id": b.id,
+        "coach_name": b.coach.user.get_full_name(),
+        "coach_image": b.coach.profile_picture.url if hasattr(b.coach, "profile_picture") else "",
+        "sport": b.coach.sport.name if hasattr(b.coach, "sport") else "",
+        "location": b.location,
+        "date": b.date.strftime("%Y-%m-%d"),
+        "start_time": b.start_time.strftime("%H:%M"),
+        "end_time": b.end_time.strftime("%H:%M"),
+        "status": b.status,
+    }
+    
+@login_required
+def api_booking_list(request):
+    auto_complete_bookings()
+
+    user = request.user
+    if hasattr(user, "coach"):
+        qs = Booking.objects.filter(coach=user.coach)
+    else:
+        qs = Booking.objects.filter(member=user.member)
+
+    data = [serialize_booking(b) for b in qs]
+    return JsonResponse({"bookings": data})
+
+@csrf_exempt
+@login_required
+def api_create_booking(request):
+    if request.method != "POST":
+        return JsonResponse({"error": "POST only"}, status=400)
+
+    import json
+    payload = json.loads(request.body)
+
+    coach_id = payload.get("coach_id")
+    date_str = payload.get("date")
+    location = payload.get("location")
+
+    coach = Coach.objects.get(id=coach_id)
+    member = request.user.member
+
+    dt = timezone.make_aware(datetime.strptime(date_str, "%Y-%m-%dT%H:%M"))
+    date = dt.date()
+    start = dt.time()
+    end = (dt + timedelta(hours=1)).time()
+
+    if Booking.is_conflict(coach, date, start, end):
+        return JsonResponse({"error": "Coach unavailable"}, status=400)
+
+    b = Booking.objects.create(
+        coach=coach,
+        member=member,
+        date=date,
+        start_time=start,
+        end_time=end,
+        location=location,
+        status="pending",
+    )
+
+    return JsonResponse({"ok": True, "booking": serialize_booking(b)})
+
+@csrf_exempt
+@login_required
+def api_cancel_booking(request, booking_id):
+    try:
+        b = Booking.objects.get(id=booking_id)
+        b.status = "cancelled"
+        b.save()
+        return JsonResponse({"ok": True})
+    except Booking.DoesNotExist:
+        return JsonResponse({"error": "Not found"}, status=404)
+
+@csrf_exempt
+@login_required
+def api_reschedule_booking(request, booking_id):
+    import json
+    data = json.loads(request.body)
+
+    new_dt = datetime.strptime(data.get("date"), "%Y-%m-%dT%H:%M")
+    new_date = new_dt.date()
+    new_start = new_dt.time()
+    new_end = (new_dt + timedelta(hours=1)).time()
+
+    try:
+        b = Booking.objects.get(id=booking_id)
+        b.reschedule(new_date, new_start, new_end)
+        return JsonResponse({"ok": True})
+    except Booking.DoesNotExist:
+        return JsonResponse({"error": "Not found"}, status=404)
+    except Exception as e:
+        return JsonResponse({"error": str(e)}, status=400)

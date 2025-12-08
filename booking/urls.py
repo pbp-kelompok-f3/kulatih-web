@@ -19,4 +19,11 @@ urlpatterns = [
     path('ajax_accept_reschedule/<int:booking_id>/', views.ajax_accept_reschedule, name='ajax_accept_reschedule'),
     path('ajax_reject_reschedule/<int:booking_id>/', views.ajax_reject_reschedule, name='ajax_reject_reschedule'),
     path('ajax_confirm_booking/<int:booking_id>/', views.ajax_confirm_booking, name='ajax_confirm_booking'),
+    
+    # API for Flutter
+    path('api/list/', views.api_booking_list, name='api_booking_list'),
+    path('api/create/', views.api_create_booking, name='api_create_booking'),
+    path('api/cancel/<int:booking_id>/', views.api_cancel_booking, name='api_cancel_booking'),
+    path('api/reschedule/<int:booking_id>/', views.api_reschedule_booking, name='api_reschedule_booking'),
+
 ]
