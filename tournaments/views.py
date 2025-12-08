@@ -219,8 +219,10 @@ def edit_tournament_ajax(request, tournament_id):
 
     return JsonResponse({"error": "Invalid request method"}, status=405)
 
+@login_required
 def tournament_view_flutter(request):
     tournaments = Tournament.objects.filter(flagTournaments=True)
+
 
     if hasattr(request.user, 'coach'):
         role = "coach"
@@ -238,14 +240,15 @@ def tournament_view_flutter(request):
             else "Unknown"
         )
 
-        participants = []
-        for m in t.pesertaTournaments.all():
-            participants.append({
+
+        participants_list = []
+        for member in t.pesertaTournaments.all():
+            participants_list.append({
                 "member": {
-                    "id": str(m.id),
-                    "username": m.user.username,
-                    "city": m.city,
-                    "photo": m.profile_photo or "/static/images/empty.png",
+                    "id": str(member.id),
+                    "username": member.user.username,
+                    "city": member.city,
+                    "photo": member.profile_photo or "",
                 }
             })
 
@@ -259,14 +262,15 @@ def tournament_view_flutter(request):
             "deskripsi": t.deskripsiTournaments,
             "pembuat": pembuat_username,
 
-            "participants": participants,
-            "participant_count": len(participants)
+            "participants": participants_list,
+            "participant_count": len(participants_list),
         })
 
     return JsonResponse({
         "role": role,
-        "tournaments": result
+        "tournaments": result,
     }, status=200)
+
 
 def my_tournaments_flutter(request):
     user = request.user
