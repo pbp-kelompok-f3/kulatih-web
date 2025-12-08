@@ -313,7 +313,7 @@ def create_post_json(request):
         "can_edit": True
     })
 
-@login_required
+@login_required 
 def upvote_json(request, post_id):
     if request.method != "POST":
         return JsonResponse({"ok": False, "error": "method not allowed"}, status=405)
