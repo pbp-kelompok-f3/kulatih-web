@@ -8,6 +8,7 @@ from django.views.decorators.cache import never_cache
 from django.views.decorators.http import require_POST
 from django.core.paginator import Paginator
 import json
+from django.views.decorators.csrf import csrf_exempt
 
 from .models import ForumPost, Vote, Comment
 
@@ -53,7 +54,7 @@ def _node_from_comment(c, user_id=None):
         "parent": c.parent_id,
         "replies": [],
         "replies_count": 0,
-        "is_owner": bool(user_id and c.author_id == user_id),
+        "is_owner": False,
     }  # :contentReference[oaicite:0]{index=0}
 
 def _build_comment_tree(post, user):
@@ -271,18 +272,33 @@ def post_list_json(request):
 
         posts.append({
             "id": p.id,
+
+            # author info
             "author": p.author.username,
+            "author_name": _display_name(p.author),
             "author_id": p.author.id,
+
+            # content
             "content": p.content,
-            "created": timezone.localtime(p.created_at).isoformat(),
+
+            # timestamps
+            "created": timezone.localtime(p.created_at).strftime("%d %b %Y %H:%M"),
+            "created_iso": timezone.localtime(p.created_at).isoformat(),
+
+            # voting info
             "score": score,
             "comments": p.active_comments,
             "user_vote": user_vote,
+
+            # owner flags (untuk kebab menu di Flutter)
+            "is_owner": request.user.is_authenticated and request.user.id == p.author_id,
+            "can_edit": request.user.is_authenticated and request.user.id == p.author_id,
+            "can_delete": request.user.is_authenticated and request.user.id == p.author_id,
         })
 
     return JsonResponse({"ok": True, "count": len(posts), "items": posts})
 
-
+@csrf_exempt
 @login_required
 def create_post_json(request):
     if request.method != "POST":
@@ -307,7 +323,8 @@ def create_post_json(request):
         "can_edit": True
     })
 
-@login_required
+@csrf_exempt
+@login_required 
 def upvote_json(request, post_id):
     if request.method != "POST":
         return JsonResponse({"ok": False, "error": "method not allowed"}, status=405)
@@ -329,7 +346,7 @@ def upvote_json(request, post_id):
 
     return JsonResponse(_vote_payload(post, request.user))
 
-
+@csrf_exempt
 @login_required
 def downvote_json(request, post_id):
     if request.method != "POST":
@@ -352,9 +369,10 @@ def downvote_json(request, post_id):
 
     return JsonResponse(_vote_payload(post, request.user))
 
+@csrf_exempt
 @login_required
 def delete_post_json(request, post_id):
-    if request.method != "DELETE":
+    if request.method != "POST":
         return JsonResponse({"ok": False, "error": "method not allowed"}, status=405)
 
     post = get_object_or_404(ForumPost, id=post_id)
@@ -365,9 +383,10 @@ def delete_post_json(request, post_id):
     post.delete()
     return JsonResponse({"ok": True, "id": post_id})
 
+@csrf_exempt
 @login_required
 def edit_post_json(request, post_id):
-    if request.method != "PUT":
+    if request.method != "POST":
         return JsonResponse({"ok": False, "error": "method not allowed"}, status=405)
 
     post = get_object_or_404(ForumPost, id=post_id)
@@ -388,10 +407,57 @@ def edit_post_json(request, post_id):
 
 def comment_list_json(request, post_id):
     post = get_object_or_404(ForumPost, id=post_id)
-    roots, total = _build_comment_tree(post, request.user)
 
-    return JsonResponse({"ok": True, "count": total, "items": roots})
+    # Ambil SEMUA komentar aktif (root + replies)
+    comments = Comment.objects.filter(
+        post=post,
+        is_active=True
+    ).select_related('author').order_by("created_at")
 
+    # Map untuk build tree
+    comment_map = {c.id: c for c in comments}
+
+    # Tempat simpan reply
+    for c in comments:
+        c._replies = []
+
+    # Build tree
+    roots = []
+    for c in comments:
+        if c.parent_id:
+            parent = comment_map.get(c.parent_id)
+            if parent:
+                parent._replies.append(c)
+        else:
+            roots.append(c)
+
+    # Serialize
+    def serialize_comment(c):
+        return {
+            "id": c.id,
+            "author": c.display_name(),
+            "author_id": c.author_id,
+            "content": c.content,
+            "parent": c.parent_id,
+            "created_iso": c.created_at.isoformat(),
+            "created": c.created_at.strftime("%d %b %Y %H:%M"),
+
+            # HANYA ROOT COMMENT yg boleh edit/delete
+            "is_owner": (c.parent_id is None) and (c.author == request.user),
+
+            "replies": [serialize_comment(r) for r in c._replies],
+            "replies_count": len(c._replies),
+        }
+
+    items = [serialize_comment(r) for r in roots]
+
+    return JsonResponse({
+        "ok": True,
+        "count": comments.count(),
+        "items": items,
+    })
+
+@csrf_exempt
 @login_required
 def comment_add_json(request, post_id):
     if request.method != "POST":
@@ -421,4 +487,12 @@ def comment_add_json(request, post_id):
     node = _node_from_comment(c, request.user.id)
 
     return JsonResponse({"ok": True, "item": node})
+
+def _soft_delete_comment_tree(comment):
+    comment.is_active = False
+    comment.save(update_fields=["is_active"])
+
+    children = Comment.objects.filter(parent=comment, is_active=True)
+    for child in children:
+        _soft_delete_comment_tree(child)
 
