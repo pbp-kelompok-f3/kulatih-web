@@ -240,6 +240,9 @@ def tournament_view_flutter(request):
             else "Unknown"
         )
 
+        pembuat_foto = (
+            t.pembuatTournaments.profile_photo
+        )
 
         participants_list = []
         for member in t.pesertaTournaments.all():
@@ -261,6 +264,7 @@ def tournament_view_flutter(request):
             "poster": t.posterTournaments or "/static/images/empty.png",
             "deskripsi": t.deskripsiTournaments,
             "pembuat": pembuat_username,
+            "pembuat_foto": pembuat_foto,
 
             "participants": participants_list,
             "participant_count": len(participants_list),
@@ -268,6 +272,7 @@ def tournament_view_flutter(request):
 
     return JsonResponse({
         "role": role,
+        "namaUser": request.user.username,
         "tournaments": result,
     }, status=200)
 
@@ -395,6 +400,7 @@ def edit_tournament_flutter(request, tournament_id):
         tournament.namaTournaments = data.get("namaTournaments", tournament.namaTournaments)
         tournament.lokasiTournaments = data.get("lokasiTournaments", tournament.lokasiTournaments)
         tournament.deskripsiTournaments = data.get("deskripsiTournaments", tournament.deskripsiTournaments)
+        tournament.posterTournaments = data.get("posterTournaments", tournament.posterTournaments)
 
         tanggal = data.get("tanggalTournaments")
         if tanggal:
