@@ -7,6 +7,9 @@ from django.views.decorators.http import require_POST
 from django.contrib.auth.decorators import login_required
 from django.db import models
 import json
+from django.http import JsonResponse
+from django.views.decorators.csrf import csrf_exempt
+from django.utils import timezone
 
 
 from .models import Booking
@@ -526,4 +529,95 @@ def confirm_booking_json(request, booking_id):
     b.save()
 
     return JsonResponse({"ok": True})
+
+@csrf_exempt
+def api_list_bookings(request):
+    user = request.user
+
+    # sementara tanpa auth, biar Flutter jalan dulu
+    bookings = Booking.objects.all().order_by("-date", "-start_time")
+
+    data = []
+    for b in bookings:
+        data.append({
+            "id": b.id,
+            "coach_name": b.coach.user.get_full_name(),
+            "sport": b.coach.sport if hasattr(b.coach, "sport") else "",
+            "location": b.location,
+            "date": b.date.isoformat(),
+            "start_time": b.start_time.strftime("%H:%M"),
+            "end_time": b.end_time.strftime("%H:%M"),
+            "status": b.status,
+        })
+
+    return JsonResponse({"bookings": data})
+
+@csrf_exempt
+def api_create_booking(request):
+    if request.method != "POST":
+        return JsonResponse({"error": "POST required"}, status=405)
+
+    data = json.loads(request.body)
+    coach_id = data.get("coach_id")
+    location = data.get("location")
+    dt_str = data.get("date")
+
+    if not (coach_id and location and dt_str):
+        return JsonResponse({"error": "Missing fields"}, status=400)
+
+    coach = Coach.objects.get(id=coach_id)
+
+    dt = timezone.make_aware(datetime.strptime(dt_str, "%Y-%m-%dT%H:%M:%S"))
+    date = dt.date()
+    start_time = dt.time()
+    end_time = (dt + timedelta(hours=1)).time()
+
+    booking = Booking.objects.create(
+        coach=coach,
+        member=request.user.member,   # kalau kamu mau pakai auth
+        date=date,
+        start_time=start_time,
+        end_time=end_time,
+        location=location,
+        status="pending"
+    )
+
+    return JsonResponse({"ok": True, "id": booking.id})
+
+@csrf_exempt
+def api_reschedule_booking(request, booking_id):
+    if request.method != "POST":
+        return JsonResponse({"error": "POST required"}, status=405)
+
+    data = json.loads(request.body)
+    new_start = data.get("new_start_time")
+    new_end = data.get("new_end_time")
+
+    if not new_start or not new_end:
+        return JsonResponse({"error": "Missing time fields"}, status=400)
+
+    b = Booking.objects.get(id=booking_id)
+
+    new_start_dt = datetime.fromisoformat(new_start)
+    new_end_dt = datetime.fromisoformat(new_end)
+
+    b.start_time = new_start_dt.time()
+    b.end_time = new_end_dt.time()
+    b.date = new_start_dt.date()
+    b.status = "rescheduled"
+    b.save()
+
+    return JsonResponse({"ok": True})
+
+@csrf_exempt
+def api_cancel_booking(request, booking_id):
+    if request.method != "POST":
+        return JsonResponse({"error": "POST required"}, status=405)
+
+    b = Booking.objects.get(id=booking_id)
+    b.status = "cancelled"
+    b.save()
+
+    return JsonResponse({"ok": True})
+
 

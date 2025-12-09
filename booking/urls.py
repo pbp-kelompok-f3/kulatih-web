@@ -27,4 +27,11 @@ urlpatterns = [
     path('json/<int:booking_id>/confirm/', views.confirm_booking_json, name='confirm_json'),
     path('json/<int:booking_id>/accept/', views.accept_reschedule_json, name='accept_json'),
     path('json/<int:booking_id>/reject/', views.reject_reschedule_json, name='reject_json'),
+    
+    # API untuk Flutter
+    path('api/list/', views.api_list_bookings),
+    path('api/create/', views.api_create_booking),
+    path('api/reschedule/<int:booking_id>/', views.api_reschedule_booking),
+    path('api/cancel/<int:booking_id>/', views.api_cancel_booking),
+
 ]
