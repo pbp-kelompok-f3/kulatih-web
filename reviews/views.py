@@ -271,39 +271,3 @@ def review_detail_page(request, review_id: int):
         "reviewer_username": getattr(getattr(r.reviewer, "user", None), "username", str(r.reviewer_id)),
     }
     return render(request, "review_detail.html", ctx)
-
-
-
-def review_detail_json(request, review_id: int):
-    r = get_object_or_404(
-        Review.objects.select_related("reviewer__user", "coach__user"),
-        pk=review_id,
-    )
-
-    # Cek apakah ini review milik user
-    try:
-        me_member_id = Member.objects.get(user=request.user).id
-    except Exception:
-        me_member_id = None
-
-    is_owner = (me_member_id == r.reviewer_id)
-
-    data = {
-        "id": r.id,
-        "rating": r.rating,
-        "text": r.text,
-        "created_at": r.created_at.isoformat(),
-        "updated_at": r.updated_at.isoformat() if r.updated_at else None,
-
-        # reviewer
-        "reviewer_id": str(r.reviewer_id),
-        "reviewer_username": getattr(getattr(r.reviewer, "user", None), "username", None),
-
-        # coach
-        "coach_id": str(r.coach_id),
-        "coach_username": getattr(getattr(r.coach, "user", None), "username", None),
-
-        "is_owner": is_owner,
-    }
-
-    return JsonResponse({"ok": True, "review": data})
