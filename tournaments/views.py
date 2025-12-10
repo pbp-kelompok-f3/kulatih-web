@@ -466,11 +466,9 @@ def proxy_image_tournament(request):
         return HttpResponse('No URL provided', status=400)
     
     try:
-        # Fetch image from external source
         response = requests.get(image_url, timeout=10)
         response.raise_for_status()
         
-        # Return the image with proper content type
         return HttpResponse(
             response.content,
             content_type=response.headers.get('Content-Type', 'image/jpeg')
