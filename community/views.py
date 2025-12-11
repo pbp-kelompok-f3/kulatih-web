@@ -60,16 +60,19 @@ def community_create(request):
                 defaults={'role': 'admin'}
             )
 
-            # Redirect ke my_list dengan parameter untuk toast
+            # Redirect ke my_list agar langsung terlihat
             return redirect(reverse('community:my_list') + '?created=true')
+
         else:
             messages.error(request, "Please correct the errors below.")
+
     else:
         form = CommunityCreateForm()
 
     return render(request, 'community/create.html', {'form': form})
 
 @csrf_exempt
+@login_required
 def community_create_json(request):
     if request.method != "POST":
         return JsonResponse({"error": "POST method required"}, status=400)
@@ -84,9 +87,6 @@ def community_create_json(request):
     full_description = body.get("full_description")
     profile_image_url = body.get("profile_image_url")
 
-    if not request.user.is_authenticated:
-        return JsonResponse({"error": "Authentication required"}, status=401)
-
     # Create the community
     community = Community.objects.create(
         name=name,
@@ -96,16 +96,24 @@ def community_create_json(request):
         created_by=request.user
     )
 
-    # return JSON format
+    # Automatically add creator as admin
+    Membership.objects.get_or_create(
+        community=community,
+        user=request.user,
+        defaults={"role": "admin"}
+    )
+
     data = {
         "id": community.id,
         "name": community.name,
         "short_description": community.short_description,
         "full_description": community.full_description,
         "profile_image_url": community.profile_image_url,
-        "members_count": community.members_count(),  # 0 at creation
+        "members_count": community.members_count(),
         "created_at": community.created_at.isoformat(),
         "created_by": community.created_by.username,
+        "is_member": True,
+        "user_role": "admin"
     }
 
     return JsonResponse(data, status=201)
@@ -150,17 +158,31 @@ def join_community_json(request, id):
         defaults={'role': 'user'}
     )
 
+    community_data = {
+        "id": community.id,
+        "name": community.name,
+        "short_description": community.short_description,
+        "full_description": community.full_description,
+        "profile_image_url": community.profile_image_url,
+        "members_count": community.members_count(),
+        "created_by": community.created_by.username,
+        "is_member": True,
+        "user_role": membership.role,
+    }
+
     if created:
         return JsonResponse({
             'success': True,
             'message': f'Joined {community.name}.',
-            'community_id': community.id
+            'community': community_data
         })
 
     return JsonResponse({
         'success': False,
-        'message': 'Already a member.'
+        'message': 'Already a member.',
+        'community': community_data
     })
+
 
 
 # MY COMMUNITY LIST (daftar komunitas yang di join)
@@ -181,25 +203,47 @@ def my_community_list(request):
 def my_community_list_json(request):
     memberships = Membership.objects.filter(
         user=request.user
-    ).select_related('community').order_by('joined_at')
+    ).select_related('community')
 
     data = [
         {
-            'id': m.community.id,
-            'name': m.community.name,
-            'short_description': m.community.short_description,
-            'full_description': m.community.full_description,
-            'joined_at': m.joined_at,
-            'role': m.role,
+            "id": m.community.id,
+            "name": m.community.name,
+            "short_description": m.community.short_description,
+            "full_description": m.community.full_description,
+            "profile_image_url": m.community.profile_image_url,
+            "members_count": m.community.members_count(),
+            "created_at": m.community.created_at.isoformat(),
+            "created_by": m.community.created_by.username,
         }
         for m in memberships
     ]
 
-    return JsonResponse({
-        'success': True,
-        'count': len(data),
-        'communities': data
-    })
+    # RETURN LIST — sesuai ekspektasi Flutter
+    return JsonResponse(data, safe=False)
+
+@login_required
+def send_message_ajax(request, id):
+    if request.method == 'POST':
+        import json
+        data = json.loads(request.body)
+        text = data.get('text', '').strip()
+        if not text:
+            return JsonResponse({'error': 'Empty message'}, status=400)
+        
+        community = get_object_or_404(Community, pk=id)
+        msg = Message.objects.create(community=community, sender=request.user, text=text)
+        
+        return JsonResponse({
+            'id': msg.id,
+            'text': msg.text,
+            'sender': msg.sender.username,
+            'community_id': community.id,  
+        })
+
+    return JsonResponse({'error': 'Invalid request'}, status=400)
+
+
 
 # LEAVE (hapus membership, balikin ke Community main)
 @login_required
@@ -222,15 +266,29 @@ def leave_community_json(request, id):
         user=request.user
     ).delete()
 
+    community_data = {
+        "id": community.id,
+        "name": community.name,
+        "short_description": community.short_description,
+        "full_description": community.full_description,
+        "profile_image_url": community.profile_image_url,
+        "members_count": community.members_count(),
+        "created_by": community.created_by.username,
+        "is_member": False,
+        "user_role": None
+    }
+
     if deleted:
         return JsonResponse({
             'success': True,
-            'message': f'Left {community.name}.'
+            'message': f'Left {community.name}.',
+            'community': community_data,
         })
 
     return JsonResponse({
         'success': False,
-        'message': 'You were not a member.'
+        'message': 'You were not a member.',
+        'community': community_data
     })
 
 
@@ -348,28 +406,6 @@ def my_community_group_json(request, id):
     })
 
 
-@login_required
-def send_message_ajax(request, id):
-    if request.method == 'POST':
-        import json
-        data = json.loads(request.body)
-        text = data.get('text', '').strip()
-        if not text:
-            return JsonResponse({'error': 'Empty message'}, status=400)
-        
-        community = get_object_or_404(Community, pk=id)
-        msg = Message.objects.create(community=community, sender=request.user, text=text)
-        
-        return JsonResponse({
-            'id': msg.id,
-            'text': msg.text,
-            'sender': msg.sender.username,
-            'community_id': community.id,  
-        })
-
-    return JsonResponse({'error': 'Invalid request'}, status=400)
-
-
 
 @login_required
 def edit_message(request, id, msg_id):
@@ -431,25 +467,6 @@ def delete_message(request, id, msg_id):
     return JsonResponse({'error': 'Invalid request'}, status=400)
 
 
-def communities_create_json(request): 
-    communities = Community.objects.all().select_related("created_by")
-
-    data = [
-        {
-            "id": c.id,
-            "name": c.name,
-            "short_description": c.short_description,
-            "full_description": c.full_description,
-            "profile_image_url": c.profile_image_url,
-            "members_count": c.members_count(),
-            "created_at": c.created_at.isoformat(),
-            "created_by": c.created_by.username,
-        }
-        for c in communities
-    ]
-
-    return JsonResponse(data, safe=False)
-
 
 def community_detail_json(request, id):
     c = get_object_or_404(Community, id=id)
@@ -489,27 +506,22 @@ def community_detail_json(request, id):
     })
 
 
-@login_required
-def join_community_json(request, id):
-    if request.method != 'POST':
-        return JsonResponse({'error': 'Invalid method'}, status=405)
-
-    c = get_object_or_404(Community, id=id)
-
-    membership, created = Membership.objects.get_or_create(
-        community=c,
-        user=request.user,
-        defaults={'role': 'user'}
-    )
-
-    if created:
-        return JsonResponse({'success': True, 'message': f'Joined {c.name}.'})
-    else:
-        return JsonResponse({'success': False, 'message': 'Already a member.'})
 
 def communities_json(request):
-    communities = Community.objects.all().select_related("created_by")
+    # Ambil semua komunitas
+    communities = Community.objects.all()
 
+    # Jika user login, hilangkan komunitas yang sudah dijoin
+    if request.user.is_authenticated:
+        joined_ids = Membership.objects.filter(
+            user=request.user
+        ).values_list("community_id", flat=True)
+        communities = communities.exclude(id__in=joined_ids)
+
+    # Optimasi query
+    communities = communities.select_related("created_by")
+
+    # Format JSON sesuai kebutuhan Flutter
     data = [
         {
             "id": c.id,
@@ -527,22 +539,6 @@ def communities_json(request):
     return JsonResponse(data, safe=False)
 
 
-@login_required
-def leave_community_json(request, id):
-    if request.method != 'POST':
-        return JsonResponse({'error': 'Invalid method'}, status=405)
-
-    c = get_object_or_404(Community, id=id)
-
-    deleted, _ = Membership.objects.filter(
-        community=c,
-        user=request.user
-    ).delete()
-
-    if deleted:
-        return JsonResponse({'success': True, 'message': f'Left {c.name}.'})
-    else:
-        return JsonResponse({'success': False, 'message': 'You were not a member.'})
 
 @login_required
 def community_messages_json(request, id):
@@ -568,35 +564,7 @@ def community_messages_json(request, id):
 
     return JsonResponse({'count': len(data), 'messages': data})
 
-@login_required
-def send_message_json(request, id):
-    if request.method != 'POST':
-        return JsonResponse({'error': 'Invalid method'}, status=405)
 
-    community = get_object_or_404(Community, id=id)
-
-    if not Membership.objects.filter(user=request.user, community=community).exists():
-        return JsonResponse({'error': 'Not a member'}, status=403)
-
-    body = json.loads(request.body)
-    text = body.get('text', '').strip()
-
-    if not text:
-        return JsonResponse({'error': 'Empty message'}, status=400)
-
-    msg = Message.objects.create(
-        community=community,
-        sender=request.user,
-        text=text
-    )
-
-    return JsonResponse({
-        'id': msg.id,
-        'text': msg.text,
-        'sender': msg.sender.username,
-        'sender_id': msg.sender.id,
-        'created_at': msg.created_at,
-    })
 
 @csrf_exempt
 @login_required
