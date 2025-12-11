@@ -9,6 +9,7 @@ from django.http import JsonResponse
 import json
 from django.urls import reverse
 from django.core.paginator import Paginator
+from django.views.decorators.csrf import csrf_exempt
 
 
 # COMMUNITY MAIN PAGE
@@ -68,7 +69,46 @@ def community_create(request):
 
     return render(request, 'community/create.html', {'form': form})
 
+@csrf_exempt
+def community_create_json(request):
+    if request.method != "POST":
+        return JsonResponse({"error": "POST method required"}, status=400)
 
+    try:
+        body = json.loads(request.body)
+    except:
+        return JsonResponse({"error": "Invalid JSON"}, status=400)
+
+    name = body.get("name")
+    short_description = body.get("short_description")
+    full_description = body.get("full_description")
+    profile_image_url = body.get("profile_image_url")
+
+    if not request.user.is_authenticated:
+        return JsonResponse({"error": "Authentication required"}, status=401)
+
+    # Create the community
+    community = Community.objects.create(
+        name=name,
+        short_description=short_description,
+        full_description=full_description,
+        profile_image_url=profile_image_url,
+        created_by=request.user
+    )
+
+    # return JSON format
+    data = {
+        "id": community.id,
+        "name": community.name,
+        "short_description": community.short_description,
+        "full_description": community.full_description,
+        "profile_image_url": community.profile_image_url,
+        "members_count": community.members_count(),  # 0 at creation
+        "created_at": community.created_at.isoformat(),
+        "created_by": community.created_by.username,
+    }
+
+    return JsonResponse(data, status=201)
 
 
 
@@ -85,7 +125,6 @@ def community_detail(request, id):
     })
 
 
-
 # JOIN (tambah membership, otomatis hitung, add ke My Community List)
 @login_required
 def join_community(request, id):
@@ -96,6 +135,32 @@ def join_community(request, id):
     else:
         messages.info(request, f'You are already a member of {c.name}.')
     return redirect('community:my_list')
+
+@csrf_exempt
+@login_required
+def join_community_json(request, id):
+    if request.method != "POST":
+        return JsonResponse({'success': False, 'error': 'Invalid method'}, status=405)
+
+    community = get_object_or_404(Community, id=id)
+
+    membership, created = Membership.objects.get_or_create(
+        community=community,
+        user=request.user,
+        defaults={'role': 'user'}
+    )
+
+    if created:
+        return JsonResponse({
+            'success': True,
+            'message': f'Joined {community.name}.',
+            'community_id': community.id
+        })
+
+    return JsonResponse({
+        'success': False,
+        'message': 'Already a member.'
+    })
 
 
 # MY COMMUNITY LIST (daftar komunitas yang di join)
@@ -112,7 +177,29 @@ def my_community_list(request):
 
     return render(request, 'community/my_list.html', {'memberships': page_obj})
 
+@login_required
+def my_community_list_json(request):
+    memberships = Membership.objects.filter(
+        user=request.user
+    ).select_related('community').order_by('joined_at')
 
+    data = [
+        {
+            'id': m.community.id,
+            'name': m.community.name,
+            'short_description': m.community.short_description,
+            'full_description': m.community.full_description,
+            'joined_at': m.joined_at,
+            'role': m.role,
+        }
+        for m in memberships
+    ]
+
+    return JsonResponse({
+        'success': True,
+        'count': len(data),
+        'communities': data
+    })
 
 # LEAVE (hapus membership, balikin ke Community main)
 @login_required
@@ -121,6 +208,30 @@ def leave_community(request, id):
     Membership.objects.filter(user=request.user, community=c).delete()
     messages.success(request, f'You are no longer a member of {c.name}.')
     return redirect('community:home')
+
+@csrf_exempt
+@login_required
+def leave_community_json(request, id):
+    if request.method != "POST":
+        return JsonResponse({'success': False, 'error': 'Invalid method'}, status=405)
+
+    community = get_object_or_404(Community, id=id)
+
+    deleted, _ = Membership.objects.filter(
+        community=community,
+        user=request.user
+    ).delete()
+
+    if deleted:
+        return JsonResponse({
+            'success': True,
+            'message': f'Left {community.name}.'
+        })
+
+    return JsonResponse({
+        'success': False,
+        'message': 'You were not a member.'
+    })
 
 
 # MY COMMUNITY GROUP (group chat)
@@ -150,11 +261,92 @@ def my_community_group(request, id):
         'messages': messages_qs,
     })
 
-
+from django.views.decorators.csrf import csrf_exempt
 from django.http import JsonResponse
-from django.contrib.auth.decorators import login_required
-from django.shortcuts import get_object_or_404
-from .models import Community, Message
+import json
+
+@csrf_exempt
+@login_required
+def my_community_group_json(request, id):
+    community = get_object_or_404(Community, id=id)
+
+    # --- Check membership ---
+    membership = Membership.objects.filter(
+        user=request.user,
+        community=community
+    ).first()
+
+    if not membership:
+        return JsonResponse({
+            "success": False,
+            "error": "You must join this community first."
+        }, status=403)
+
+    # --- POST: Send message ---
+    if request.method == "POST":
+        try:
+            data = json.loads(request.body)
+        except:
+            return JsonResponse({
+                "success": False,
+                "error": "Invalid JSON"
+            }, status=400)
+
+        text = data.get("text", "").strip()
+        if not text:
+            return JsonResponse({
+                "success": False,
+                "error": "Message cannot be empty."
+            }, status=400)
+
+        msg = Message.objects.create(
+            community=community,
+            sender=request.user,
+            text=text
+        )
+
+        return JsonResponse({
+            "success": True,
+            "message": "Message sent.",
+            "data": {
+                "id": msg.id,
+                "text": msg.text,
+                "sender": msg.sender.username,
+                "sender_id": msg.sender.id,
+                "created_at": msg.created_at,
+            }
+        }, status=201)
+
+    # --- GET: Return full group details ---
+    messages_qs = Message.objects.filter(
+        community=community
+    ).select_related("sender").order_by("created_at")
+
+    messages_data = [
+        {
+            "id": m.id,
+            "text": m.text,
+            "sender": m.sender.username,
+            "sender_id": m.sender.id,
+            "created_at": m.created_at,
+        }
+        for m in messages_qs
+    ]
+
+    return JsonResponse({
+        "success": True,
+        "community": {
+            "id": community.id,
+            "name": community.name,
+            "short_description": community.short_description,
+            "full_description": community.full_description,
+            "members_count": community.members_count(),
+        },
+        "messages": messages_data,
+        "is_member": True,
+        "user_role": membership.role,
+    })
+
 
 @login_required
 def send_message_ajax(request, id):
@@ -192,6 +384,42 @@ def edit_message(request, id, msg_id):
         form = MessageForm(instance=message)
     return render(request, 'community/edit_message.html', {'form': form, 'community': message.community})
 
+from django.views.decorators.csrf import csrf_exempt
+import json
+
+@csrf_exempt
+@login_required
+def edit_message_json(request, id, msg_id):
+    # pastikan pesan milik user
+    message = get_object_or_404(Message, id=msg_id, sender=request.user)
+
+    if request.method not in ["PUT", "POST"]:
+        return JsonResponse({'error': 'Invalid method'}, status=405)
+
+    try:
+        data = json.loads(request.body)
+    except:
+        return JsonResponse({'error': 'Invalid JSON'}, status=400)
+
+    new_text = data.get("text", "").strip()
+
+    if not new_text:
+        return JsonResponse({'error': 'Message cannot be empty'}, status=400)
+
+    message.text = new_text
+    message.save()
+
+    return JsonResponse({
+        'success': True,
+        'message': 'Message updated successfully',
+        'data': {
+            'id': message.id,
+            'text': message.text,
+            'sender': message.sender.username,
+            'created_at': message.created_at,
+        }
+    })
+
 
 @login_required
 def delete_message(request, id, msg_id):
@@ -203,38 +431,24 @@ def delete_message(request, id, msg_id):
     return JsonResponse({'error': 'Invalid request'}, status=400)
 
 
-def community_json(request):
-    q = request.GET.get('q', '').strip()
-    communities = Community.objects.all()
-
-    if request.user.is_authenticated:
-        joined_ids = Membership.objects.filter(
-            user=request.user
-        ).values_list('community_id', flat=True)
-        communities = communities.exclude(id__in=joined_ids)
-
-    if q:
-        communities = communities.filter(
-            Q(name__icontains=q) |
-            Q(short_description__icontains=q) |
-            Q(full_description__icontains=q)
-        )
+def communities_create_json(request): 
+    communities = Community.objects.all().select_related("created_by")
 
     data = [
         {
-            'id': c.id,
-            'name': c.name,
-            'short_description': c.short_description,
-            'full_description': c.full_description,
-            'created_at': c.created_at,
+            "id": c.id,
+            "name": c.name,
+            "short_description": c.short_description,
+            "full_description": c.full_description,
+            "profile_image_url": c.profile_image_url,
+            "members_count": c.members_count(),
+            "created_at": c.created_at.isoformat(),
+            "created_by": c.created_by.username,
         }
         for c in communities
     ]
 
-    return JsonResponse({
-        'count': len(data),
-        'results': data
-    })
+    return JsonResponse(data, safe=False)
 
 
 def community_detail_json(request, id):
@@ -292,6 +506,25 @@ def join_community_json(request, id):
         return JsonResponse({'success': True, 'message': f'Joined {c.name}.'})
     else:
         return JsonResponse({'success': False, 'message': 'Already a member.'})
+
+def communities_json(request):
+    communities = Community.objects.all().select_related("created_by")
+
+    data = [
+        {
+            "id": c.id,
+            "name": c.name,
+            "short_description": c.short_description,
+            "full_description": c.full_description,
+            "profile_image_url": c.profile_image_url,
+            "members_count": c.members_count(),
+            "created_at": c.created_at.isoformat(),
+            "created_by": c.created_by.username,
+        }
+        for c in communities
+    ]
+
+    return JsonResponse(data, safe=False)
 
 
 @login_required
@@ -365,14 +598,16 @@ def send_message_json(request, id):
         'created_at': msg.created_at,
     })
 
+@csrf_exempt
 @login_required
 def delete_message_json(request, id, msg_id):
-    if request.method != 'DELETE':
+    if request.method != 'POST':   
         return JsonResponse({'error': 'Invalid method'}, status=405)
 
     msg = get_object_or_404(Message, id=msg_id, sender=request.user)
     msg.delete()
 
     return JsonResponse({'success': True})
+
 
 
