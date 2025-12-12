@@ -16,7 +16,7 @@ from django.views.decorators.csrf import csrf_exempt
 def community_home(request):
     q = request.GET.get('q', '').strip()
     communities = Community.objects.all()
-
+git b
     # Filter komunitas yang belum dijoin
     if request.user.is_authenticated:
         joined_ids = set(
