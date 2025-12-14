@@ -10,6 +10,8 @@ import json
 from django.urls import reverse
 from django.core.paginator import Paginator
 from django.views.decorators.csrf import csrf_exempt
+import requests
+from django.http import HttpResponse
 
 
 # COMMUNITY MAIN PAGE
@@ -575,6 +577,24 @@ def delete_message_json(request, id, msg_id):
     msg.delete()
 
     return JsonResponse({'success': True})
+
+def proxy_image(request):
+    image_url = request.GET.get('url')
+    if not image_url:
+        return HttpResponse('No URL provided', status=400)
+    
+    try:
+        # Fetch image from external source
+        response = requests.get(image_url, timeout=10)
+        response.raise_for_status()
+        
+        # Return the image with proper content type
+        return HttpResponse(
+            response.content,
+            content_type=response.headers.get('Content-Type', 'image/jpeg')
+        )
+    except requests.RequestException as e:
+        return HttpResponse(f'Error fetching image: {str(e)}', status=500)
 
 
 

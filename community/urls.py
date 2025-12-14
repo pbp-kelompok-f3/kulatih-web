@@ -26,5 +26,5 @@ urlpatterns = [
     path("my/json/", views.my_community_list_json, name="my_community_list_json"),
     path('my/<int:id>/json/send_message/', views.my_community_group_json, name='send_message_json'),
     path('my/<int:id>/send_message_ajax/', views.send_message_ajax, name='send_message_ajax'),
-
+    path('proxy-image/', views.proxy_image, name='proxy_image'),
 ]
