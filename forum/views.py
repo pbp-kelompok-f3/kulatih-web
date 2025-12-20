@@ -8,6 +8,7 @@ from django.views.decorators.cache import never_cache
 from django.views.decorators.http import require_POST
 from django.core.paginator import Paginator
 import json
+from django.views.decorators.csrf import csrf_exempt
 
 from .models import ForumPost, Vote, Comment
 
@@ -288,7 +289,7 @@ def post_list_json(request):
 
     return JsonResponse({"ok": True, "count": len(posts), "items": posts})
 
-
+@csrf_exempt
 @login_required
 def create_post_json(request):
     if request.method != "POST":
@@ -313,7 +314,7 @@ def create_post_json(request):
         "can_edit": True
     })
 
-@login_required
+@login_required 
 def upvote_json(request, post_id):
     if request.method != "POST":
         return JsonResponse({"ok": False, "error": "method not allowed"}, status=405)
@@ -394,9 +395,46 @@ def edit_post_json(request, post_id):
 
 def comment_list_json(request, post_id):
     post = get_object_or_404(ForumPost, id=post_id)
-    roots, total = _build_comment_tree(post, request.user)
 
-    return JsonResponse({"ok": True, "count": total, "items": roots})
+    # Ambil semua komentar post ini yang aktif
+    comments = Comment.objects.filter(post=post, is_active=True).select_related('author')
+
+    # Map id -> comment object
+    comment_map = {c.id: c for c in comments}
+
+    # Tambahkan field 'replies' sementara untuk membangun nested
+    for c in comments:
+        c._replies = []
+
+    # Bangun tree
+    roots = []
+    for c in comments:
+        if c.parent_id:
+            parent = comment_map.get(c.parent_id)
+            if parent:
+                parent._replies.append(c)
+        else:
+            roots.append(c)
+
+    # Function recursive untuk serialize comment + nested replies
+    def serialize_comment(c):
+        return {
+            "id": c.id,
+            "author": c.display_name(),
+            "author_id": c.author.id if c.author else None,
+            "content": c.content,
+            "parent": c.parent_id,
+            "created_iso": c.created_at.isoformat(),
+            "created": c.created_at.strftime("%d %b %Y %H:%M"),
+            "replies": [serialize_comment(r) for r in c._replies],
+            "replies_count": len(c._replies),
+            "is_owner": c.author == request.user,
+        }
+
+    data = [serialize_comment(c) for c in roots]
+    total_comments = comments.count()
+
+    return JsonResponse({"ok": True, "count": total_comments, "items": data})
 
 @login_required
 def comment_add_json(request, post_id):

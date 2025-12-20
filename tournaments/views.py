@@ -8,6 +8,8 @@ from datetime import datetime
 from .models import Tournament
 from users.models import Coach, Member
 from .forms import TournamentForm
+import requests
+from django.http import HttpResponse
 
 
 def tournament_view(request):
@@ -220,6 +222,8 @@ def edit_tournament_ajax(request, tournament_id):
 @login_required
 def tournament_view_flutter(request):
     tournaments = Tournament.objects.filter(flagTournaments=True)
+
+
     if hasattr(request.user, 'coach'):
         role = "coach"
     elif hasattr(request.user, 'member'):
@@ -228,12 +232,25 @@ def tournament_view_flutter(request):
         role = "guest"
 
     result = []
+
     for t in tournaments:
         pembuat_username = (
             t.pembuatTournaments.user.username
             if hasattr(t.pembuatTournaments, 'user')
             else "Unknown"
         )
+
+
+        participants_list = []
+        for member in t.pesertaTournaments.all():
+            participants_list.append({
+                "member": {
+                    "id": str(member.id),
+                    "username": member.user.username,
+                    "city": member.city,
+                    "photo": member.profile_photo or "",
+                }
+            })
 
         result.append({
             "id": str(t.idTournaments),
@@ -244,12 +261,16 @@ def tournament_view_flutter(request):
             "poster": t.posterTournaments or "/static/images/empty.png",
             "deskripsi": t.deskripsiTournaments,
             "pembuat": pembuat_username,
+
+            "participants": participants_list,
+            "participant_count": len(participants_list),
         })
 
     return JsonResponse({
         "role": role,
-        "tournaments": result
+        "tournaments": result,
     }, status=200)
+
 
 def my_tournaments_flutter(request):
     user = request.user
@@ -437,3 +458,20 @@ def assign_tournament_flutter(request, tournament_id):
     }, status=200)
 
 
+def proxy_image_tournament(request):
+    image_url = request.GET.get('url')
+    if not image_url:
+        return HttpResponse('No URL provided', status=400)
+    
+    try:
+        # Fetch image from external source
+        response = requests.get(image_url, timeout=10)
+        response.raise_for_status()
+        
+        # Return the image with proper content type
+        return HttpResponse(
+            response.content,
+            content_type=response.headers.get('Content-Type', 'image/jpeg')
+        )
+    except requests.RequestException as e:
+        return HttpResponse(f'Error fetching image: {str(e)}', status=500)

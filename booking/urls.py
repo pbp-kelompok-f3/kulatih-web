@@ -34,4 +34,9 @@ urlpatterns = [
     path('api/reschedule/<int:booking_id>/', views.api_reschedule_booking),
     path('api/cancel/<int:booking_id>/', views.api_cancel_booking),
 
+    # API untuk Flutter – COACH ACTIONS
+    path('api/confirm/<int:booking_id>/', views.api_confirm_booking, name='api_confirm'),
+    path('api/accept/<int:booking_id>/', views.api_accept_reschedule, name='api_accept'),
+    path('api/reject/<int:booking_id>/', views.api_reject_reschedule, name='api_reject'),
+    path('proxy-image/', views.proxy_image, name='proxy_image'),
 ]

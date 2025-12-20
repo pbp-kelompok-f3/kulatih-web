@@ -2,7 +2,7 @@ from django.shortcuts import render, get_object_or_404, redirect
 from django.utils import timezone
 from django.contrib import messages
 from datetime import datetime, timedelta
-from django.http import JsonResponse
+from django.http import HttpResponse, JsonResponse
 from django.views.decorators.http import require_POST
 from django.contrib.auth.decorators import login_required
 from django.db import models
@@ -10,6 +10,7 @@ import json
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.utils import timezone
+import requests
 
 
 from .models import Booking
@@ -48,7 +49,7 @@ def auto_complete_bookings():
 
 
 # 🟢 LIST BOOKINGS
-@login_required(login_url='/account/login/')
+@login_required(login_url='/accounts/login/')
 def booking_list(request):
     # Auto update setiap kali halaman dibuka
     auto_complete_bookings()
@@ -72,7 +73,7 @@ def booking_list(request):
     return render(request, "booking/booking_list.html", context)
 
 # 🟢 CREATE BOOKING
-@login_required(login_url='/account/login/')
+@login_required(login_url='/accounts/login/')
 def create_booking(request, coach_id):
     # 🚫 Jika user adalah coach, langsung tolak
     if hasattr(request.user, "coach"):
@@ -134,7 +135,7 @@ def create_booking(request, coach_id):
 
 
 # 🟢 EDIT BOOKING
-@login_required(login_url='/account/login/')
+@login_required(login_url='/accounts/login/')
 def edit_booking(request, booking_id):
     booking = get_object_or_404(Booking, id=booking_id)
 
@@ -542,6 +543,7 @@ def api_list_bookings(request):
         data.append({
             "id": b.id,
             "coach_name": b.coach.user.get_full_name(),
+            "member_name": b.member.user.get_full_name(),
             "sport": b.coach.sport if hasattr(b.coach, "sport") else "",
             "location": b.location,
             "date": b.date.isoformat(),
@@ -620,4 +622,44 @@ def api_cancel_booking(request, booking_id):
 
     return JsonResponse({"ok": True})
 
+@csrf_exempt
+def api_confirm_booking(request, booking_id):
+    if request.method == "POST":
+        booking = get_object_or_404(Booking, id=booking_id)
+        booking.status = "confirmed"
+        booking.save()
+        return JsonResponse({"status": "success"})
 
+@csrf_exempt
+def api_accept_reschedule(request, booking_id):
+    if request.method == "POST":
+        booking = get_object_or_404(Booking, id=booking_id)
+        booking.status = "confirmed"
+        booking.save()
+        return JsonResponse({"status": "success"})
+
+@csrf_exempt
+def api_reject_reschedule(request, booking_id):
+    if request.method == "POST":
+        booking = get_object_or_404(Booking, id=booking_id)
+        booking.status = "cancelled"
+        booking.save()
+        return JsonResponse({"status": "success"})
+
+def proxy_image(request):
+    image_url = request.GET.get('url')
+    if not image_url:
+        return HttpResponse('No URL provided', status=400)
+    
+    try:
+        # Fetch image from external source
+        response = requests.get(image_url, timeout=10)
+        response.raise_for_status()
+        
+        # Return the image with proper content type
+        return HttpResponse(
+            response.content,
+            content_type=response.headers.get('Content-Type', 'image/jpeg')
+        )
+    except requests.RequestException as e:
+        return HttpResponse(f'Error fetching image: {str(e)}', status=500)
