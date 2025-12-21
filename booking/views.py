@@ -359,7 +359,7 @@ def booking_list_json(request):
         "items": data
     })
 
-
+@csrf_exempt
 @login_required
 def create_booking_json(request, coach_id):
     if request.method != "POST":
@@ -639,6 +639,7 @@ def api_create_booking(request):
         {"ok": True, "id": booking.id},
         status=201
     )
+    
 @csrf_exempt
 def api_reschedule_booking(request, booking_id):
     if request.method != "POST":
