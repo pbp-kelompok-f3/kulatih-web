@@ -16,5 +16,6 @@ urlpatterns = [
     path('json/tournaments/create/', views.create_tournament_flutter, name='create_tournament_flutter'),
     path('json/tournaments/<uuid:tournament_id>/edit/', views.edit_tournament_flutter, name='edit_tournament_flutter'),
     path('json/tournaments/<uuid:tournament_id>/delete/', views.delete_tournament_flutter, name='delete_tournament_flutter'),
-    
+    path('proxy-image/', views.proxy_image_tournament, name='proxy_image_tournament'),
+    path('json/<uuid:tournament_id>/assign/', views.assign_tournament_flutter, name='assign_tournament_flutter'),
 ]

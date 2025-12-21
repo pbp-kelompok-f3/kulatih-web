@@ -2,11 +2,15 @@ from django.shortcuts import render, get_object_or_404, redirect
 from django.utils import timezone
 from django.contrib import messages
 from datetime import datetime, timedelta
-from django.http import JsonResponse
+from django.http import HttpResponse, JsonResponse
 from django.views.decorators.http import require_POST
 from django.contrib.auth.decorators import login_required
 from django.db import models
 import json
+from django.http import JsonResponse
+from django.views.decorators.csrf import csrf_exempt
+from django.utils import timezone
+import requests
 
 
 from .models import Booking
@@ -45,7 +49,7 @@ def auto_complete_bookings():
 
 
 # 🟢 LIST BOOKINGS
-@login_required(login_url='/account/login/')
+@login_required(login_url='/accounts/login/')
 def booking_list(request):
     # Auto update setiap kali halaman dibuka
     auto_complete_bookings()
@@ -69,7 +73,7 @@ def booking_list(request):
     return render(request, "booking/booking_list.html", context)
 
 # 🟢 CREATE BOOKING
-@login_required(login_url='/account/login/')
+@login_required(login_url='/accounts/login/')
 def create_booking(request, coach_id):
     # 🚫 Jika user adalah coach, langsung tolak
     if hasattr(request.user, "coach"):
@@ -131,7 +135,7 @@ def create_booking(request, coach_id):
 
 
 # 🟢 EDIT BOOKING
-@login_required(login_url='/account/login/')
+@login_required(login_url='/accounts/login/')
 def edit_booking(request, booking_id):
     booking = get_object_or_404(Booking, id=booking_id)
 
@@ -305,7 +309,7 @@ def ajax_confirm_booking(request, booking_id):
     except Booking.DoesNotExist:
         return JsonResponse({"ok": False, "error": "Booking not found"}, status=404)
 
-
+@csrf_exempt
 @login_required
 def booking_list_json(request):
     auto_complete_bookings()  # update otomatis
@@ -527,3 +531,188 @@ def confirm_booking_json(request, booking_id):
 
     return JsonResponse({"ok": True})
 
+@csrf_exempt
+def api_list_bookings(request):
+    # sementara tanpa auth, biar Flutter jalan dulu
+    bookings = Booking.objects.all().order_by("-date", "-start_time")
+
+    data = []
+    for b in bookings:
+        data.append({
+            "id": b.id,
+            "coach_id": str(b.coach.id),
+            "coach_name": b.coach.user.get_full_name(),
+            "member_name": b.member.user.get_full_name(),
+            "sport": b.coach.sport if hasattr(b.coach, "sport") else "",
+            "location": b.location,
+            "date": b.date.isoformat(),
+            "start_time": b.start_time.strftime("%H:%M"),
+            "end_time": b.end_time.strftime("%H:%M"),
+            "status": b.status,
+        })
+
+    return JsonResponse({"bookings": data}, status=200)
+
+
+@csrf_exempt
+@login_required
+def api_create_booking(request):
+    if request.method != "POST":
+        return JsonResponse({"ok": False, "error": "POST required"}, status=405)
+
+    # 🚫 COACH TIDAK BOLEH BOOKING
+    if hasattr(request.user, "coach"):
+        return JsonResponse(
+            {"ok": False, "error": "Coach cannot create booking"},
+            status=403
+        )
+
+    # 🚫 HANYA MEMBER YANG BOLEH
+    if not hasattr(request.user, "member"):
+        return JsonResponse(
+            {"ok": False, "error": "Only members can book"},
+            status=403
+        )
+
+    try:
+        data = json.loads(request.body)
+    except json.JSONDecodeError:
+        return JsonResponse({"ok": False, "error": "Invalid JSON"}, status=400)
+
+    coach_id = data.get("coach_id")
+    location = data.get("location")
+    dt_str = data.get("date")
+
+    if not (coach_id and location and dt_str):
+        return JsonResponse(
+            {"ok": False, "error": "Missing fields"},
+            status=400
+        )
+
+    try:
+        coach = Coach.objects.get(id=coach_id)
+    except Coach.DoesNotExist:
+        return JsonResponse(
+            {"ok": False, "error": "Coach not found"},
+            status=404
+        )
+
+    try:
+        dt = timezone.make_aware(
+            datetime.strptime(dt_str, "%Y-%m-%dT%H:%M:%S")
+        )
+    except ValueError:
+        return JsonResponse(
+            {"ok": False, "error": "Invalid datetime format"},
+            status=400
+        )
+
+    # 🚫 TIDAK BOLEH BOOKING KE MASA LALU
+    if dt < timezone.now():
+        return JsonResponse(
+            {"ok": False, "error": "Cannot book in the past"},
+            status=400
+        )
+
+    date = dt.date()
+    start_time = dt.time()
+    end_time = (dt + timedelta(hours=1)).time()
+
+    # 🚫 CEK KONFLIK JADWAL
+    if Booking.is_conflict(coach, date, start_time, end_time):
+        return JsonResponse(
+            {"ok": False, "error": "Coach unavailable at that time"},
+            status=409
+        )
+
+    booking = Booking.objects.create(
+        coach=coach,
+        member=request.user.member,
+        date=date,
+        start_time=start_time,
+        end_time=end_time,
+        location=location,
+        status="pending",
+    )
+
+    return JsonResponse(
+        {"ok": True, "id": booking.id},
+        status=201
+    )
+@csrf_exempt
+def api_reschedule_booking(request, booking_id):
+    if request.method != "POST":
+        return JsonResponse({"error": "POST required"}, status=405)
+
+    data = json.loads(request.body)
+    new_start = data.get("new_start_time")
+    new_end = data.get("new_end_time")
+
+    if not new_start or not new_end:
+        return JsonResponse({"error": "Missing time fields"}, status=400)
+
+    b = Booking.objects.get(id=booking_id)
+
+    new_start_dt = datetime.fromisoformat(new_start)
+    new_end_dt = datetime.fromisoformat(new_end)
+
+    b.start_time = new_start_dt.time()
+    b.end_time = new_end_dt.time()
+    b.date = new_start_dt.date()
+    b.status = "rescheduled"
+    b.save()
+
+    return JsonResponse({"ok": True})
+
+@csrf_exempt
+def api_cancel_booking(request, booking_id):
+    if request.method != "POST":
+        return JsonResponse({"error": "POST required"}, status=405)
+
+    b = Booking.objects.get(id=booking_id)
+    b.status = "cancelled"
+    b.save()
+
+    return JsonResponse({"ok": True})
+
+@csrf_exempt
+def api_confirm_booking(request, booking_id):
+    if request.method == "POST":
+        booking = get_object_or_404(Booking, id=booking_id)
+        booking.status = "confirmed"
+        booking.save()
+        return JsonResponse({"status": "success"})
+
+@csrf_exempt
+def api_accept_reschedule(request, booking_id):
+    if request.method == "POST":
+        booking = get_object_or_404(Booking, id=booking_id)
+        booking.status = "confirmed"
+        booking.save()
+        return JsonResponse({"status": "success"})
+
+@csrf_exempt
+def api_reject_reschedule(request, booking_id):
+    if request.method == "POST":
+        booking = get_object_or_404(Booking, id=booking_id)
+        booking.status = "cancelled"
+        booking.save()
+        return JsonResponse({"status": "success"})
+
+def proxy_image(request):
+    image_url = request.GET.get('url')
+    if not image_url:
+        return HttpResponse('No URL provided', status=400)
+    
+    try:
+        # Fetch image from external source
+        response = requests.get(image_url, timeout=10)
+        response.raise_for_status()
+        
+        # Return the image with proper content type
+        return HttpResponse(
+            response.content,
+            content_type=response.headers.get('Content-Type', 'image/jpeg')
+        )
+    except requests.RequestException as e:
+        return HttpResponse(f'Error fetching image: {str(e)}', status=500)
