@@ -240,6 +240,9 @@ def tournament_view_flutter(request):
             else "Unknown"
         )
 
+        pembuat_foto = (
+            t.pembuatTournaments.profile_photo
+        )
 
         participants_list = []
         for member in t.pesertaTournaments.all():
@@ -261,6 +264,7 @@ def tournament_view_flutter(request):
             "poster": t.posterTournaments or "/static/images/empty.png",
             "deskripsi": t.deskripsiTournaments,
             "pembuat": pembuat_username,
+            "pembuat_foto": pembuat_foto,
 
             "participants": participants_list,
             "participant_count": len(participants_list),
@@ -268,6 +272,7 @@ def tournament_view_flutter(request):
 
     return JsonResponse({
         "role": role,
+        "namaUser": request.user.username,
         "tournaments": result,
     }, status=200)
 
@@ -345,38 +350,34 @@ def create_tournament_flutter(request):
         return JsonResponse({"error": str(e)}, status=400)
     
 @csrf_exempt
-@login_required(login_url=reverse_lazy('users:login'))
 def create_tournament_flutter(request):
-    if not hasattr(request.user, 'coach'):
-        return JsonResponse({"error": "Hanya coach yang dapat membuat turnamen."}, status=403)
-
     if request.method != "POST":
-        return JsonResponse({"error": "Gunakan request POST."}, status=405)
+        return JsonResponse({"error": "POST required"}, status=400)
 
     try:
-        data = request.POST
-        poster = request.FILES.get("posterTournaments")
+        data = json.loads(request.body)
+
+        tanggal_str = data.get("tanggalTournaments")
+        if not tanggal_str:
+            return JsonResponse({"error": "Tanggal wajib diisi"}, status=400)
+
+        tanggal_parsed = datetime.strptime(tanggal_str, "%Y-%m-%d").date()
 
         tournament = Tournament(
-            namaTournaments=data.get("namaTournaments"),
-            tipeTournaments=data.get("tipeTournaments"),
-            tanggalTournaments=data.get("tanggalTournaments"),
-            lokasiTournaments=data.get("lokasiTournaments"),
-            deskripsiTournaments=data.get("deskripsiTournaments"),
-            posterTournaments=poster,
-            pembuatTournaments=request.user.coach
+            namaTournaments=data["namaTournaments"],
+            tipeTournaments=data["tipeTournaments"],
+            tanggalTournaments=tanggal_parsed,
+            lokasiTournaments=data["lokasiTournaments"],
+            deskripsiTournaments=data["deskripsiTournaments"],
+            posterTournaments=data["posterTournaments"],
+            pembuatTournaments=request.user.coach,
         )
-
         tournament.save()
 
-        return JsonResponse({
-            "message": "Tournament berhasil dibuat!",
-            "id": str(tournament.idTournaments)
-        }, status=201)
+        return JsonResponse({"id": str(tournament.idTournaments)}, status=201)
 
     except Exception as e:
         return JsonResponse({"error": str(e)}, status=400)
-
 
 @csrf_exempt
 @login_required(login_url=reverse_lazy('users:login'))
@@ -395,6 +396,7 @@ def edit_tournament_flutter(request, tournament_id):
         tournament.namaTournaments = data.get("namaTournaments", tournament.namaTournaments)
         tournament.lokasiTournaments = data.get("lokasiTournaments", tournament.lokasiTournaments)
         tournament.deskripsiTournaments = data.get("deskripsiTournaments", tournament.deskripsiTournaments)
+        tournament.posterTournaments = data.get("posterTournaments", tournament.posterTournaments)
 
         tanggal = data.get("tanggalTournaments")
         if tanggal:
@@ -464,11 +466,9 @@ def proxy_image_tournament(request):
         return HttpResponse('No URL provided', status=400)
     
     try:
-        # Fetch image from external source
         response = requests.get(image_url, timeout=10)
         response.raise_for_status()
         
-        # Return the image with proper content type
         return HttpResponse(
             response.content,
             content_type=response.headers.get('Content-Type', 'image/jpeg')

@@ -21,5 +21,11 @@ urlpatterns = [
     path('coach/<uuid:coach_id>/', coach_detail, name='coach_detail'),
 
     # Member
-    path('member/<uuid:id>', member_details, name='member_details')
+    path('member/<uuid:id>', member_details, name='member_details'),
+
+    # Flutter Endpoints
+    path('coaches-json/', coaches_json, name='coaches_json'),
+    path('proxy-image/', proxy_image, name='proxy_image'),
+    path('logout-flutter/', logout_flutter, name='logout_flutter'),
+    path('edit-profile-flutter/', edit_profile_flutter, name='edit_profile_flutter'),
 ]

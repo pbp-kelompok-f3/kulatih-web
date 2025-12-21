@@ -533,8 +533,6 @@ def confirm_booking_json(request, booking_id):
 
 @csrf_exempt
 def api_list_bookings(request):
-    user = request.user
-
     # sementara tanpa auth, biar Flutter jalan dulu
     bookings = Booking.objects.all().order_by("-date", "-start_time")
 
@@ -542,6 +540,7 @@ def api_list_bookings(request):
     for b in bookings:
         data.append({
             "id": b.id,
+            "coach_id": str(b.coach.id),
             "coach_name": b.coach.user.get_full_name(),
             "member_name": b.member.user.get_full_name(),
             "sport": b.coach.sport if hasattr(b.coach, "sport") else "",
@@ -552,7 +551,7 @@ def api_list_bookings(request):
             "status": b.status,
         })
 
-    return JsonResponse({"bookings": data})
+    return JsonResponse({"bookings": data}, status=200)
 
 
 @csrf_exempt
