@@ -275,6 +275,7 @@ def tournament_view_flutter(request):
         "tournaments": result,
     }, status=200)
 
+@login_required
 @csrf_exempt
 def my_tournaments_flutter(request):
     user = request.user
@@ -316,7 +317,7 @@ def my_tournaments_flutter(request):
     }, status=200)
 
 @csrf_exempt
-@login_required(login_url=reverse_lazy('users:login'))
+@login_required
 def create_tournament_flutter(request):
     if not hasattr(request.user, 'coach'):
         return JsonResponse({"error": "Hanya coach yang dapat membuat turnamen."}, status=403)
@@ -348,6 +349,7 @@ def create_tournament_flutter(request):
     except Exception as e:
         return JsonResponse({"error": str(e)}, status=400)
     
+@login_required
 @csrf_exempt
 def create_tournament_flutter(request):
     if request.method != "POST":
@@ -459,6 +461,7 @@ def assign_tournament_flutter(request, tournament_id):
     }, status=200)
 
 @csrf_exempt
+@login_required
 def proxy_image_tournament(request):
     image_url = request.GET.get('url')
     if not image_url:
