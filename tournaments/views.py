@@ -460,8 +460,6 @@ def assign_tournament_flutter(request, tournament_id):
         "status": "success"
     }, status=200)
 
-@csrf_exempt
-@login_required
 def proxy_image_tournament(request):
     image_url = request.GET.get('url')
     if not image_url:
