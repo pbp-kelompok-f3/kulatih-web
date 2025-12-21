@@ -360,6 +360,7 @@ def booking_list_json(request):
     })
 
 
+@csrf_exempt
 @login_required
 def create_booking_json(request, coach_id):
     if request.method != "POST":
