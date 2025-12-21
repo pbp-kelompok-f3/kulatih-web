@@ -554,38 +554,92 @@ def api_list_bookings(request):
 
     return JsonResponse({"bookings": data})
 
+
 @csrf_exempt
+@login_required
 def api_create_booking(request):
     if request.method != "POST":
-        return JsonResponse({"error": "POST required"}, status=405)
+        return JsonResponse({"ok": False, "error": "POST required"}, status=405)
 
-    data = json.loads(request.body)
+    # 🚫 COACH TIDAK BOLEH BOOKING
+    if hasattr(request.user, "coach"):
+        return JsonResponse(
+            {"ok": False, "error": "Coach cannot create booking"},
+            status=403
+        )
+
+    # 🚫 HANYA MEMBER YANG BOLEH
+    if not hasattr(request.user, "member"):
+        return JsonResponse(
+            {"ok": False, "error": "Only members can book"},
+            status=403
+        )
+
+    try:
+        data = json.loads(request.body)
+    except json.JSONDecodeError:
+        return JsonResponse({"ok": False, "error": "Invalid JSON"}, status=400)
+
     coach_id = data.get("coach_id")
     location = data.get("location")
     dt_str = data.get("date")
 
     if not (coach_id and location and dt_str):
-        return JsonResponse({"error": "Missing fields"}, status=400)
+        return JsonResponse(
+            {"ok": False, "error": "Missing fields"},
+            status=400
+        )
 
-    coach = Coach.objects.get(id=coach_id)
+    try:
+        coach = Coach.objects.get(id=coach_id)
+    except Coach.DoesNotExist:
+        return JsonResponse(
+            {"ok": False, "error": "Coach not found"},
+            status=404
+        )
 
-    dt = timezone.make_aware(datetime.strptime(dt_str, "%Y-%m-%dT%H:%M:%S"))
+    try:
+        dt = timezone.make_aware(
+            datetime.strptime(dt_str, "%Y-%m-%dT%H:%M:%S")
+        )
+    except ValueError:
+        return JsonResponse(
+            {"ok": False, "error": "Invalid datetime format"},
+            status=400
+        )
+
+    # 🚫 TIDAK BOLEH BOOKING KE MASA LALU
+    if dt < timezone.now():
+        return JsonResponse(
+            {"ok": False, "error": "Cannot book in the past"},
+            status=400
+        )
+
     date = dt.date()
     start_time = dt.time()
     end_time = (dt + timedelta(hours=1)).time()
 
+    # 🚫 CEK KONFLIK JADWAL
+    if Booking.is_conflict(coach, date, start_time, end_time):
+        return JsonResponse(
+            {"ok": False, "error": "Coach unavailable at that time"},
+            status=409
+        )
+
     booking = Booking.objects.create(
         coach=coach,
-        member=request.user.member,   # kalau kamu mau pakai auth
+        member=request.user.member,
         date=date,
         start_time=start_time,
         end_time=end_time,
         location=location,
-        status="pending"
+        status="pending",
     )
 
-    return JsonResponse({"ok": True, "id": booking.id})
-
+    return JsonResponse(
+        {"ok": True, "id": booking.id},
+        status=201
+    )
 @csrf_exempt
 def api_reschedule_booking(request, booking_id):
     if request.method != "POST":
