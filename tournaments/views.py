@@ -140,7 +140,6 @@ def create_tournament(request):
 
 
 @csrf_exempt
-
 @login_required(login_url=reverse_lazy('users:login'))
 def delete_tournament(request, tournament_id):
     if request.method not in ["POST", "DELETE"]:
@@ -218,7 +217,7 @@ def edit_tournament_ajax(request, tournament_id):
             return JsonResponse({"error": "Invalid JSON data."}, status=400)
 
     return JsonResponse({"error": "Invalid request method"}, status=405)
-
+@csrf_exempt
 @login_required
 def tournament_view_flutter(request):
     tournaments = Tournament.objects.filter(flagTournaments=True)
@@ -276,7 +275,7 @@ def tournament_view_flutter(request):
         "tournaments": result,
     }, status=200)
 
-
+@csrf_exempt
 def my_tournaments_flutter(request):
     user = request.user
 
@@ -459,7 +458,7 @@ def assign_tournament_flutter(request, tournament_id):
         "status": "success"
     }, status=200)
 
-
+@csrf_exempt
 def proxy_image_tournament(request):
     image_url = request.GET.get('url')
     if not image_url:
