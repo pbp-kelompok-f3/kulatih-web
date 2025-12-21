@@ -309,7 +309,7 @@ def ajax_confirm_booking(request, booking_id):
     except Booking.DoesNotExist:
         return JsonResponse({"ok": False, "error": "Booking not found"}, status=404)
 
-
+@csrf_exempt
 @login_required
 def booking_list_json(request):
     auto_complete_bookings()  # update otomatis
